@@ -206,11 +206,6 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <div class="row">
       <button class="btn main big" id="sum-btn">추상화 정리하기</button>
     </div>
-    <div class="row" id="after-row" hidden>
-      <button class="btn main big" id="send">선생님께 제출</button>
-      <button class="btn big" data-gallery>다른 모둠 결과 보기</button>
-    </div>
-    <p class="verdict" id="send-msg" aria-live="polite" hidden></p>
     <div class="talk" id="summary" hidden>
       <b>우리 모둠의 추상화</b>
       <div class="flow">
@@ -223,9 +218,14 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
       <b>추상화란?</b>
       <p id="sum-def">이렇게 ㅎㅅㅇㅅ를 추출해서 복잡한 것을 간결하게 ㄷㅅㅎ하는 과정</p>
     </div>
-    <div class="row">
-      <button class="btn main big" id="again">같은 장르로 다음 문제</button>
-      <button class="btn big" id="home">장르 다시 고르기</button>
+    <div class="row" id="after-row" hidden>
+      <button class="btn main big" id="send">선생님께 제출</button>
+      <button class="btn big" data-gallery>다른 모둠 결과 보기</button>
+    </div>
+    <p class="verdict" id="send-msg" aria-live="polite" hidden></p>
+    <div class="row" id="end-row" hidden>
+      <button class="btn big" id="home">이어 그리기 처음으로 돌아가기</button>
+      <button class="btn big" id="again">같은 장르로 다음 문제</button>
     </div>
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
@@ -322,7 +322,7 @@ var WORDS={
   "직업":["의사","요리사","경찰","소방관","선생님","화가","가수","축구선수","우주비행사","농부","어부","미용사","사진작가","택배기사","군인","판사","과학자","마술사","조종사","프로그래머","제빵사","기자"],
   "중학교 과목":["국어","수학","영어","과학","사회","역사","도덕","체육","음악","미술","정보","한문","기술","가정","진로"]
 };
-var COLORS=["#0f172a","#2563eb","#e02424","#16a34a","#9333ea"],COLOR_NAMES=["검정","파랑","빨강","초록","보라"];
+var COLORS=["#e02424","#16a34a","#f97316","#9333ea","#db2777"],COLOR_NAMES=["빨강","초록","주황","보라","분홍"];
 var S={group:1,sent:false,genre:"동물",n:3,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
 
 /* ---------- 준비 화면 ---------- */
@@ -454,7 +454,7 @@ function review(){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
       '<input id="key'+i+'" style="border-color:'+COLORS[i]+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
-  $("summary").hidden=true;$("after-row").hidden=true;$("send-msg").hidden=true;$("steps").classList.remove("small");S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
+  $("summary").hidden=true;$("after-row").hidden=true;$("send-msg").hidden=true;$("end-row").hidden=true;$("steps").classList.remove("small");S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
   show("s-review");
 }
 $("sum-btn").onclick=function(){
@@ -467,7 +467,7 @@ $("sum-btn").onclick=function(){
   if(!any)box.textContent="(아직 적지 않았어요)";
   $("sum-word").textContent=S.word;
   $("sum-out").textContent=S.secs+"초 그림 "+S.snaps.length+"조각";
-  $("after-row").hidden=false;$("send-msg").hidden=false;
+  $("after-row").hidden=false;$("send-msg").hidden=false;$("end-row").hidden=false;
   $("steps").classList.add("small");
   $("summary").hidden=false;
   $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
