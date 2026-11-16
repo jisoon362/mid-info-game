@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>이어 그리기 결과 보기</title>
+<title>수업 결과 보기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
@@ -53,13 +53,19 @@ main{padding:18px 20px 40px;max-width:1280px;margin:0 auto;display:flex;flex-dir
 .keys{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:15px}
 .keys i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px}
 .keys .none{color:var(--dim);font-size:13px}
+table{border-collapse:collapse;width:100%;max-width:560px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:13px;font-weight:500;color:var(--dim)}
+td.n,th.n{text-align:right}
+tr.first td{font-weight:600;color:var(--blue)}
+h2.t{font-size:17px;font-weight:600;margin:18px 0 6px}
 .empty{color:var(--dim);text-align:center;padding:40px 0}
 </style>
 </head>
 <body>
 <header>
   <a class="btn back" href="../">← 목록으로</a>
-  <h1>이어 그리기 결과 보기</h1>
+  <h1>수업 결과 보기</h1>
   <span class="status" id="status"></span>
 </header>
 <main>
@@ -70,6 +76,18 @@ main{padding:18px 20px 40px;max-width:1280px;margin:0 auto;display:flex;flex-dir
     <p class="err" id="err" aria-live="polite"></p>
     <button class="btn main" type="submit">열기</button>
   </form>
+
+  <div class="filters" id="views" hidden>
+    <button class="chip" id="tab-card" aria-pressed="true">1번 카드 옮기기 랭킹</button>
+    <button class="chip" id="tab-draw" aria-pressed="false">2번 이어 그리기 결과</button>
+  </div>
+
+  <section id="rank" hidden>
+    <div class="filters" id="rfilters"></div>
+    <p class="count" id="rcount"></p>
+    <div id="tables"></div>
+    <p class="empty" id="rempty" hidden>아직 도착한 기록이 없어요. 학생이 게임을 끝낼 때마다 자동으로 들어와요.</p>
+  </section>
 
   <section id="board" hidden>
     <div class="filters" id="filters"></div>
@@ -86,6 +104,7 @@ main{padding:18px 20px 40px;max-width:1280px;margin:0 auto;display:flex;flex-dir
 var $=function(id){return document.getElementById(id)};
 var COLORS=["#0f172a","#2563eb","#e02424","#16a34a","#9333ea"];
 var URL_=window.SHEET_URL||"",pin="",since=1,rows=[],filter=0,timer=null,busy=false;
+var csince=1,crows=[],cfilter=-1,cbusy=false,view="card";
 
 function status(text,bad){$("status").textContent=text;$("status").className="status"+(bad?" bad":"")}
 function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
@@ -122,6 +141,53 @@ function draw(){
   });
 }
 
+function showView(){
+  $("rank").hidden=view!=="card";$("board").hidden=view!=="draw";
+  $("tab-card").setAttribute("aria-pressed",String(view==="card"));$("tab-draw").setAttribute("aria-pressed",String(view==="draw"));
+}
+$("tab-card").onclick=function(){view="card";showView()};
+$("tab-draw").onclick=function(){view="draw";showView()};
+function drawRank(){
+  var periods={};crows.forEach(function(r){periods[r.period]=1});
+  var list=Object.keys(periods).map(Number).sort(function(a,b){return a-b});
+  if(cfilter<0&&list.length)cfilter=list[list.length-1];
+  var f=$("rfilters");f.innerHTML="";f.appendChild(el("span","","교시"));
+  list.forEach(function(p){
+    var b=el("button","chip",p+"교시");b.setAttribute("aria-pressed",String(cfilter===p));
+    b.onclick=function(){cfilter=p;drawRank()};f.appendChild(b);
+  });
+  var shown=crows.filter(function(r){return r.period===cfilter});
+  $("rempty").hidden=crows.length>0;
+  $("rcount").textContent=crows.length?cfilter+"교시 도착 기록 "+shown.length+"건 · 닉네임마다 가장 빠른 기록으로 순위를 매겨요":"";
+  var groups={};
+  shown.forEach(function(r){
+    var g=r.mode+" · "+(r.mode==="정렬 카드"?r.size+"장":r.size+"×"+r.size);
+    var best=(groups[g]=groups[g]||{})[r.nick];
+    if(!best)groups[g][r.nick]={nick:r.nick,t:r.t,m:r.m,tries:1};
+    else{best.tries++;if(r.t<best.t){best.t=r.t;best.m=r.m}}
+  });
+  var box=$("tables");box.innerHTML="";
+  Object.keys(groups).sort().forEach(function(g){
+    box.appendChild(el("h2","t",g));
+    var t=el("table"),h=el("tr");
+    [["순위",""],["닉네임",""],["최고 기록","n"],["횟수","n"],["도전","n"]].forEach(function(c){h.appendChild(el("th",c[1],c[0]))});
+    t.appendChild(h);
+    Object.keys(groups[g]).map(function(k){return groups[g][k]}).sort(function(a,b){return a.t-b.t}).forEach(function(r,i){
+      var tr=el("tr",i===0?"first":"");
+      tr.appendChild(el("td","",(i+1)+"위"));tr.appendChild(el("td","",r.nick));
+      tr.appendChild(el("td","n",r.t.toFixed(1)+"초"));tr.appendChild(el("td","n",r.m+"회"));tr.appendChild(el("td","n",r.tries+"번"));
+      t.appendChild(tr);
+    });
+    box.appendChild(t);
+  });
+}
+function loadCard(){
+  if(cbusy)return;cbusy=true;
+  fetch(URL_+"?view=card&pin="+encodeURIComponent(pin)+"&since="+csince+"&_="+Date.now(),{redirect:"follow"})
+    .then(function(r){return r.json()})
+    .then(function(j){cbusy=false;if(!j.ok)return;var had=crows.length;crows=crows.concat(j.rows);csince=Math.max(csince,j.last);if(j.rows.length||!had)drawRank()})
+    .catch(function(){cbusy=false});
+}
 function load(first){
   if(busy)return;busy=true;
   fetch(URL_+"?pin="+encodeURIComponent(pin)+"&since="+since+"&_="+Date.now(),{redirect:"follow"})
@@ -132,7 +198,7 @@ function load(first){
         if(first){$("err").textContent=j.error==="pin"?"비밀번호가 달라요.":"불러오지 못했어요.";return}
         status("불러오지 못했어요",true);return;
       }
-      if(first){$("login").hidden=true;$("board").hidden=false;timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
+      if(first){$("login").hidden=true;$("views").hidden=false;showView();loadCard();timer=setInterval(function(){if(!document.hidden){load(false);loadCard()}},10000)}
       rows=rows.concat(j.rows);since=Math.max(since,j.last);
       var d=new Date();status("연결됨 · "+d.getHours()+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2)+" 갱신 · 10초마다 새로 고쳐요");
       if(first||j.rows.length)draw();
