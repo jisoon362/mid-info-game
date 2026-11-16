@@ -99,7 +99,7 @@ function draw(){
   var list=Object.keys(periods).map(Number).sort(function(a,b){return a-b});
   var f=$("filters");f.innerHTML="";f.appendChild(el("span","","교시"));
   [0].concat(list).forEach(function(p){
-    var b=el("button","chip",p?p+"교시":"전체");b.setAttribute("aria-pressed",String(filter===p));
+    var b=el("button","chip",p===99?"수업 외":p?p+"교시":"전체");b.setAttribute("aria-pressed",String(filter===p));
     b.onclick=function(){filter=p;draw()};f.appendChild(b);
   });
   var shown=rows.filter(function(r){return !filter||r.period===filter}).slice().reverse();
@@ -108,7 +108,7 @@ function draw(){
   var ul=$("cards");ul.innerHTML="";
   shown.forEach(function(r){
     var li=el("li","card");
-    var top=el("div","top");top.appendChild(el("span","group",r.group+"모둠"));top.appendChild(el("span","meta",r.period+"교시 · "+r.time.slice(0,5)));
+    var top=el("div","top");top.appendChild(el("span","group",r.group+"모둠"));top.appendChild(el("span","meta",(r.period===99?"수업 외":r.period+"교시")+" · "+r.time.slice(0,5)));
     li.appendChild(top);
     if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=el("img");im.alt=r.group+"모둠이 그린 그림";im.src=r.img;li.appendChild(im)}
     else li.appendChild(el("div","noimg","그림 없음"));
@@ -137,7 +137,7 @@ function load(first){
         status("불러오지 못했어요",true);return;
       }
       if(first){$("login").hidden=true;$("board").hidden=false;timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
-      rows=rows.concat(j.rows);since=Math.max(since,j.last);
+      j.rows.forEach(function(r){if(!r.period)r.period=99});rows=rows.concat(j.rows);since=Math.max(since,j.last);
       var d=new Date();status("연결됨 · "+d.getHours()+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2)+" 갱신 · 10초마다 새로 고쳐요");
       if(first||j.rows.length)draw();
     })

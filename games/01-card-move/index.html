@@ -353,7 +353,8 @@ function gshow(id){
 function gate(){
   var ses=sget(K.ses,null),pass=sget(K.pass,0),accs=sget(K.acc,{});
   if(!ses||!accs[ses]){G.back="auth";gshow("g-auth");return}
-  if(pass<=Date.now()){
+  var free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  if(!free&&pass<=Date.now()){
     G.back="code";$("g-hello").textContent=ses;$("g-class").value="";
     if(G.started)$("g-code-err").textContent="수업 코드 시간이 끝났어요. 새 코드를 받아야 계속할 수 있어요.";
     else $("g-code-err").textContent="";
@@ -361,7 +362,7 @@ function gate(){
   }
   gshow(null);
   $("who-id").textContent=ses;
-  $("who-left").textContent=Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
+  $("who-left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
   if(!G.started){G.started=true;newGame()}
 }
 function auth(join){
@@ -441,9 +442,9 @@ function drawHud(){
 }
 
 /* ---------- 기록 ---------- */
-function recKey(){var c=sget(K.code,{day:"",code:""});return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
+function recKey(){var c=sget(K.code,{day:"",code:""});if(period(new Date())<0)c={day:new Date().toDateString(),code:"수업 외"};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
 function drawRecords(){
-  var list=load(recKey()),c=sget(K.code,{code:""});
+  var list=load(recKey()),c=period(new Date())<0?{code:"없음"}:sget(K.code,{code:""});
   $("rec-key").textContent="(수업 코드 "+c.code+" · "+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
   if(!list.length){$("records").innerHTML='<li class="none">아직 성공한 사람이 없어요. 첫 기록의 주인공이 되어 보세요.</li>';return}
   var me=sget(K.ses,"");

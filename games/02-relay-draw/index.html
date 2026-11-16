@@ -234,7 +234,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
   <section class="screen wide" id="s-gallery" hidden>
-    <h2>이번 교시 모둠 결과</h2>
+    <h2>지금 시간대의 모둠 결과</h2>
     <p class="dim" id="gal-status"></p>
     <ul class="gal" id="gal"></ul>
     <div class="row"><button class="btn big" id="gal-back">돌아가기</button></div>
@@ -284,10 +284,10 @@ function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.le
 function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
-  var pass=sget(K.pass,0);
-  if(pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
+  var pass=sget(K.pass,0),free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
   gshow(null);
-  $("left").textContent=Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
+  $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
 }
 function locked(err){
   var lock=sget(K.lock,{n:0,until:0}),t=Date.now();
