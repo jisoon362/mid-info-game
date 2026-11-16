@@ -48,6 +48,7 @@ p{margin:0}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:var(--bg);border:0;padding:8px 13px;color:var(--dim)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
 .rules{margin:0;padding-left:20px;font-size:14.5px;color:var(--dim);max-width:560px}
 .rules b{color:var(--ink);font-weight:600}
 
@@ -137,6 +138,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <h2>2. 장르를 고르세요</h2>
     <div class="genres" id="genres"></div>
     <div class="opts">
+      <div class="opt"><label for="o-group">모둠 번호</label><select id="o-group"></select></div>
       <div class="opt"><span>그리는 시간</span><div class="seg" id="o-secs"></div></div>
       <div class="opt"><span>단어를 보는 사람</span><div class="seg" id="o-see"></div></div>
     </div>
@@ -193,6 +195,10 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
         <div><small>간결한 표현</small><span id="sum-out"></span></div>
       </div>
       <p id="sum-text"></p>
+      <div class="row" id="send-row" style="justify-content:flex-start;margin-bottom:10px" hidden>
+        <button class="btn main" id="send">선생님께 제출</button>
+        <span class="verdict" id="send-msg" aria-live="polite"></span>
+      </div>
       <ul>
         <li>적은 핵심요소만으로 맞히는 사람이 알아볼 수 있었나요?</li>
         <li>그리지 않고 <strong>버린 것</strong>은 무엇인가요? 버려도 괜찮았나요?</li>
@@ -231,6 +237,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   </form>
 </div>
 
+<script src="../../config.js"></script>
 <script>
 (function(){
 "use strict";
@@ -243,7 +250,7 @@ function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(
 function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
 var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=3498242298754679;
 var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
-var K={pass:"cardrelay|pass",lock:"cardrelay|lock"};
+var K={pass:"cardrelay|pass",lock:"cardrelay|lock",code:"cardrelay|code"};
 function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
 function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
@@ -266,6 +273,7 @@ $("g-code").onsubmit=function(e){
   if(p<0){err.textContent="지금은 수업 시간이 아니에요. 수업이 시작되면 코드를 넣을 수 있어요.";return}
   if(code!==codeFor(d,p)){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
   var end=new Date(d);end.setHours(0,PERIODS[p][1],0,0);
+  var saved=sget(K.code,{})||{};saved.code=code;saved.day=d.toDateString();sset(K.code,saved);
   sset(K.lock,{n:0,until:0});sset(K.pass,end.getTime());err.textContent="";gate();
 };
 $("g-teacher-open").onclick=function(){$("g-pin-err").textContent="";$("g-issued").hidden=true;gshow("g-tpin");$("g-pin").focus()};
@@ -290,7 +298,7 @@ var WORDS={
   "중학교 과목":["국어","수학","영어","과학","사회","역사","도덕","체육","음악","미술","정보","한문","기술","가정","진로"]
 };
 var COLORS=["#0f172a","#2563eb","#e02424","#16a34a","#9333ea"],COLOR_NAMES=["검정","파랑","빨강","초록","보라"];
-var S={genre:"동물",n:3,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
+var S={group:1,sent:false,genre:"동물",n:3,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
 
 /* ---------- 준비 화면 ---------- */
 function seg(id,opts,cur,set){
@@ -307,6 +315,8 @@ function drawSetup(){
 }
 $("o-drawers").onclick=function(e){var b=e.target.closest("button");if(!b)return;S.n=+b.dataset.n;drawSetup()};
 $("genres").onclick=function(e){var b=e.target.closest(".genre");if(!b)return;S.genre=b.dataset.g;drawSetup()};
+(function(){var h="";for(var i=1;i<=12;i++)h+='<option value="'+i+'">'+i+"모둠</option>";$("o-group").innerHTML=h})();
+$("o-group").onchange=function(){S.group=+this.value};
 function show(id){["s-setup","s-play","s-review"].forEach(function(s){$(s).hidden=s!==id})}
 
 /* ---------- 도화지 ---------- */
@@ -419,7 +429,7 @@ function review(){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
       '<input id="key'+i+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
-  $("summary").hidden=true;
+  $("summary").hidden=true;S.sent=false;$("send-msg").textContent="";$("send").disabled=false;
   show("s-review");
 }
 $("sum-btn").onclick=function(){
@@ -431,8 +441,30 @@ $("sum-btn").onclick=function(){
   $("sum-text").textContent=keys.length
     ?"실제 '"+S.word+"'에는 훨씬 많은 특징이 있지만, 우리는 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요. 이렇게 핵심요소를 추출해서 복잡한 것을 단순화하는 과정이 추상화예요."
     :"각자 그린 부분이 어떤 핵심요소였는지 위 칸에 적은 뒤 다시 눌러 보세요.";
+  $("send-row").hidden=!window.SHEET_URL;
   $("summary").hidden=false;
   $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+function smallImage(){
+  var c=document.createElement("canvas");c.width=480;c.height=360;
+  var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,480,360);x.drawImage(cv,0,0,480,360);
+  var q=[0.6,0.4,0.25];
+  for(var i=0;i<q.length;i++){var d=c.toDataURL("image/jpeg",q[i]);if(d.length<=45000)return d}
+  return "";
+}
+$("send").onclick=function(){
+  var msg=$("send-msg"),btn=$("send");
+  if(S.sent)return;
+  var keys=[];for(var i=0;i<S.snaps.length;i++)keys.push($("key"+i).value.trim());
+  var body=JSON.stringify({code:(sget(K.code,{})||{}).code||"",group:S.group,genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()});
+  btn.disabled=true;msg.className="verdict";msg.textContent="보내는 중…";
+  fetch(window.SHEET_URL,{method:"POST",body:body,redirect:"follow"})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j.ok){S.sent=true;msg.className="verdict good";msg.textContent=S.group+"모둠 결과를 제출했어요."}
+      else{btn.disabled=false;msg.className="verdict bad";msg.textContent=j.error==="code"?"수업 코드가 지났어요. 새 코드를 넣은 뒤 다시 제출하세요.":"제출하지 못했어요. 다시 눌러 보세요."}
+    })
+    .catch(function(){btn.disabled=false;msg.className="verdict bad";msg.textContent="연결하지 못했어요. 와이파이를 확인하고 다시 눌러 보세요."});
 };
 $("start").onclick=startGame;
 $("again").onclick=startGame;
