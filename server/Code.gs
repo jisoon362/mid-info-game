@@ -126,8 +126,11 @@ function saveCard(q, n) {
 // 선생님 결과 보기 화면이 목록을 가져갈 때
 function doGet(e) {
   var q = (e && e.parameter) || {};
-  if (cyrb("T|" + SECRET + "|" + String(q.pin || "")) !== TPIN) return out({ ok: false, error: "pin" });
   var n = nowInfo();
+  // 선생님 비밀번호면 오늘 전체, 이번 교시 수업 코드면 이번 교시 결과만 볼 수 있다
+  var teacher = cyrb("T|" + SECRET + "|" + String(q.pin || "")) === TPIN;
+  var student = !teacher && n.p >= 0 && String(q.code || "") === codeFor(n.day, n.p);
+  if (!teacher && !student) return out({ ok: false, error: q.code ? "code" : "pin" });
   var since = Math.max(1, Math.round(Number(q.since)) || 1);   // 이 줄 번호 다음부터 돌려준다
   var rows = [];
   if (q.view === "card") {
@@ -149,6 +152,7 @@ function doGet(e) {
     for (var i = 0; i < values.length; i++) {
       var r = values[i];
       if (r[1] !== "d" + n.day) continue;                      // 오늘 기록만
+      if (student && Number(r[2]) !== n.p + 1) continue;       // 학생은 이번 교시만
       rows.push({
         row: since + 1 + i, time: r[0], period: Number(r[2]), group: Number(r[3]), genre: r[4], word: r[5],
         solved: r[6] === "O", tries: Number(r[7]), secs: Number(r[8]), n: Number(r[9]),
