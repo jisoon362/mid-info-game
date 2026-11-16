@@ -94,7 +94,9 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 .people{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .people button{width:86px;padding:14px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:22px;font-weight:600}
 .people button[aria-pressed="true"]{border-color:var(--blue);background:#eff4ff;color:var(--blue)}
-.steps input{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line);font-size:16px}
+.steps label{font-size:16px;font-weight:600;color:var(--ink)}
+.steps input{width:100%;padding:12px;border-radius:10px;border:3px solid var(--ink);font-size:19px;font-weight:700;background:#fffbea}
+.steps input::placeholder{font-weight:400;color:#94a3b8}
 .concept{font-size:17px;background:#eff4ff;border-color:#c7d7fb}
 .concept strong,.flow span{color:var(--blue)}
 .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:6px 0 10px}
@@ -102,7 +104,9 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 .flow small{font-size:12px;color:var(--dim)}
 .flow span{font-weight:600;font-size:17px}
 .flow i{font-style:normal;color:var(--dim);font-size:20px}
-#sum-text{margin:0 0 8px}
+#sum-text{margin:0;font-size:17px}
+#sum-def{margin:4px 0 0;font-size:17px;color:var(--blue)}
+.talk .q{margin:10px 0 0;font-size:14px;color:var(--dim)}
 
 .screen.wide{max-width:1200px}
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;list-style:none;margin:0;padding:0;width:100%}
@@ -202,6 +206,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <div class="row">
       <button class="btn main big" id="sum-btn">추상화 정리하기</button>
       <button class="btn big" id="send">선생님께 제출</button>
+      <button class="btn big" data-gallery>모둠 결과 보기</button>
     </div>
     <p class="verdict" id="send-msg" aria-live="polite"></p>
     <div class="talk" id="summary" hidden>
@@ -214,16 +219,12 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
         <div><small>간결한 표현</small><span id="sum-out"></span></div>
       </div>
       <p id="sum-text"></p>
-      <ul>
-        <li>적은 핵심요소만으로 맞히는 사람이 알아볼 수 있었나요?</li>
-        <li>그리지 않고 <strong>버린 것</strong>은 무엇인가요? 버려도 괜찮았나요?</li>
-        <li>시간이 더 짧았다면 핵심요소 중 무엇 하나만 남기겠어요?</li>
-      </ul>
+      <p id="sum-def"><strong>이렇게 핵심요소를 추출해서 복잡한 것을 간결하게 단순화하는 과정이 추상화예요.</strong></p>
+      <p class="q">생각해 보기: 그리지 않고 버린 것은 무엇인가요?</p>
     </div>
     <div class="row">
       <button class="btn main big" id="again">같은 장르로 다음 문제</button>
       <button class="btn big" id="home">장르 다시 고르기</button>
-      <button class="btn big" data-gallery>모둠 결과 보기</button>
     </div>
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
@@ -450,7 +451,7 @@ function review(){
   $("r-answer").textContent=S.word;
   $("steps").innerHTML=S.snaps.map(function(src,i){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
-      '<input id="key'+i+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
+      '<input id="key'+i+'" style="border-color:'+COLORS[i]+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
   $("summary").hidden=true;S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
   show("s-review");
@@ -462,8 +463,9 @@ $("sum-btn").onclick=function(){
   $("sum-keys").textContent=keys.length?keys.join(" · "):"(아직 적지 않았어요)";
   $("sum-out").textContent=S.secs+"초 그림 "+S.snaps.length+"조각";
   $("sum-text").textContent=keys.length
-    ?"실제 '"+S.word+"'에는 훨씬 많은 특징이 있지만, 우리는 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요. 이렇게 핵심요소를 추출해서 복잡한 것을 단순화하는 과정이 추상화예요."
+    ?"'"+S.word+"'의 많은 특징 중 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요."
     :"각자 그린 부분이 어떤 핵심요소였는지 위 칸에 적은 뒤 다시 눌러 보세요.";
+  $("sum-def").hidden=!keys.length;
   $("summary").hidden=false;
   $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
 };
