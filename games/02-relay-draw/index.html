@@ -98,14 +98,17 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 .steps input{width:100%;padding:12px;border-radius:10px;border:3px solid var(--ink);font-size:19px;font-weight:700;background:#fffbea}
 .steps input::placeholder{font-weight:400;color:#94a3b8}
 .concept{font-size:17px;background:#eff4ff;border-color:#c7d7fb}
-.concept strong,.flow span{color:var(--blue)}
+.flow span{color:var(--ink)}
 .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:6px 0 10px}
 .flow div{display:flex;flex-direction:column;background:var(--cell);border-radius:10px;padding:8px 12px;min-width:120px}
 .flow small{font-size:12px;color:var(--dim)}
 .flow span{font-weight:600;font-size:17px}
 .flow i{font-style:normal;color:var(--dim);font-size:20px}
-#sum-text{margin:0;font-size:17px}
-#sum-def{margin:4px 0 0;font-size:17px;color:var(--blue)}
+#sum-def{margin:0;font-size:clamp(22px,3.6vw,32px);font-weight:700;color:var(--ink);line-height:1.35;text-wrap:balance}
+.flow span b{display:inline;font-size:inherit;font-weight:600;margin:0}
+.steps.small{grid-template-columns:repeat(auto-fit,minmax(110px,150px));justify-content:center;gap:8px}
+.steps.small label{font-size:12px;font-weight:500}
+.steps.small input{padding:5px 7px;font-size:13px;border-width:2px}
 .talk .q{margin:10px 0 0;font-size:14px;color:var(--dim)}
 
 .screen.wide{max-width:1200px}
@@ -196,19 +199,17 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   <section class="screen" id="s-review" hidden>
     <p class="dim" id="r-result"></p>
     <div class="answer" id="r-answer"></div>
-    <div class="talk concept">
-      <b>추상화란?</b>
-      <strong>핵심요소를 추출해서</strong>, 복잡한 것을 <strong>간결하게 단순화</strong>하는 과정이에요.
-    </div>
     <h2>내가 그린 부분은 어떤 핵심요소였나요?</h2>
     <p class="dim">사람마다 펜 색이 달라요. 자기 색으로 그린 부분이 제시어의 어떤 특징(핵심요소)인지 적어 보세요.</p>
     <ol class="steps" id="steps"></ol>
     <div class="row">
       <button class="btn main big" id="sum-btn">추상화 정리하기</button>
-      <button class="btn big" id="send">선생님께 제출</button>
-      <button class="btn big" data-gallery>모둠 결과 보기</button>
     </div>
-    <p class="verdict" id="send-msg" aria-live="polite"></p>
+    <div class="row" id="after-row" hidden>
+      <button class="btn main big" id="send">선생님께 제출</button>
+      <button class="btn big" data-gallery>다른 모둠 결과 보기</button>
+    </div>
+    <p class="verdict" id="send-msg" aria-live="polite" hidden></p>
     <div class="talk" id="summary" hidden>
       <b>우리 모둠의 추상화</b>
       <div class="flow">
@@ -218,9 +219,8 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
         <i>→</i>
         <div><small>간결한 표현</small><span id="sum-out"></span></div>
       </div>
-      <p id="sum-text"></p>
-      <p id="sum-def"><strong>이렇게 핵심요소를 추출해서 복잡한 것을 간결하게 단순화하는 과정이 추상화예요.</strong></p>
-      <p class="q">생각해 보기: 그리지 않고 버린 것은 무엇인가요?</p>
+      <b>추상화란?</b>
+      <p id="sum-def">이렇게 ㅎㅅㅇㅅ를 추출해서 복잡한 것을 간결하게 ㄷㅅㅎ하는 과정</p>
     </div>
     <div class="row">
       <button class="btn main big" id="again">같은 장르로 다음 문제</button>
@@ -453,19 +453,21 @@ function review(){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
       '<input id="key'+i+'" style="border-color:'+COLORS[i]+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
-  $("summary").hidden=true;S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
+  $("summary").hidden=true;$("after-row").hidden=true;$("send-msg").hidden=true;$("steps").classList.remove("small");S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
   show("s-review");
 }
 $("sum-btn").onclick=function(){
-  var keys=[];
-  for(var i=0;i<S.snaps.length;i++){var v=$("key"+i).value.trim();if(v)keys.push(v)}
+  var box=$("sum-keys"),any=false;box.innerHTML="";
+  for(var i=0;i<S.snaps.length;i++){
+    var v=$("key"+i).value.trim();if(!v)continue;
+    if(any)box.appendChild(document.createTextNode(" · "));
+    var b=document.createElement("b");b.textContent=v;b.style.color=COLORS[i];box.appendChild(b);any=true;
+  }
+  if(!any)box.textContent="(아직 적지 않았어요)";
   $("sum-word").textContent=S.word;
-  $("sum-keys").textContent=keys.length?keys.join(" · "):"(아직 적지 않았어요)";
   $("sum-out").textContent=S.secs+"초 그림 "+S.snaps.length+"조각";
-  $("sum-text").textContent=keys.length
-    ?"'"+S.word+"'의 많은 특징 중 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요."
-    :"각자 그린 부분이 어떤 핵심요소였는지 위 칸에 적은 뒤 다시 눌러 보세요.";
-  $("sum-def").hidden=!keys.length;
+  $("after-row").hidden=false;$("send-msg").hidden=false;
+  $("steps").classList.add("small");
   $("summary").hidden=false;
   $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
 };
