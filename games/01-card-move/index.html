@@ -199,7 +199,6 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
     <div class="box">
       <h2>이번 교시 랭킹 <span id="rec-key"></span></h2>
       <ol class="records" id="records"></ol>
-      <span class="sub" id="sent-note">도착 기록은 선생님께 자동으로 전송돼요.</span>
     </div>
     <div class="box" id="hud-b-box" hidden><small id="hud-b-label">교환 횟수</small><b class="num" id="hud-b">0</b></div>
     <div class="box turn" id="turn">
@@ -310,7 +309,6 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
   </div>
 </div>
 
-<script>document.write('<script src="../../config.js?t='+Date.now()+'"><\/script>')</script>
 <script>
 (function(){
 "use strict";
@@ -447,17 +445,7 @@ function drawRecords(){
   var me=sget(K.ses,"");
   $("records").innerHTML=list.slice(0,10).map(function(r,i){return "<li"+(r.id===me?' style="color:var(--goal)"':"")+"><span>"+(i+1)+"위 · "+r.id+"</span><span>"+fmt(r.t)+"</span></li>"}).join("");
 }
-function sendRecord(t,m){
-  if(!window.SHEET_URL)return;
-  var c=sget(K.code,{})||{};
-  try{
-    fetch(window.SHEET_URL,{method:"POST",redirect:"follow",body:JSON.stringify({game:"card",code:c.code||"",nick:sget(K.ses,""),mode:S.mode,size:S.size[S.mode],t:Math.round(t),m:m})})
-      .then(function(r){return r.json()}).then(function(j){$("sent-note").textContent=j.ok?"방금 기록을 선생님께 보냈어요.":"기록을 선생님께 보내지 못했어요."})
-      .catch(function(){$("sent-note").textContent="기록을 선생님께 보내지 못했어요."});
-  }catch(e){}
-}
 function addRecord(t,m){
-  sendRecord(t,m);
   var key=recKey(),list=load(key),id=sget(K.ses,"?"),old=null;
   list.forEach(function(r){if(r.id===id)old=r});
   if(!old)list.push({id:id,t:Math.round(t),m:m});

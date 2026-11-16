@@ -15,8 +15,6 @@ var PERIODS = [[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,
 var SHEET_NAME = "이어그리기";
 var TZ = "Asia/Seoul";
 var GENRES = ["동물", "음식", "직업", "중학교 과목"];
-var CARD_SHEET = "카드옮기기";
-var CARD_HEAD = ["받은 시각", "날짜", "교시", "닉네임", "게임", "크기", "시간(초)", "횟수"];
 var HEAD = ["받은 시각", "날짜", "교시", "모둠", "장르", "제시어", "맞힘", "도전 횟수", "그린 시간(초)", "그린 인원", "핵심요소", "그림"];
 
 function cyrb(str) {
@@ -50,13 +48,12 @@ function out(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-function getSheet(name, head) {
-  name = name || SHEET_NAME; head = head || HEAD;
+function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(name);
+  var sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
-    sh = ss.insertSheet(name);
-    sh.getRange(1, 1, 1, head.length).setValues([head]);
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
     sh.setFrozenRows(1);
   }
   return sh;
@@ -74,8 +71,6 @@ function doPost(e) {
   try { q = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false, error: "format" }); }
   var n = nowInfo();
   if (n.p < 0 || String(q.code) !== codeFor(n.day, n.p)) return out({ ok: false, error: "code" });
-
-  if (q.game === "card") return saveCard(q, n);
 
   var group = Math.round(Number(q.group));
   if (!(group >= 1 && group <= 20)) return out({ ok: false, error: "group" });
@@ -102,27 +97,6 @@ function doPost(e) {
   return out({ ok: true });
 }
 
-// 1번 게임(카드 옮기기)에서 도착할 때마다 자동으로 보내는 기록
-function saveCard(q, n) {
-  var nick = String(q.nick || "");
-  if (!/^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]{1,6}$/.test(nick)) return out({ ok: false, error: "nick" });
-  var mode = q.mode === "sort" ? "정렬 카드" : "카드 옮기기";
-  var size = Math.round(Number(q.size));
-  if ([3, 4, 5, 6, 8].indexOf(size) < 0) return out({ ok: false, error: "size" });
-  var t = Math.round(Number(q.t)), m = Math.round(Number(q.m));
-  if (!(t >= 300 && t <= 3600000) || !(m >= 1 && m <= 100000)) return out({ ok: false, error: "value" });
-  var row = [n.time, "d" + n.day, n.p + 1, nick, mode, size, Math.round(t / 100) / 10, m];
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    var sh = getSheet(CARD_SHEET, CARD_HEAD);
-    sh.getRange(sh.getLastRow() + 1, 1, 1, row.length).setValues([row]);
-  } finally {
-    lock.releaseLock();
-  }
-  return out({ ok: true });
-}
-
 // 선생님 결과 보기 화면이 목록을 가져갈 때
 function doGet(e) {
   var q = (e && e.parameter) || {};
@@ -131,22 +105,10 @@ function doGet(e) {
   var teacher = cyrb("T|" + SECRET + "|" + String(q.pin || "")) === TPIN;
   var student = !teacher && n.p >= 0 && String(q.code || "") === codeFor(n.day, n.p);
   if (!teacher && !student) return out({ ok: false, error: q.code ? "code" : "pin" });
-  var since = Math.max(1, Math.round(Number(q.since)) || 1);   // 이 줄 번호 다음부터 돌려준다
-  var rows = [];
-  if (q.view === "card") {
-    var cs = getSheet(CARD_SHEET, CARD_HEAD), cl = cs.getLastRow();
-    if (cl > since) {
-      var cv = cs.getRange(since + 1, 1, cl - since, CARD_HEAD.length).getDisplayValues();
-      for (var k = 0; k < cv.length; k++) {
-        var c = cv[k];
-        if (c[1] !== "d" + n.day) continue;
-        rows.push({ row: since + 1 + k, time: c[0], period: Number(c[2]), nick: c[3], mode: c[4], size: Number(c[5]), t: Number(c[6]), m: Number(c[7]) });
-      }
-    }
-    return out({ ok: true, last: cl, period: n.p + 1, rows: rows });
-  }
   var sh = getSheet();
   var last = sh.getLastRow();
+  var since = Math.max(1, Math.round(Number(q.since)) || 1);   // 이 줄 번호 다음부터 돌려준다
+  var rows = [];
   if (last > since) {
     var values = sh.getRange(since + 1, 1, last - since, HEAD.length).getDisplayValues();
     for (var i = 0; i < values.length; i++) {
