@@ -90,6 +90,19 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 .talk b{display:block;font-size:13px;color:var(--dim);font-weight:500;margin-bottom:4px}
 .talk ul{margin:0;padding-left:20px}
 
+.people{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.people button{width:86px;padding:14px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:22px;font-weight:600}
+.people button[aria-pressed="true"]{border-color:var(--blue);background:#eff4ff;color:var(--blue)}
+.steps input{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line);font-size:16px}
+.concept{font-size:17px;background:#eff4ff;border-color:#c7d7fb}
+.concept strong,.flow span{color:var(--blue)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:6px 0 10px}
+.flow div{display:flex;flex-direction:column;background:var(--cell);border-radius:10px;padding:8px 12px;min-width:120px}
+.flow small{font-size:12px;color:var(--dim)}
+.flow span{font-weight:600;font-size:17px}
+.flow i{font-style:normal;color:var(--dim);font-size:20px}
+#sum-text{margin:0 0 8px}
+
 /* 수업 코드 */
 .gate{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;display:grid;place-items:center;padding:20px 16px}
 .gate-card{width:min(100%,400px);display:flex;flex-direction:column;gap:12px}
@@ -118,18 +131,21 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 <main>
   <!-- 준비 -->
   <section class="screen" id="s-setup">
-    <h2>장르를 고르고 시작하세요</h2>
+    <h2>1. 몇 명이 그리나요?</h2>
+    <div class="people" id="o-drawers"></div>
+    <p class="dim" id="people-note"></p>
+    <h2>2. 장르를 고르세요</h2>
     <div class="genres" id="genres"></div>
     <div class="opts">
-      <div class="opt"><span>모둠 인원</span><div class="seg" id="o-team"></div></div>
       <div class="opt"><span>그리는 시간</span><div class="seg" id="o-secs"></div></div>
       <div class="opt"><span>단어를 보는 사람</span><div class="seg" id="o-see"></div></div>
     </div>
     <button class="btn main big" id="start">게임 시작</button>
     <ol class="rules">
-      <li>태블릿 한 대를 모둠이 돌려 가며 써요. <b>마지막 사람</b>은 단어를 보면 안 돼요.</li>
+      <li>태블릿 한 대를 모둠이 돌려 가며 써요. <b>맞히는 사람</b>은 단어를 보면 안 돼요.</li>
       <li>앞사람부터 차례로 <b>정해진 시간 동안만</b> 이어서 그려요.</li>
-      <li>마지막 사람이 그림을 보고 <b>글자 수에 맞게</b> 단어를 맞혀요.</li>
+      <li>맞히는 사람이 그림을 보고 <b>글자 수에 맞게</b> 단어를 맞혀요.</li>
+      <li>끝나면 각자 그린 부분이 어떤 <b>핵심요소</b>였는지 적어요.</li>
     </ol>
   </section>
 
@@ -159,14 +175,28 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   <section class="screen" id="s-review" hidden>
     <p class="dim" id="r-result"></p>
     <div class="answer" id="r-answer"></div>
-    <h2>누가 무엇을 그렸을까요?</h2>
+    <div class="talk concept">
+      <b>추상화란?</b>
+      <strong>핵심요소를 추출해서</strong>, 복잡한 것을 <strong>간결하게 단순화</strong>하는 과정이에요.
+    </div>
+    <h2>내가 그린 부분은 어떤 핵심요소였나요?</h2>
+    <p class="dim">사람마다 펜 색이 달라요. 자기 색으로 그린 부분이 제시어의 어떤 특징(핵심요소)인지 적어 보세요.</p>
     <ol class="steps" id="steps"></ol>
-    <div class="talk">
-      <b>함께 이야기해요 (추상화)</b>
+    <button class="btn main big" id="sum-btn">추상화 정리하기</button>
+    <div class="talk" id="summary" hidden>
+      <b>우리 모둠의 추상화</b>
+      <div class="flow">
+        <div><small>복잡한 대상</small><span id="sum-word"></span></div>
+        <i>→</i>
+        <div><small>추출한 핵심요소</small><span id="sum-keys"></span></div>
+        <i>→</i>
+        <div><small>간결한 표현</small><span id="sum-out"></span></div>
+      </div>
+      <p id="sum-text"></p>
       <ul>
-        <li>짧은 시간 안에 무엇을 먼저 그렸나요? 그것이 이 단어의 <strong>핵심 특징</strong>인가요?</li>
-        <li>그리지 않고 <strong>버린 것</strong>은 무엇인가요? 버려도 알아볼 수 있었나요?</li>
-        <li>마지막 사람은 어떤 부분을 보고 알아챘나요?</li>
+        <li>적은 핵심요소만으로 맞히는 사람이 알아볼 수 있었나요?</li>
+        <li>그리지 않고 <strong>버린 것</strong>은 무엇인가요? 버려도 괜찮았나요?</li>
+        <li>시간이 더 짧았다면 핵심요소 중 무엇 하나만 남기겠어요?</li>
       </ul>
     </div>
     <div class="row">
@@ -259,8 +289,8 @@ var WORDS={
   "직업":["의사","요리사","경찰","소방관","선생님","화가","가수","축구선수","우주비행사","농부","어부","미용사","사진작가","택배기사","군인","판사","과학자","마술사","조종사","프로그래머","제빵사","기자"],
   "중학교 과목":["국어","수학","영어","과학","사회","역사","도덕","체육","음악","미술","정보","한문","기술","가정","진로"]
 };
-var COLORS=["#0f172a","#2563eb","#e02424"],COLOR_NAMES=["검정","파랑","빨강"];
-var S={genre:"동물",team:4,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
+var COLORS=["#0f172a","#2563eb","#e02424","#16a34a","#9333ea"],COLOR_NAMES=["검정","파랑","빨강","초록","보라"];
+var S={genre:"동물",n:3,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
 
 /* ---------- 준비 화면 ---------- */
 function seg(id,opts,cur,set){
@@ -270,10 +300,12 @@ function seg(id,opts,cur,set){
 }
 function drawSetup(){
   $("genres").innerHTML=Object.keys(WORDS).map(function(g){return '<button class="genre" data-g="'+g+'" aria-pressed="'+(S.genre===g)+'">'+g+"<small>단어 "+WORDS[g].length+"개</small></button>"}).join("");
-  seg("o-team",[[3,"3명"],[4,"4명"]],S.team,function(v){S.team=v});
+  $("o-drawers").innerHTML=[2,3,4,5].map(function(n){return '<button data-n="'+n+'" aria-pressed="'+(S.n===n)+'">'+n+"명</button>"}).join("");
+  $("people-note").textContent="그리는 사람 "+S.n+"명 + 맞히는 사람 1명, 모두 "+(S.n+1)+"명이 한 모둠이에요.";
   seg("o-secs",[[3,"3초"],[5,"5초"],[10,"10초"]],S.secs,function(v){S.secs=v});
   seg("o-see",[[true,"그리는 사람 모두"],[false,"1번만"]],S.seeAll,function(v){S.seeAll=v});
 }
+$("o-drawers").onclick=function(e){var b=e.target.closest("button");if(!b)return;S.n=+b.dataset.n;drawSetup()};
 $("genres").onclick=function(e){var b=e.target.closest(".genre");if(!b)return;S.genre=b.dataset.g;drawSetup()};
 function show(id){["s-setup","s-play","s-review"].forEach(function(s){$(s).hidden=s!==id})}
 
@@ -299,7 +331,7 @@ cv.onpointermove=function(e){
 cv.onpointerup=cv.onpointercancel=function(){drawing=false};
 
 /* ---------- 진행 ---------- */
-function drawers(){return S.team-1}
+function drawers(){return S.n}
 function pickWord(){
   var list=WORDS[S.genre],used=S.used[S.genre]||(S.used[S.genre]=[]);
   if(used.length>=list.length)used.length=0;
@@ -320,7 +352,7 @@ function handoff(){
   $("paper").classList.remove("live");
   $("turn").textContent=(S.drawer+1)+"번 차례";$("word").textContent="";
   var who=(S.drawer+1)+"번";
-  cover("<h3>"+who+" 차례</h3><p>태블릿을 "+who+"에게 넘기세요. "+S.team+"번(맞히는 사람)은 화면을 보지 마세요.</p>"+
+  cover("<h3>"+who+" 차례</h3><p>태블릿을 "+who+"에게 넘기세요. 맞히는 사람은 화면을 보지 마세요.</p>"+
     '<button class="btn main big" id="c-next">'+(knowsWord()?"단어 보기":"그릴 준비 됐어요")+"</button>");
   $("c-next").onclick=knowsWord()?showWord:ready;
 }
@@ -348,16 +380,16 @@ function timeUp(){
   S.snaps.push(cv.toDataURL("image/png"));
   $("word").textContent="";
   var lastDrawer=S.drawer===drawers()-1;
-  var next=lastDrawer?S.team+"번(맞히는 사람)":(S.drawer+2)+"번";
+  var next=lastDrawer?"맞히는 사람":(S.drawer+2)+"번";
   cover("<h3>시간 끝!</h3><p>손을 떼고 태블릿을 "+next+"에게 넘기세요.</p>"+'<button class="btn main big" id="c-next">넘겼어요</button>');
   $("c-next").onclick=function(){if(lastDrawer)guessIntro();else{S.drawer++;handoff()}};
 }
 function guessIntro(){
-  $("turn").textContent=S.team+"번 차례";$("clock").textContent="";$("meter").style.transform="scaleX(0)";
-  cover("<h3>"+S.team+"번, 맞혀 보세요</h3><p>친구들이 이어 그린 그림을 보고 "+S.word.length+"글자 단어를 맞혀요.</p>"+'<button class="btn main big" id="c-next">그림 보기</button>');
+  $("turn").textContent="맞히는 사람 차례";$("clock").textContent="";$("meter").style.transform="scaleX(0)";
+  cover("<h3>맞혀 보세요</h3><p>친구들이 이어 그린 그림을 보고 "+S.word.length+"글자 단어를 맞혀요.</p>"+'<button class="btn main big" id="c-next">그림 보기</button>');
   $("c-next").onclick=function(){
     $("cover").hidden=true;S.phase="guess";
-    $("turn").textContent=S.team+"번이 맞히는 중";$("word").textContent=S.word.length+"글자";
+    $("turn").textContent="맞히는 중";$("word").textContent=S.word.length+"글자";
     $("answer").maxLength=S.word.length;$("answer").placeholder=S.word.length+"글자";
     $("guess").hidden=false;drawBoxes();$("answer").focus();
   };
@@ -384,10 +416,24 @@ function review(){
   $("r-result").textContent=S.solved?S.tries+"번 만에 맞혔어요! 정답은":(S.tries?S.tries+"번 도전했어요. 정답은":"정답은");
   $("r-answer").textContent=S.word;
   $("steps").innerHTML=S.snaps.map(function(src,i){
-    return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><span><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b>이 "+COLOR_NAMES[i]+"색으로 더했어요</span></li>";
+    return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
+      '<input id="key'+i+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
+  $("summary").hidden=true;
   show("s-review");
 }
+$("sum-btn").onclick=function(){
+  var keys=[];
+  for(var i=0;i<S.snaps.length;i++){var v=$("key"+i).value.trim();if(v)keys.push(v)}
+  $("sum-word").textContent=S.word;
+  $("sum-keys").textContent=keys.length?keys.join(" · "):"(아직 적지 않았어요)";
+  $("sum-out").textContent=S.secs+"초 그림 "+S.snaps.length+"조각";
+  $("sum-text").textContent=keys.length
+    ?"실제 '"+S.word+"'에는 훨씬 많은 특징이 있지만, 우리는 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요. 이렇게 핵심요소를 추출해서 복잡한 것을 단순화하는 과정이 추상화예요."
+    :"각자 그린 부분이 어떤 핵심요소였는지 위 칸에 적은 뒤 다시 눌러 보세요.";
+  $("summary").hidden=false;
+  $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
+};
 $("start").onclick=startGame;
 $("again").onclick=startGame;
 $("home").onclick=function(){S.phase="setup";show("s-setup")};
