@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../../theme.js"></script>
 <title>카드 옮기기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +23,7 @@
   --goal:var(--blue);
   --chalk-dim:var(--dim);
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --soft:#eff4ff;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -36,7 +38,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px
 h1{font-size:20px;font-weight:600;margin:0}
 .tabs{display:flex;gap:6px}
 .tab{padding:7px 16px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--dim);font-weight:500;box-shadow:0 1px 2px rgba(15,23,42,.06)}
-.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .back{text-decoration:none;color:var(--ink);border-radius:999px;padding:6px 14px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
 .who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim);margin-left:auto}
 .who b{color:var(--ink);font-weight:600}
@@ -70,12 +72,12 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 .row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:14px}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:var(--bg);border:0;padding:7px 10px;min-width:42px;color:var(--dim);font-variant-numeric:tabular-nums}
-.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:18px;line-height:1}
 .stepper output{min-width:76px;text-align:center;font-weight:600}
 .btn{padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;font-weight:500}
-.btn.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .btn.wide{width:100%;padding:11px}
 .rules{margin:0;padding-left:18px;font-size:13px;color:var(--dim)}
 .rules li{margin:2px 0}
@@ -162,12 +164,14 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
   .tile,.card .in{transition:none}
   .tile.no>span,.card.swap{animation:none}
 }
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
 <header>
   <a class="btn back" href="../../">← 목록으로</a>
   <h1>카드 옮기기</h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
   <div class="tabs" role="tablist" aria-label="게임 선택">
     <button class="tab" role="tab" id="tab-slide" aria-selected="true">카드 옮기기</button>
     <button class="tab" role="tab" id="tab-sort" aria-selected="false">정렬 카드</button>

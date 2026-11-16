@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../theme.js"></script>
 <title>이어 그리기 결과 보기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +14,7 @@
   --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
   --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --soft:#eff4ff;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -24,7 +26,7 @@ button{cursor:pointer}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
 h1{font-size:20px;font-weight:600;margin:0}
 .btn{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-weight:500;text-decoration:none;color:var(--ink)}
-.btn.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .back{border-radius:999px;padding:6px 14px;font-size:14px}
 .status{margin-left:auto;font-size:14px;color:var(--dim)}
 .status.bad{color:var(--warn)}
@@ -37,7 +39,7 @@ main{padding:18px 20px 40px;max-width:1280px;margin:0 auto;display:flex;flex-dir
 .filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .filters span{font-size:14px;color:var(--dim);margin-right:4px}
 .chip{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--dim);font-variant-numeric:tabular-nums}
-.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .count{font-size:14px;color:var(--dim)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;list-style:none;margin:0;padding:0}
 .card{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -54,12 +56,14 @@ main{padding:18px 20px 40px;max-width:1280px;margin:0 auto;display:flex;flex-dir
 .keys i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px}
 .keys .none{color:var(--dim);font-size:13px}
 .empty{color:var(--dim);text-align:center;padding:40px 0}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
 <header>
   <a class="btn back" href="../">← 목록으로</a>
   <h1>이어 그리기 결과 보기</h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
   <span class="status" id="status"></span>
 </header>
 <main>

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../../theme.js"></script>
 <title>이어 그리기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +14,7 @@
   --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
   --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --soft:#eff4ff;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -26,7 +28,7 @@ button{cursor:pointer;touch-action:manipulation}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
 h1{font-size:20px;font-weight:600;margin:0}
 .btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;font-weight:500;text-decoration:none;color:var(--ink)}
-.btn.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .btn.big{padding:13px 22px;font-size:18px}
 .back{border-radius:999px;padding:6px 14px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
 .left{margin-left:auto;font-size:14px;color:var(--dim)}
@@ -42,12 +44,12 @@ p{margin:0}
 .genres{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;width:100%}
 .genre{padding:22px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:21px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px}
 .genre small{font-size:13px;font-weight:400;color:var(--dim)}
-.genre[aria-pressed="true"]{border-color:var(--blue);background:#eff4ff;color:var(--blue)}
+.genre[aria-pressed="true"]{border-color:var(--blue);background:var(--soft);color:var(--blue)}
 .opts{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:center;width:100%;border:1px solid var(--line);border-radius:12px;padding:14px}
 .opt{display:flex;align-items:center;gap:10px;font-size:15px}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:var(--bg);border:0;padding:8px 13px;color:var(--dim)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
 .rules{margin:0;padding-left:20px;font-size:14.5px;color:var(--dim);max-width:560px}
 .rules b{color:var(--ink);font-weight:600}
@@ -63,8 +65,8 @@ select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--li
 .paper{position:relative;width:min(100%,calc(62vh*4/3));aspect-ratio:4/3}
 canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-radius:12px;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
 .paper.live canvas{border-color:var(--blue)}
-.cover{position:absolute;inset:0;border-radius:12px;background:rgba(255,255,255,.97);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}
-.cover.see{background:rgba(255,255,255,.82)}
+.cover{position:absolute;inset:0;border-radius:12px;background:var(--cover);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}
+.cover.see{background:var(--cover)}
 .cover h3{font-size:clamp(26px,5vw,40px);font-weight:600;margin:0}
 .cover .secret{font-size:clamp(40px,9vw,72px);font-weight:600;color:var(--blue);line-height:1.1}
 .cover p{color:var(--dim);font-size:16px;max-width:420px;text-wrap:balance}
@@ -93,11 +95,11 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 
 .people{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .people button{width:86px;padding:14px 0;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:22px;font-weight:600}
-.people button[aria-pressed="true"]{border-color:var(--blue);background:#eff4ff;color:var(--blue)}
+.people button[aria-pressed="true"]{border-color:var(--blue);background:var(--soft);color:var(--blue)}
 .steps label{font-size:16px;font-weight:600;color:var(--ink)}
-.steps input{width:100%;padding:12px;border-radius:10px;border:3px solid var(--ink);font-size:19px;font-weight:700;background:#fffbea}
+.steps input{width:100%;padding:12px;border-radius:10px;border:3px solid var(--ink);font-size:19px;font-weight:700;background:var(--note)}
 .steps input::placeholder{font-weight:400;color:#94a3b8}
-.concept{font-size:17px;background:#eff4ff;border-color:#c7d7fb}
+.concept{font-size:17px;background:var(--soft);border-color:var(--line)}
 .flow span{color:var(--ink)}
 #summary{text-align:center}
 .flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;margin:6px 0 14px}
@@ -140,12 +142,14 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 .issued b{display:block;font-size:56px;font-weight:600;letter-spacing:8px;color:var(--blue);line-height:1.15;font-variant-numeric:tabular-nums}
 
 @media (max-width:520px){.boxes span{width:42px;height:50px;font-size:24px}}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
 <header>
   <a class="btn back" href="../../">← 목록으로</a>
   <h1>이어 그리기</h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
   <span class="left">남은 시간 <b id="left"></b></span>
 </header>
 

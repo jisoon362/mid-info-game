@@ -6,7 +6,8 @@
 
 ```
 index.html              게임 목록 화면 (학생에게 나눠 줄 첫 화면)
-games.js                목록에 보일 게임 정보
+games.js                목록에 보일 게임 정보 (번호, 이름, 영역, 단원, 설명)
+theme.js                밝은 모드 / 어두운 모드 전환 (모든 화면 공용)
 games/
   01-card-move/         1번 게임: 카드 옮기기
     index.html
