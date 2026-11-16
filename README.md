@@ -10,6 +10,8 @@ games.js                목록에 보일 게임 정보
 games/
   01-card-move/         1번 게임: 카드 옮기기
     index.html
+  02-relay-draw/        2번 게임: 이어 그리기 (추상화)
+    index.html
 ```
 
 ## 새 게임 추가하는 법
