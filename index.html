@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수업 게임 모음</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 게임 화면과 같은 흰 바탕 도구 화면. 번호가 붙은 게임 카드를 격자로 나열 */
+  --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;--red:#e02424;--blue:#2563eb;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;padding:28px 20px 48px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:26px;font-weight:600;margin:0}
+p{margin:0;color:var(--dim)}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;list-style:none;margin:0;padding:0}
+.game{display:flex;flex-direction:column;gap:6px;height:100%;padding:16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit;background:var(--bg);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.game:hover,.game:focus-visible{border-color:var(--blue)}
+.game:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.no{font-size:13px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums}
+.game b{font-size:19px;font-weight:600}
+.unit{align-self:flex-start;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--cell);color:var(--dim)}
+.game span.desc{font-size:14px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>수업 게임 모음</h1>
+  <p>하고 싶은 게임을 누르세요. 게임을 시작하려면 선생님이 알려 준 이번 교시 수업 코드가 필요해요.</p>
+  <ul class="list" id="list"></ul>
+</div>
+<script src="games.js"></script>
+<script>
+(function(){
+  var list=document.getElementById("list");
+  (window.GAMES||[]).forEach(function(g){
+    var li=document.createElement("li"),a=document.createElement("a");
+    a.className="game";a.href="games/"+g.folder+"/";
+    [["span","no",g.no+"번 게임"],["b","",g.title],["span","unit",g.unit],["span","desc",g.desc]].forEach(function(p){
+      var el=document.createElement(p[0]);if(p[1])el.className=p[1];el.textContent=p[2];a.appendChild(el);
+    });
+    li.appendChild(a);list.appendChild(li);
+  });
+})();
+</script>
+</body>
+</html>

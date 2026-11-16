@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카드 옮기기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 흰 바탕의 깔끔한 도구 화면. 왼쪽은 큰 카드판, 오른쪽은 정보 카드 한 줄. 밝은 테마 하나만 사용 */
+  --bg:#ffffff;
+  --line:#e2e5ea;
+  --ink:#0f172a;
+  --dim:#64748b;
+  --cell:#f3f5f8;
+  --red:#e02424;
+  --blue:#2563eb;
+  --ok:#16a34a;
+  --warn:#dc2626;
+  --goal:var(--blue);
+  --chalk-dim:var(--dim);
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
+h1{font-size:20px;font-weight:600;margin:0}
+.tabs{display:flex;gap:6px}
+.tab{padding:7px 16px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--dim);font-weight:500;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.back{text-decoration:none;color:var(--ink);border-radius:999px;padding:6px 14px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim);margin-left:auto}
+.who b{color:var(--ink);font-weight:600}
+.who .btn{padding:5px 12px;font-size:14px}
+
+main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270px);gap:16px;padding:16px 20px 24px;align-items:start}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.panel{display:flex;flex-direction:column;gap:10px;min-width:0}
+.box{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.box small,.box h2{font-size:13px;font-weight:500;color:var(--dim);margin:0}
+.num{font-size:34px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+.sub{font-size:13px;color:var(--dim)}
+.clock{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.clock .big{font-size:clamp(22px,3.4vw,30px);font-weight:600}
+.clock b{font-size:clamp(44px,7vw,64px);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.mission{margin:0;font-weight:600;font-size:clamp(18px,2.6vw,24px);text-align:center;text-wrap:balance}
+.mission .b{color:var(--blue)}
+.mission .r{color:var(--red)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--dim);margin-top:4px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+.turn{display:none}
+.turn.on{display:flex}
+.turn-now{font-size:22px;font-weight:600}
+.turn-now em{font-style:normal;color:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);color:var(--dim);font-size:14px;font-weight:600}
+.chip.now{background:var(--blue);border-color:var(--blue);color:#fff}
+.hint{font-size:13px;color:var(--dim);margin:6px 0 0}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--bg);border:0;padding:7px 10px;min-width:42px;color:var(--dim);font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:18px;line-height:1}
+.stepper output{min-width:76px;text-align:center;font-weight:600}
+.btn{padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;font-weight:500}
+.btn.main{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.wide{width:100%;padding:11px}
+.rules{margin:0;padding-left:18px;font-size:13px;color:var(--dim)}
+.rules li{margin:2px 0}
+.rules b{color:var(--ink);font-weight:600}
+.records{margin:2px 0 0;padding:0;list-style:none;font-size:14px;font-variant-numeric:tabular-nums}
+.records li{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)}
+.records li:last-child{border-bottom:0}
+.records .none{color:var(--dim);border:0}
+.msg{min-height:24px;margin:0;font-size:15px;color:var(--dim);text-align:center}
+.msg.bad{color:var(--warn)}
+.msg.good{color:var(--ok)}
+
+/* 카드판 */
+.grid{position:relative;width:min(100%,78vh,760px);aspect-ratio:1;background:var(--cell);border:1px solid var(--line);border-radius:12px;user-select:none;-webkit-user-select:none;touch-action:none}
+.goalmark{position:absolute;pointer-events:none;z-index:3;padding:4px}
+.goalmark::before{content:"";display:block;width:100%;height:100%;border:3px dashed var(--red);border-radius:10px}
+.tile{position:absolute;top:0;left:0;padding:4px;border:0;background:none;transition:transform .14s ease-out}
+.tile>span{display:grid;place-items:center;width:100%;height:100%;border-radius:10px;background:var(--blue);color:#fff;font-weight:600;font-size:clamp(11px,1.7vw,17px)}
+.tile.color>span{background:var(--red)}
+.tile.pin>span{background:#94a3b8}
+.tile.no>span{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* 정렬 카드 */
+.sortwrap{width:100%;max-width:820px;display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:8px}
+.axis{display:flex;justify-content:space-between;width:100%;font-size:13px;color:var(--dim)}
+.cards{display:grid;gap:8px;width:100%;user-select:none;-webkit-user-select:none}
+.slot{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.slot small{color:var(--dim);font-size:12px}
+.card{width:100%;aspect-ratio:3/4;padding:0;border:0;background:none;perspective:700px}
+.card .in{position:relative;display:block;width:100%;height:100%;transition:transform .28s;transform-style:preserve-3d}
+.card.up .in{transform:rotateY(180deg)}
+.card .f{position:absolute;inset:0;display:grid;place-items:center;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden;font-weight:600}
+.card .back{background:var(--blue);color:rgba(255,255,255,.55);font-size:clamp(20px,4vw,32px)}
+.card .front{background:var(--red);color:#fff;transform:rotateY(180deg);font-size:clamp(22px,5vw,44px);font-variant-numeric:tabular-nums}
+.card.done .front{background:var(--ok)}
+.card.swap{animation:hop .3s}
+@keyframes hop{50%{transform:translateY(-14px)}}
+.actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:48px}
+.actions .btn{font-size:17px;padding:10px 20px}
+.actions .btn[disabled]{opacity:.4;cursor:default}
+
+/* 결과 */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;padding:16px;z-index:10}
+.result{width:min(100%,420px);background:var(--bg);border-radius:14px;padding:22px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.25)}
+.result h2{font-size:26px;font-weight:600;margin:0;text-wrap:balance}
+.result h2.first{color:var(--red);font-size:30px}
+.result .new{display:inline-block;margin-top:6px;padding:2px 12px;border-radius:999px;background:var(--blue);color:#fff;font-size:14px;font-weight:600}
+.result .big{font-size:56px;font-weight:600;line-height:1.15;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.result dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.result dl div{background:var(--cell);border-radius:10px;padding:8px}
+.result dt{font-size:13px;color:var(--dim)}
+.result dd{margin:0;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.result p{margin:8px 0 14px;font-size:14px;color:var(--dim);text-wrap:balance}
+.result .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* 입장 화면 */
+.gate{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;display:grid;place-items:center;padding:20px 16px}
+.gate-card{width:min(100%,400px);display:flex;flex-direction:column;gap:12px}
+.gate-card h2{font-size:24px;font-weight:600;margin:0}
+.gate-card h2 span{color:var(--blue)}
+.gate-card p{margin:0;color:var(--dim);font-size:14px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.field input{padding:11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:18px;width:100%}
+.field input.digits{font-size:32px;font-weight:600;letter-spacing:10px;text-align:center;font-variant-numeric:tabular-nums}
+.gate-btns{display:flex;gap:8px}
+.gate-btns .btn{flex:1;padding:12px;font-size:16px}
+.gate-err{min-height:22px;color:var(--warn)!important;font-weight:600;font-size:15px!important}
+.linkbtn{background:none;border:0;color:var(--dim);text-decoration:underline;padding:8px;align-self:center;font-size:13px}
+.issued{background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;font-size:14px;color:var(--dim)}
+.issued b{display:block;font-size:56px;font-weight:600;letter-spacing:8px;color:var(--blue);line-height:1.15;font-variant-numeric:tabular-nums}
+.acct{list-style:none;margin:0;padding:0;font-size:14px}
+.acct li{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)}
+.acct .btn{padding:3px 10px;font-size:13px}
+
+@media (max-width:820px){
+  main{grid-template-columns:1fr;padding:12px 16px 24px}
+  .grid{width:min(100%,62vh)}
+}
+@media (max-width:560px){
+  .cards.many{grid-template-columns:repeat(4,1fr)!important}
+}
+@media (prefers-reduced-motion:reduce){
+  .tile,.card .in{transition:none}
+  .tile.no>span,.card.swap{animation:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn back" href="../../">← 목록으로</a>
+  <h1>카드 옮기기</h1>
+  <div class="tabs" role="tablist" aria-label="게임 선택">
+    <button class="tab" role="tab" id="tab-slide" aria-selected="true">카드 옮기기</button>
+    <button class="tab" role="tab" id="tab-sort" aria-selected="false">정렬 카드</button>
+  </div>
+  <div class="who"><span><b id="who-id"></b> · 남은 시간 <b id="who-left"></b></span><button class="btn" id="logout">로그아웃</button></div>
+</header>
+
+<main>
+  <section class="stage">
+    <p class="mission" id="mission"></p>
+    <div class="clock"><b id="hud-time">0:00.0</b><span class="sub" id="hud-status"></span></div>
+    <div class="grid" id="grid" aria-label="카드 판"></div>
+
+    <div class="sortwrap" id="sortwrap" hidden>
+      <div class="axis"><span>◀ 작은 수</span><span>큰 수 ▶</span></div>
+      <div class="cards" id="cards"></div>
+      <div class="actions">
+        <button class="btn main" id="do-swap" hidden>자리 바꾸기</button>
+        <button class="btn" id="do-keep" hidden>그대로 두기</button>
+        <button class="btn" id="do-check">정렬 끝! 확인하기</button>
+      </div>
+    </div>
+
+    <div class="clock count"><span class="big"><b id="hud-a">0</b>회</span><span class="sub" id="hud-a-label">이동 횟수</span></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+  </section>
+
+  <aside class="panel">
+    <div class="box">
+      <h2>이번 교시 랭킹 <span id="rec-key"></span></h2>
+      <ol class="records" id="records"></ol>
+    </div>
+    <div class="box" id="hud-b-box" hidden><small id="hud-b-label">교환 횟수</small><b class="num" id="hud-b">0</b></div>
+    <div class="box turn" id="turn">
+      <small>지금 차례</small>
+      <div class="turn-now"><em id="turn-now">1번</em></div>
+      <div class="chips" id="chips"></div>
+      <p class="hint" id="turn-hint"></p>
+    </div>
+    <div class="box">
+      <small>설정</small>
+      <div class="row"><span id="size-label">판 크기</span><div class="seg" id="size-seg"></div></div>
+      <div class="row"><span>참가 인원</span>
+        <div class="stepper">
+          <button id="p-minus" aria-label="인원 줄이기">−</button>
+          <output id="p-out">개인전</output>
+          <button id="p-plus" aria-label="인원 늘리기">+</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn wide" id="restart">초기화</button>
+    <ol class="rules" id="rules"></ol>
+  </aside>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="result" role="dialog" aria-modal="true" aria-labelledby="res-title">
+    <h2 id="res-title">도착!</h2>
+    <div id="res-new" class="new" hidden></div>
+    <div class="big" id="res-time">0:00.0</div>
+    <dl id="res-stats"></dl>
+    <p id="res-note"></p>
+    <div class="btns">
+      <button class="btn main" id="res-again">다시 하기</button>
+      <button class="btn" id="res-close">판 보기</button>
+    </div>
+  </div>
+</div>
+
+<div class="gate" id="gate">
+  <form class="gate-card" id="g-auth" hidden>
+    <h2>카드 옮기기</h2>
+    <p>닉네임과 비밀번호로 들어오세요. 닉네임은 이 태블릿에만 저장돼요.</p>
+    <label class="field" for="g-id">닉네임 (한글·영문·숫자 1~6자)
+      <input id="g-id" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
+    <label class="field" for="g-pw">비밀번호 (4자리)
+      <input id="g-pw" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-auth-err" aria-live="polite"></p>
+    <div class="gate-btns">
+      <button class="btn main" type="submit" id="g-login">로그인</button>
+      <button class="btn" type="button" id="g-join">새로 만들기</button>
+    </div>
+    <button class="linkbtn" type="button" data-teacher>선생님 메뉴</button>
+  </form>
+
+  <form class="gate-card" id="g-new" hidden>
+    <h2>새로 만들기</h2>
+    <p>이름, 학번, 전화번호 같은 개인정보는 쓰지 말고 별명으로 만들어요.</p>
+    <label class="field" for="g-nid">새로운 닉네임 (한글·영문·숫자 1~6자)
+      <input id="g-nid" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
+    <label class="field" for="g-npw">비밀번호 (4자리)
+      <input id="g-npw" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-new-err" aria-live="polite"></p>
+    <div class="gate-btns">
+      <button class="btn main" type="submit">만들기</button>
+      <button class="btn" type="button" data-back>돌아가기</button>
+    </div>
+  </form>
+
+  <form class="gate-card" id="g-code" hidden>
+    <h2><span id="g-hello"></span>님, 수업 코드를 넣어요</h2>
+    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다 바뀌어요.</p>
+    <label class="field" for="g-class">수업 코드
+      <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-code-err" aria-live="polite"></p>
+    <div class="gate-btns">
+      <button class="btn main" type="submit">시작하기</button>
+      <button class="btn" type="button" id="g-switch">다른 닉네임으로</button>
+    </div>
+    <button class="linkbtn" type="button" data-teacher>선생님 메뉴</button>
+  </form>
+
+  <form class="gate-card" id="g-tpin" hidden>
+    <h2>선생님 메뉴</h2>
+    <label class="field" for="g-pin">선생님 비밀번호
+      <input id="g-pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-pin-err" aria-live="polite"></p>
+    <div class="gate-btns">
+      <button class="btn main" type="submit">열기</button>
+      <button class="btn" type="button" data-back>돌아가기</button>
+    </div>
+  </form>
+
+  <div class="gate-card" id="g-teacher" hidden>
+    <h2>선생님 <span>메뉴</span></h2>
+    <div class="issued"><span id="g-now-label"></span><b id="g-now-code"></b></div>
+    <div class="box">
+      <h2 style="font-size:17px;color:var(--chalk-dim)">이 태블릿에 만든 닉네임</h2>
+      <ul class="acct" id="g-accts"></ul>
+      <p class="hint">비밀번호를 잊은 학생은 닉네임을 지운 뒤 다시 만들게 하세요.</p>
+    </div>
+    <div class="gate-btns"><button class="btn" type="button" data-back>닫기</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+
+/* ---------- 공통 도구 ---------- */
+function hash(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){var a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;var t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+function shuffle(arr,r){for(var i=arr.length-1;i>0;i--){var j=Math.floor(r()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t}return arr}
+function fmt(ms){var t=Math.floor(ms/100);var d=t%10;var s=Math.floor(t/10);var m=Math.floor(s/60);s=s%60;return m+":"+(s<10?"0":"")+s+"."+d}
+var mem={};
+function sget(k,def){try{var v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?mem[k]:def}
+function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function load(key){return sget(key,[])||[]}
+function save(key,v){sset(key,v)}
+function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+
+/* ---------- 입장: 아이디와 수업 코드 ---------- */
+var SECRET="bfc536cdefd2262ab9bb49bb";
+var TPIN=3498242298754679;
+var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]]; /* 분 단위: 9:15~10:10 ... 15:35~16:30 */
+var K={acc:"cardrelay|accounts",ses:"cardrelay|session",pass:"cardrelay|pass",lock:"cardrelay|lock",code:"cardrelay|code"};
+var G={started:false};
+function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
+function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)}
+function verifyCode(code){
+  var d=new Date(),p=period(d);
+  if(p<0)return -1;
+  if(codeFor(d,p)!==code)return 0;
+  var e=new Date(d);e.setHours(0,PERIODS[p][1],0,0);return e.getTime();
+}
+function clock(ms){var d=new Date(ms),h=d.getHours(),m=d.getMinutes();return h+"시 "+(m<10?"0":"")+m+"분"}
+function gshow(id){
+  ["g-auth","g-new","g-code","g-tpin","g-teacher"].forEach(function(v){$(v).hidden=v!==id});
+  $("gate").hidden=!id;
+  document.querySelector("main").inert=!!id;
+}
+function gate(){
+  var ses=sget(K.ses,null),pass=sget(K.pass,0),accs=sget(K.acc,{});
+  if(!ses||!accs[ses]){G.back="auth";gshow("g-auth");return}
+  if(pass<=Date.now()){
+    G.back="code";$("g-hello").textContent=ses;$("g-class").value="";
+    if(G.started)$("g-code-err").textContent="수업 코드 시간이 끝났어요. 새 코드를 받아야 계속할 수 있어요.";
+    else $("g-code-err").textContent="";
+    stopTimer();G.started=false;gshow("g-code");return;
+  }
+  gshow(null);
+  $("who-id").textContent=ses;
+  $("who-left").textContent=Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
+  if(!G.started){G.started=true;newGame()}
+}
+function auth(join){
+  var idEl=$(join?"g-nid":"g-id"),pwEl=$(join?"g-npw":"g-pw"),err=$(join?"g-new-err":"g-auth-err");
+  var id=idEl.value.trim(),pw=pwEl.value,accs=sget(K.acc,{});
+  if(!/^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]{1,6}$/.test(id)){err.textContent="닉네임은 한글·영문·숫자로 1~6자여야 해요. 띄어쓰기와 특수문자는 쓸 수 없어요.";return}
+  if(!/^[0-9]{4}$/.test(pw)){err.textContent="비밀번호는 숫자 4자리여야 해요.";return}
+  var h=cyrb("P|"+SECRET+"|"+id+"|"+pw);
+  if(join){
+    if(accs[id]&&accs[id].h!==h){err.textContent="이 태블릿에 이미 있는 닉네임이에요. 다른 닉네임을 쓰세요.";return}
+    accs[id]={h:h};sset(K.acc,accs);
+  }else{
+    if(!accs[id]){err.textContent="이 태블릿에 없는 닉네임이에요. 처음이라면 새로 만들기를 누르세요.";return}
+    if(accs[id].h!==h){err.textContent="비밀번호가 달라요.";return}
+  }
+  err.textContent="";idEl.value="";pwEl.value="";
+  sset(K.ses,id);G.started=false;gate();
+}
+function enterCode(){
+  var lock=sget(K.lock,{n:0,until:0}),t=Date.now(),err=$("g-code-err");
+  if(t<lock.until){err.textContent="여러 번 틀렸어요. "+Math.ceil((lock.until-t)/1000)+"초 뒤에 다시 넣을 수 있어요.";return}
+  var code=$("g-class").value.replace(/\D/g,"");
+  var until=code.length===3?verifyCode(code):0;
+  if(until<0){err.textContent="지금은 수업 시간이 아니에요. 수업이 시작되면 코드를 넣을 수 있어요.";return}
+  if(!until){
+    failLock(lock,t);
+    err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";
+    return;
+  }
+  sset(K.lock,{n:0,until:0});sset(K.pass,until);sset(K.code,{code:code,day:new Date().toDateString()});err.textContent="";gate();
+}
+function failLock(lock,t){lock.n++;if(lock.n%3===0)lock.until=t+20000*Math.pow(2,Math.min(6,lock.n/3-1));sset(K.lock,lock)}
+function drawTeacher(){
+  var d=new Date(),p=period(d);
+  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":(p+1)+"교시 수업 코드";
+  $("g-now-code").textContent=p<0?"---":codeFor(d,p);
+  var accs=sget(K.acc,{}),ids=Object.keys(accs);
+  $("g-accts").innerHTML=ids.length?ids.map(function(id){return "<li><span>"+id+'</span><button class="btn" type="button" data-del="'+id+'">지우기</button></li>'}).join(""):"<li>아직 없어요.</li>";
+}
+
+/* ---------- 상태 ---------- */
+var S={
+  mode:"slide",
+  size:{slide:6,sort:6},
+  players:1,
+  turn:0,
+  startAt:0,penalty:0,running:false,finished:false,elapsed:0,
+  a:0,b:0,
+  slide:null,sort:null
+};
+var tick=null;
+
+function now(){return S.running?(performance.now()-S.startAt+S.penalty):S.elapsed}
+function startTimer(){if(S.running||S.finished)return;$("hud-status").textContent="진행 중";S.running=true;S.startAt=performance.now();tick=setInterval(function(){$("hud-time").textContent=fmt(now())},100)}
+function stopTimer(){if(!S.running)return;S.elapsed=performance.now()-S.startAt+S.penalty;S.running=false;clearInterval(tick);$("hud-time").textContent=fmt(S.elapsed);$("hud-status").textContent="멈춤"}
+function resetTimer(){clearInterval(tick);S.running=false;S.finished=false;S.elapsed=0;S.penalty=0;S.a=0;S.b=0;S.turn=0;$("hud-time").textContent=fmt(0);$("hud-status").textContent="대기 중 · 첫 이동에서 시작"}
+function say(text,cls){var m=$("msg");m.textContent=text||"";m.className="msg"+(cls?" "+cls:"")}
+
+/* ---------- 차례 표시 ---------- */
+function drawTurn(){
+  var box=$("turn");
+  $("p-out").textContent=S.players===1?"개인전":S.players+"명 릴레이";
+  if(S.players===1){box.classList.remove("on");return}
+  box.classList.add("on");
+  var cur=S.turn%S.players;
+  $("turn-now").textContent=(cur+1)+"번";
+  var html="";
+  for(var i=0;i<S.players;i++)html+='<span class="chip'+(i===cur?" now":"")+'">'+(i+1)+"</span>";
+  $("chips").innerHTML=html;
+  $("turn-hint").textContent=S.mode==="slide"?"한 사람이 카드 한 장만 옮기고 다음 사람에게 태블릿을 넘겨요.":"한 사람이 카드 두 장을 뒤집어 비교하고 다음 사람에게 넘겨요.";
+}
+function drawHud(){
+  $("hud-a").textContent=S.a;
+  var sl=S.mode==="slide";
+  $("hud-a-label").textContent=sl?"이동 횟수":"비교 횟수";
+  $("hud-b-box").hidden=sl;$("hud-b").textContent=S.b;
+}
+
+/* ---------- 기록 ---------- */
+function recKey(){var c=sget(K.code,{day:"",code:""});return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
+function drawRecords(){
+  var list=load(recKey()),c=sget(K.code,{code:""});
+  $("rec-key").textContent="(수업 코드 "+c.code+" · "+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
+  if(!list.length){$("records").innerHTML='<li class="none">아직 성공한 사람이 없어요. 첫 기록의 주인공이 되어 보세요.</li>';return}
+  var me=sget(K.ses,"");
+  $("records").innerHTML=list.slice(0,10).map(function(r,i){return "<li"+(r.id===me?' style="color:var(--goal)"':"")+"><span>"+(i+1)+"위 · "+r.id+"</span><span>"+fmt(r.t)+"</span></li>"}).join("");
+}
+function addRecord(t,m){
+  var key=recKey(),list=load(key),id=sget(K.ses,"?"),old=null;
+  list.forEach(function(r){if(r.id===id)old=r});
+  if(!old)list.push({id:id,t:Math.round(t),m:m});
+  else if(t<old.t){old.t=Math.round(t);old.m=m}
+  list.sort(function(x,y){return x.t-y.t});
+  save(key,list.slice(0,30));
+  var rank=1;list.forEach(function(r){if(r.id!==id&&r.t<t)rank++});
+  return rank;
+}
+
+/* ---------- 카드 옮기기 ---------- */
+function neigh(n,i){var r=Math.floor(i/n),c=i%n,o=[];if(r>0)o.push(i-n);if(r<n-1)o.push(i+n);if(c>0)o.push(i-1);if(c<n-1)o.push(i+1);return o}
+function minMoves(n,color,blank,pins,goal){
+  var N=n*n,P={},seen=new Uint8Array(N*N),q=[[color,blank]],d=0;
+  pins.forEach(function(p){P[p]=1});seen[color*N+blank]=1;
+  while(q.length){
+    var nq=[];
+    for(var i=0;i<q.length;i++){
+      var c=q[i][0],b=q[i][1];
+      if(c===goal)return d;
+      var ns=neigh(n,b);
+      for(var j=0;j<ns.length;j++){
+        var nb=ns[j];if(P[nb])continue;
+        var nc=nb===c?b:c,k=nc*N+nb;
+        if(!seen[k]){seen[k]=1;nq.push([nc,nb])}
+      }
+    }
+    q=nq;d++;
+  }
+  return -1;
+}
+function makeSlide(n,code){
+  var goal=n*n-1,basic={n:n,color:0,blank:1,pins:[],goal:goal};
+  basic.min=minMoves(n,0,1,[],goal);
+  if(!code)return basic;
+  var need=Math.ceil(basic.min*0.7);
+  for(var a=0;a<300;a++){
+    var r=rng(hash("slide|"+n+"|"+code+"|"+a));
+    var cells=[];for(var i=0;i<n*n-1;i++)cells.push(i);
+    shuffle(cells,r);
+    var color=cells[0],pins=cells.slice(1,n-1),rest=cells.slice(n-1).concat([goal]);
+    var blank=rest[Math.floor(r()*rest.length)];
+    var min=minMoves(n,color,blank,pins,goal);
+    if(min>=need)return{n:n,color:color,blank:blank,pins:pins,goal:goal,min:min};
+  }
+  return basic;
+}
+function place(el,n,pos){el.style.transform="translate("+(pos%n)*100+"%,"+Math.floor(pos/n)*100+"%)"}
+function newSlide(){
+  resetTimer();
+  var n=S.size.slide,g=makeSlide(n,"");
+  var grid=$("grid");grid.innerHTML="";
+  var w=100/n+"%";
+  var gm=document.createElement("div");gm.className="goalmark";gm.style.width=w;gm.style.height=w;gm.style.left=(g.goal%n)*100/n+"%";gm.style.top=Math.floor(g.goal/n)*100/n+"%";
+  var at={};
+  for(var p=0;p<n*n;p++){
+    if(p===g.blank)continue;
+    var el=document.createElement("button");
+    var kind=p===g.color?"color":(g.pins.indexOf(p)>=0?"pin":"plain");
+    el.className="tile "+kind;el.style.width=w;el.style.height=w;
+    el.innerHTML="<span>"+(kind==="color"?"주인공":kind==="pin"?"고정":"")+"</span>";
+    el.setAttribute("aria-label",kind==="color"?"빨간 카드":kind==="pin"?"고정된 카드":"파란 카드");
+    place(el,n,p);
+    grid.appendChild(el);
+    at[p]={el:el,kind:kind};
+  }
+  grid.appendChild(gm);
+  S.slide={n:n,g:g,at:at,blank:g.blank};
+  var down=null;
+  function posOf(t){for(var k in at){if(at[k]&&at[k].el===t)return +k}return -1}
+  grid.onpointerdown=function(e){down=e.target.closest(".tile")};
+  grid.onpointerup=function(){if(down&&!S.finished)tapTile(posOf(down));down=null};
+  grid.onpointercancel=function(){down=null};
+  grid.onclick=function(e){if(e.detail!==0||S.finished)return;var t=e.target.closest(".tile");if(t)tapTile(posOf(t))};
+  say("");
+  drawAll();
+}
+function tapTile(pos){
+  var s=S.slide,t=s.at[pos];if(!t)return;
+  var ok=t.kind!=="pin"&&neigh(s.n,s.blank).indexOf(pos)>=0;
+  if(!ok){
+    t.el.classList.remove("no");void t.el.offsetWidth;t.el.classList.add("no");
+    say(t.kind==="pin"?"고정된 카드는 움직일 수 없어요.":"빈칸과 맞닿은 카드만 옮길 수 있어요.","bad");
+    return;
+  }
+  startTimer();
+  place(t.el,s.n,s.blank);
+  s.at[s.blank]=t;s.at[pos]=null;
+  var landed=s.blank;s.blank=pos;
+  S.a++;S.turn++;
+  say("");
+  drawHud();drawTurn();
+  if(t.kind==="color"&&landed===s.g.goal)winSlide();
+}
+function winSlide(){
+  stopTimer();S.finished=true;
+  var s=S.slide,rank=addRecord(S.elapsed,S.a);
+  var perfect=S.a===s.g.min;
+  showResult({
+    title:"도착!",rank:rank,
+    stats:[["내 이동 횟수",S.a+"번"],["가장 짧은 길",s.g.min+"번"]],
+    note:perfect?"가장 짧은 길로 도착했어요. 이제 남은 승부는 손 빠르기뿐이에요.":"가장 짧은 길보다 "+(S.a-s.g.min)+"번 더 움직였어요. 어느 카드를 헛걸음시켰는지 찾아보세요."
+  });
+  drawRecords();
+}
+
+/* ---------- 정렬 카드 ---------- */
+function newSort(){
+  resetTimer();
+  var seed=String(Math.random());
+  var n=S.size.sort,vals,a=0;
+  do{
+    var r=rng(hash("sort|"+n+"|"+seed+"|"+a++));
+    var pool=[];for(var i=10;i<100;i++)pool.push(i);
+    vals=shuffle(pool,r).slice(0,n);
+  }while(inversions(vals)<Math.floor(n*(n-1)/6));
+  S.sort={n:n,vals:vals,sel:[],els:[]};
+  var wrap=$("cards");wrap.innerHTML="";
+  wrap.style.gridTemplateColumns="repeat("+n+",1fr)";
+  wrap.className="cards"+(n>6?" many":"");
+  for(var k=0;k<n;k++){
+    var slot=document.createElement("div");slot.className="slot";
+    slot.innerHTML='<button class="card" data-i="'+k+'" aria-label="'+(k+1)+'번 자리 카드"><span class="in"><span class="f back">?</span><span class="f front"></span></span></button><small>'+(k+1)+"번 자리</small>";
+    wrap.appendChild(slot);
+    S.sort.els.push(slot.firstChild);
+  }
+  wrap.onclick=function(e){var c=e.target.closest(".card");if(c)tapCard(+c.dataset.i)};
+  say("카드 두 장을 골라 뒤집으면 시간이 시작돼요.");
+  drawSort();drawAll();
+}
+function inversions(v){var c=0;for(var i=0;i<v.length;i++)for(var j=i+1;j<v.length;j++)if(v[i]>v[j])c++;return c}
+function drawSort(){
+  var s=S.sort;
+  s.els.forEach(function(el,i){
+    var up=S.finished||s.sel.indexOf(i)>=0;
+    el.classList.toggle("up",up);
+    el.classList.toggle("done",S.finished);
+    if(up)el.querySelector(".front").textContent=s.vals[i];
+  });
+  var pending=s.sel.length===2&&!S.finished;
+  $("do-swap").hidden=!pending;$("do-keep").hidden=!pending;
+  $("do-check").hidden=pending||S.finished;
+  $("do-check").disabled=s.sel.length>0||S.a===0;
+}
+function tapCard(i){
+  var s=S.sort;
+  if(S.finished||s.sel.length>=2||s.sel.indexOf(i)>=0)return;
+  startTimer();
+  s.sel.push(i);
+  if(s.sel.length===2){S.a++;say("두 수를 비교했어요. 자리를 바꿀까요?");}
+  else say("비교할 카드를 한 장 더 고르세요.");
+  drawSort();drawHud();
+}
+function decide(swap){
+  var s=S.sort;if(s.sel.length!==2)return;
+  var x=s.sel[0],y=s.sel[1];
+  if(swap){
+    var t=s.vals[x];s.vals[x]=s.vals[y];s.vals[y]=t;S.b++;
+    [x,y].forEach(function(k){
+      var el=s.els[k];el.querySelector(".front").textContent=s.vals[k];
+      el.classList.remove("swap");void el.offsetWidth;el.classList.add("swap");
+    });
+  }
+  S.turn++;
+  var hold=swap?450:0;
+  setTimeout(function(){s.sel=[];say(swap?"자리를 바꿨어요.":"그대로 두었어요.");drawSort();drawHud();drawTurn()},hold);
+  $("do-swap").hidden=true;$("do-keep").hidden=true;
+}
+function checkSort(){
+  var s=S.sort;if(S.finished||s.sel.length)return;
+  if(inversions(s.vals)===0){
+    stopTimer();S.finished=true;drawSort();
+    var n=s.n,rank=addRecord(S.elapsed,S.a);
+    showResult({
+      title:"정렬 완료!",rank:rank,
+      stats:[["비교",S.a+"번"],["교환",S.b+"번"]],
+      note:"버블 정렬은 카드 "+n+"장에 비교를 "+(n*(n-1)/2)+"번 해요. 우리 방법은 선택·버블·삽입 정렬 중 무엇과 가장 닮았나요?"
+    });
+    drawRecords();
+  }else{
+    S.penalty+=5000;
+    say("아직 순서가 맞지 않아요. 벌점으로 5초가 더해졌어요.","bad");
+  }
+}
+
+/* ---------- 결과 창 ---------- */
+function showResult(o){
+  var detail=" ("+(S.elapsed/1000).toFixed(1)+"초 "+S.a+"회)";
+  $("res-title").textContent=o.rank===1?"축하합니다 이번 교시 1위 !!"+detail:"아쉽습니다 이번 교시 "+o.rank+"위"+detail;
+  $("res-title").className=o.rank===1?"first":"";
+  $("res-new").hidden=false;$("res-new").textContent=sget(K.ses,"");
+  $("res-time").textContent=fmt(S.elapsed);
+  $("res-stats").innerHTML=o.stats.map(function(s){return "<div><dt>"+s[0]+"</dt><dd>"+s[1]+"</dd></div>"}).join("");
+  $("res-note").textContent=o.note;
+  $("overlay").hidden=false;
+  $("res-again").focus();
+}
+function hideResult(){$("overlay").hidden=true}
+
+/* ---------- 화면 구성 ---------- */
+var RULES={
+  slide:[
+    "빈 칸과 맞닿은 카드를 누르거나 빈 칸 쪽으로 끌면 옮겨져요.",
+    "릴레이에서는 한 사람이 <b>한 장만</b> 옮기고 태블릿을 넘겨요."
+  ],
+  sort:[
+    "뒤집힌 카드를 <b>작은 수부터 큰 수 순서</b>로 놓으면 끝나요.",
+    "카드 두 장을 뒤집어 비교하고, 자리를 바꿀지 정해요. 정한 뒤에는 다시 덮여요.",
+    "릴레이에서는 한 사람이 <b>한 번만 비교</b>하고 태블릿을 넘겨요.",
+    "다 됐다 싶으면 확인하기를 눌러요. 틀리면 <b>5초</b>가 더해져요."
+  ]
+};
+function drawSettings(){
+  var m=S.mode,opts=m==="slide"?[[3,"3×3"],[4,"4×4"],[6,"6×6"]]:[[5,"5장"],[6,"6장"],[8,"8장"]];
+  $("size-label").textContent=m==="slide"?"판 크기":"카드 수";
+  $("size-seg").innerHTML=opts.map(function(o){return '<button data-v="'+o[0]+'" aria-pressed="'+(S.size[m]===o[0])+'">'+o[1]+"</button>"}).join("");
+  $("rules").innerHTML=RULES[m].map(function(r){return "<li>"+r+"</li>"}).join("");
+  $("mission").innerHTML=m==="slide"?'<span class="b">파란 카드</span>를 눌러서 <span class="r">빨간 카드</span>를 제일 구석으로 옮기기!':"카드를 작은 수부터 차례대로 줄 세우기!";
+  $("tab-slide").setAttribute("aria-selected",m==="slide");
+  $("tab-sort").setAttribute("aria-selected",m==="sort");
+  $("grid").hidden=m!=="slide";
+  $("sortwrap").hidden=m!=="sort";
+}
+function drawAll(){drawSettings();drawHud();drawTurn();drawRecords()}
+function newGame(){hideResult();if(S.mode==="slide")newSlide();else newSort()}
+
+/* ---------- 이벤트 ---------- */
+$("tab-slide").onclick=function(){S.mode="slide";newGame()};
+$("tab-sort").onclick=function(){S.mode="sort";newGame()};
+$("size-seg").onclick=function(e){var b=e.target.closest("button");if(!b)return;S.size[S.mode]=+b.dataset.v;newGame()};
+$("p-minus").onclick=function(){if(S.players>1){S.players--;drawTurn()}};
+$("p-plus").onclick=function(){if(S.players<8){S.players++;drawTurn()}};
+$("restart").onclick=newGame;
+$("do-swap").onclick=function(){decide(true)};
+$("do-keep").onclick=function(){decide(false)};
+$("do-check").onclick=checkSort;
+$("res-again").onclick=newGame;
+$("res-close").onclick=hideResult;
+
+$("g-auth").onsubmit=function(e){e.preventDefault();auth(false)};
+$("g-join").onclick=function(){$("g-new-err").textContent="";gshow("g-new");$("g-nid").focus()};
+$("g-new").onsubmit=function(e){e.preventDefault();auth(true)};
+$("g-code").onsubmit=function(e){e.preventDefault();enterCode()};
+$("g-switch").onclick=function(){sset(K.ses,null);gate()};
+$("logout").onclick=function(){sset(K.ses,null);hideResult();gate()};
+$("g-tpin").onsubmit=function(e){
+  e.preventDefault();
+  var lock=sget(K.lock,{n:0,until:0}),t=Date.now(),err=$("g-pin-err");
+  if(t<lock.until){err.textContent="여러 번 틀렸어요. "+Math.ceil((lock.until-t)/1000)+"초 뒤에 다시 넣을 수 있어요.";return}
+  if(cyrb("T|"+SECRET+"|"+$("g-pin").value)!==TPIN){failLock(lock,t);err.textContent="비밀번호가 달라요.";return}
+  sset(K.lock,{n:0,until:0});$("g-pin").value="";err.textContent="";drawTeacher();gshow("g-teacher");
+};
+$("gate").addEventListener("click",function(e){
+  var b=e.target.closest("button");if(!b)return;
+  if(b.hasAttribute("data-teacher")){$("g-pin-err").textContent="";gshow("g-tpin");$("g-pin").focus()}
+  else if(b.hasAttribute("data-back"))gate();
+  else if(b.dataset.del){var a=sget(K.acc,{});delete a[b.dataset.del];sset(K.acc,a);drawTeacher()}
+});
+setInterval(function(){if($("gate").hidden)gate()},5000);
+
+gate();
+})();
+</script>
+</body>
+</html>
