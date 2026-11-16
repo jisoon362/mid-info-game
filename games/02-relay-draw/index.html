@@ -184,7 +184,11 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <h2>내가 그린 부분은 어떤 핵심요소였나요?</h2>
     <p class="dim">사람마다 펜 색이 달라요. 자기 색으로 그린 부분이 제시어의 어떤 특징(핵심요소)인지 적어 보세요.</p>
     <ol class="steps" id="steps"></ol>
-    <button class="btn main big" id="sum-btn">추상화 정리하기</button>
+    <div class="row">
+      <button class="btn main big" id="sum-btn">추상화 정리하기</button>
+      <button class="btn big" id="send">선생님께 제출</button>
+    </div>
+    <p class="verdict" id="send-msg" aria-live="polite"></p>
     <div class="talk" id="summary" hidden>
       <b>우리 모둠의 추상화</b>
       <div class="flow">
@@ -195,10 +199,6 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
         <div><small>간결한 표현</small><span id="sum-out"></span></div>
       </div>
       <p id="sum-text"></p>
-      <div class="row" id="send-row" style="justify-content:flex-start;margin-bottom:10px" hidden>
-        <button class="btn main" id="send">선생님께 제출</button>
-        <span class="verdict" id="send-msg" aria-live="polite"></span>
-      </div>
       <ul>
         <li>적은 핵심요소만으로 맞히는 사람이 알아볼 수 있었나요?</li>
         <li>그리지 않고 <strong>버린 것</strong>은 무엇인가요? 버려도 괜찮았나요?</li>
@@ -237,7 +237,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   </form>
 </div>
 
-<script src="../../config.js"></script>
+<script>document.write('<script src="../../config.js?t='+Date.now()+'"><\/script>')</script>
 <script>
 (function(){
 "use strict";
@@ -429,7 +429,7 @@ function review(){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
       '<input id="key'+i+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
-  $("summary").hidden=true;S.sent=false;$("send-msg").textContent="";$("send").disabled=false;
+  $("summary").hidden=true;S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
   show("s-review");
 }
 $("sum-btn").onclick=function(){
@@ -441,7 +441,6 @@ $("sum-btn").onclick=function(){
   $("sum-text").textContent=keys.length
     ?"실제 '"+S.word+"'에는 훨씬 많은 특징이 있지만, 우리는 "+keys.length+"가지 핵심요소만 뽑아 간결하게 그렸어요. 이렇게 핵심요소를 추출해서 복잡한 것을 단순화하는 과정이 추상화예요."
     :"각자 그린 부분이 어떤 핵심요소였는지 위 칸에 적은 뒤 다시 눌러 보세요.";
-  $("send-row").hidden=!window.SHEET_URL;
   $("summary").hidden=false;
   $("summary").scrollIntoView({behavior:"smooth",block:"nearest"});
 };
