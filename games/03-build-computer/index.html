@@ -127,6 +127,14 @@ p{margin:0}
 .map .skip{fill:var(--cell)}
 .map .done{fill:var(--ok);font-weight:700}
 .map .off{fill:var(--dim)}
+.hgauge{flex-basis:100%;display:flex;align-items:center;margin-top:4px;--g:var(--ok)}
+.hgauge.mid{--g:var(--gold)}
+.hgauge.low{--g:var(--red)}
+.hgauge .bulb{flex:none;width:30px;height:30px;border-radius:50%;background:var(--g);border:3px solid var(--line);margin-right:-6px;z-index:1}
+.hgauge .tube{flex:1;height:18px;border:3px solid var(--line);border-left:0;border-radius:0 10px 10px 0;background:var(--cell);overflow:hidden}
+.hgauge .tube i{display:block;height:100%;background:var(--g);transition:width .5s ease-out}
+.hgauge span{flex:none;width:52px;text-align:right;font-size:14px;font-weight:600;color:var(--g);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.hgauge .tube i{transition:none}}
 .budgetbar .use{color:var(--red)}
 .budgetbar .rest{color:var(--ok)}
 .budgetbar .rest.minus{color:var(--red)}
@@ -235,7 +243,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <!-- 2장: 퀴즈 안내 -->
   <section class="screen" id="s-lead" hidden>
     <h2>먼저 퀴즈를 맞혀 컴퓨터 부품을 살 돈을 벌어 보자</h2>
-    <p class="lead">문제마다 <b>60만원</b>씩이야!</p>
+    <p class="lead">문제마다 <b>70만원</b>씩이야!</p>
     <p class="dim">문제마다 정답을 고를 기회는 두 번이에요.</p>
     <button class="btn main big" id="go-q1">퀴즈 시작</button>
   </section>
@@ -255,7 +263,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
         <ol class="th-scale" id="th-scale" aria-hidden="true"></ol>
       </div>
       <div class="th-bulb"></div>
-      <small>최대 360만원</small>
+      <small>최대 420만원</small>
     </aside>
   </section>
 
@@ -415,7 +423,7 @@ setInterval(function(){if($("gate").hidden)gate()},5000);
 
 
 /* ---------- 퀴즈 ---------- */
-var PRIZE=60,CHANCES=2;
+var PRIZE=70,CHANCES=2;
 var QUIZ=[
   {q:"컴퓨팅 시스템은 무엇과 무엇으로 구성되어 있을까요?",
    o:["하드웨어와 소프트웨어","모니터와 본체","키보드와 마우스","운영체제와 응용프로그램","중앙처리장치와 저장장치"],a:0,
@@ -604,9 +612,16 @@ var PARTS=[
 ];
 var B={i:0,picks:{},blocked:false};
 function spent(){var t=0;for(var k in B.picks)t+=B.picks[k].price;return t}
+// 남은 돈을 가로로 누운 온도계로 보여 준다. 가득 찬 상태가 시작 자금이다.
+function gauge(rest){
+  var pct=S.money>0?Math.max(0,Math.min(100,rest/S.money*100)):0;
+  var lv=pct>50?"ok":pct>20?"mid":"low";
+  return "<div class=\"hgauge "+lv+"\" role=\"img\" aria-label=\"남은 예산 "+won(rest)+", 시작 자금의 "+Math.round(pct)+"%\">"+
+    "<i class=\"bulb\"></i><div class=\"tube\"><i style=\"width:"+pct+"%\"></i></div><span>"+Math.round(pct)+"%</span></div>";
+}
 function barHtml(){
   var use=spent(),rest=S.money-use;
-  return "<span>시작 자금</span><b class=\"plain\">"+won(S.money)+"</b><span>사용 합계</span><b class=\"use\">"+won(use)+"</b><span>남은 예산</span><b class=\"rest"+(rest<0?" minus":"")+"\">"+won(rest)+"</b>";
+  return "<span>시작 자금</span><b class=\"plain\">"+won(S.money)+"</b><span>사용 합계</span><b class=\"use\">"+won(use)+"</b><span>남은 예산</span><b class=\"rest"+(rest<0?" minus":"")+"\">"+won(rest)+"</b>"+gauge(rest);
 }
 function drawBuy(){
   var P=PARTS[B.i],name=P[0],must=P[2],pk=B.picks[name];
