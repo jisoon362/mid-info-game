@@ -135,6 +135,16 @@ p{margin:0}
 .hgauge .tube i{display:block;height:100%;background:var(--g);transition:width .5s ease-out}
 .hgauge span{flex:none;width:52px;text-align:right;font-size:14px;font-weight:600;color:var(--g);font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){.hgauge .tube i{transition:none}}
+.map .dim{opacity:.32;pointer-events:none}
+.map .layer{fill:var(--bg);stroke:var(--ink);stroke-width:3}
+.map .layer.need{stroke:var(--red);stroke-width:5;fill:var(--note)}
+.map .layer.got{fill:var(--okbg);stroke:var(--ok);stroke-width:4}
+.map .layer.opt{stroke-dasharray:8 6;stroke:var(--dim)}
+.map .layer.opt.got{stroke-dasharray:none;stroke:var(--ok)}
+.map .lnote{fill:var(--dim);font-size:15px;font-weight:600}
+.map .swp{fill:var(--blue);font-weight:600}
+.pick .badge{position:absolute;top:8px;left:8px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--badbg);color:var(--warn)}
+.pick.poor{opacity:.6}
 .budgetbar .use{color:var(--red)}
 .budgetbar .rest{color:var(--ok)}
 .budgetbar .rest.minus{color:var(--red)}
@@ -167,6 +177,7 @@ p{margin:0}
 .pick[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-weight:700}
 .pnav{width:100%;display:flex;justify-content:space-between;gap:10px}
 .pnav .btn[disabled],#b-done[disabled]{opacity:.45;cursor:default}
+.map [data-os],.map [data-app]{cursor:pointer}
 .legend2{font-size:14px;color:var(--dim);text-align:center}
 .legend2 b{font-weight:600;color:var(--ink)}
 .legend2 .hi{color:var(--gold)}.legend2 .mid{color:var(--bronze)}.legend2 .low{color:var(--dim)}
@@ -323,6 +334,40 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
     <div class="row"><button class="btn main big" id="b-done">구매 완료</button></div>
   </section>
 
+  <!-- 소프트웨어 부품 사기 -->
+  <section class="screen" id="s-sw" hidden>
+    <div class="map" id="w-map"></div>
+    <p class="legend2">흐리게 보이는 것이 내가 고른 <b>하드웨어</b>예요. 그 위에 <b>운영체제</b>가, 운영체제 위에 <b>응용프로그램</b>이 올라가요.</p>
+    <div class="budgetbar" id="w-bar"></div>
+    <div class="warnbox" id="w-warn" hidden>
+      <p>예산을 넘어서 구매할 수 없어요.</p>
+      <button class="btn main" id="w-note">오답노트로 돈 더 벌기</button>
+    </div>
+    <div class="phead" id="w-os-head"><h2>🪟 운영체제</h2><span class="tag must">필수 · 1개</span><span class="pcount">1 / 2</span></div>
+    <div class="pdesc"><p>컴퓨터의 모든 동작을 관리하는 기본 소프트웨어입니다. 반드시 한 개를 선택하세요.</p></div>
+    <div class="picks" id="w-os"></div>
+    <div class="phead" id="w-app-head"><h2>📦 응용 프로그램</h2><span class="tag opt">선택 · 0~2개</span><span class="pcount">2 / 2</span></div>
+    <div class="pdesc"><p>특정 작업(문서 작성 등)을 위한 응용 소프트웨어입니다. 자유롭게 선택하세요.</p></div>
+    <div class="picks" id="w-app"></div>
+    <div class="pnav">
+      <button class="btn big" id="w-prev">◀ 이전</button>
+      <button class="btn main big" id="w-done">조립 완료 ▶</button>
+    </div>
+  </section>
+
+  <!-- 완성 -->
+  <section class="screen" id="s-final" hidden>
+    <h2>나만의 컴퓨팅 시스템 완성!</h2>
+    <p class="lead">컴퓨팅 시스템 = <b>하드웨어</b> + <b>소프트웨어</b>(운영체제 + 응용소프트웨어)</p>
+    <div class="map" id="f-map"></div>
+    <div class="budgetbar" id="f-bar"></div>
+    <ul class="brief" id="f-list"></ul>
+    <div class="row">
+      <button class="btn big" id="f-edit">소프트웨어 다시 고르기</button>
+      <button class="btn big" id="f-restart">처음부터 다시</button>
+    </div>
+  </section>
+
   <!-- 오답노트: 틀렸던 문제 중 하나를 골라 다시 풀기 -->
   <section class="screen" id="s-note" hidden>
     <h2>오답노트로 돈 더 벌기</h2>
@@ -339,7 +384,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
     <ul class="brief" id="h-list"></ul>
     <div class="row">
       <button class="btn big" id="h-edit">부품 다시 고르기</button>
-      <button class="btn main big" disabled>소프트웨어 사러 가기 (준비 중)</button>
+      <button class="btn main big" id="h-next">소프트웨어 사러 가기 ▶</button>
     </div>
   </section>
 </main>
@@ -452,7 +497,14 @@ var QUIZ=[
 var MARK=["①","②","③","④","⑤"];
 var S={i:0,money:0,right:0,solved:false,earned:[],mode:"quiz"};
 
-function show(id){["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw","s-note"].forEach(function(s){$(s).hidden=s!==id});setStep(id==="s-buy"||id==="s-hw"||id==="s-note"||S.mode==="note"?2:1);window.scrollTo(0,0)}
+var NOTE_BACK="s-buy";   // 오답노트를 마치고 돌아갈 화면
+function show(id){
+  ["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw","s-note","s-sw","s-final"].forEach(function(s){$(s).hidden=s!==id});
+  var late=id==="s-note"||S.mode==="note";
+  setStep(id==="s-sw"||id==="s-final"||(late&&NOTE_BACK==="s-sw")?3:id==="s-buy"||id==="s-hw"||late?2:1);
+  window.scrollTo(0,0);
+}
+function backFromNote(){B.blocked=false;W.blocked=false;if(NOTE_BACK==="s-sw"){drawSw();show("s-sw")}else{drawBuy();show("s-buy")}}
 function won(n){return n+"만원"}
 var MAXMONEY=QUIZ.length*PRIZE;
 function head(){
@@ -537,7 +589,7 @@ function nameCell(tr,emoji,name,sub,tag,tagCls){
 function tri(r){return '<tspan class="hi">'+r[3]+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+r[4]+"만</tspan>"}
 function part(name){for(var i=0;i<MUST.length;i++)if(MUST[i][1]===name)return MUST[i];return null}
 // 그림 그리기. st가 있으면 지금 고르는 부품(st.active)을 강조하고, 산 부품(st.picks)을 표시한다
-function drawMap(target,st){
+function drawMap(target,st,sw){
   function cls(name){
     if(!st)return "";
     if(st.active===name)return " on";
@@ -551,7 +603,8 @@ function drawMap(target,st){
     return pk.tier==="none"?'<tspan class="off">사지 않음</tspan>':'<tspan class="done">✓ '+pk.label+" "+pk.price+"만</tspan>";
   }
   var inside=[["CPU",150,40,250,200,26],["메인보드",150,240,250,130,22],["저장장치",400,40,190,150,20],["RAM",400,190,190,180,26],["전원공급장치",150,370,250,90,19]];
-  var h='<svg viewBox="0 0 900 480" role="img" aria-label="컴퓨터 본체 안의 부품과 바깥에 연결된 입출력장치, 그리고 가격">';
+  var h='<svg viewBox="0 0 900 480" role="img" aria-label="'+(sw?"흐리게 보이는 하드웨어 위에 운영체제, 그 위에 응용프로그램이 올라간 그림":"컴퓨터 본체 안의 부품과 바깥에 연결된 입출력장치, 그리고 가격")+'">';
+  h+=sw?'<g class="dim">':"<g>";
   var c=part("케이스");
   h+='<path class="wire" d="M590 90 C630 150 655 20 700 70"/><path class="wire" d="M590 180 C630 240 665 130 712 195"/><path class="wire" d="M590 330 C630 390 665 280 715 345"/>';
   h+='<path class="wire" d="M150 130 C135 100 130 160 120 130"/><path class="wire" d="M150 320 C135 290 130 350 120 320"/>';
@@ -571,6 +624,22 @@ function drawMap(target,st){
   h+='<rect'+at("스피커")+' class="box opt'+cls("스피커")+'" x="6" y="90" width="114" height="80" rx="6"/><text class="nm" x="63" y="124" font-size="16">🔊 스피커</text><text class="pr" x="63" y="148" font-size="14">'+price("스피커","선택 · 10만")+"</text>";
   h+='<rect'+at("프린터")+' class="box opt'+cls("프린터")+'" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">'+price("프린터","선택 · 20만")+"</text>";
   h+='<text class="cap" x="150" y="26" font-size="19">'+c[0]+" 케이스  "+'<tspan class="pr">'+price("케이스",tri(c))+"</tspan></text>";
+  h+="</g>";
+  if(sw){
+    // 소프트웨어 층: 하드웨어 위에 운영체제, 운영체제 위에 응용프로그램
+    var os=sw.os;
+    APPS.forEach(function(a,k){
+      var on=!!sw.apps[a[0]],x=175+k*200;
+      h+='<rect data-app="'+a[0]+'" class="layer opt'+(on?" got":"")+'" x="'+x+'" y="62" width="190" height="96" rx="10"/>';
+      h+='<text class="nm" x="'+(x+95)+'" y="104" font-size="19">📦 '+a[0]+"</text>";
+      h+='<text class="'+(on?"done":"swp")+'" x="'+(x+95)+'" y="132" font-size="16">'+(on?"✓ "+a[1]+"만":"선택 · "+a[1]+"만")+"</text>";
+    });
+    h+='<text class="lnote" x="370" y="186">▲ 응용프로그램이 동작할 환경을 제공</text>';
+    h+='<rect data-os="1" class="layer '+(os?"got":"need")+'" x="165" y="200" width="410" height="104" rx="10"/>';
+    h+='<text class="nm" x="370" y="244" font-size="24">🪟 운영체제</text>';
+    h+='<text class="'+(os?"done":"swp")+'" x="370" y="276" font-size="17">'+(os?"✓ "+os[0]+(os[1]?" "+os[1]+"만":""):"Windows 30만 · macOS 30만 · Linux 무료")+"</text>";
+    h+='<text class="lnote" x="370" y="332">▼ 하드웨어를 제어</text>';
+  }
   $(target).innerHTML=h+"</svg>";
 }
 function fillBrief(ul){
@@ -611,7 +680,53 @@ var PARTS=[
   ["스피커","🔊",false,null,10,"소리를 들려주는 출력장치예요."]
 ];
 var B={i:0,picks:{},blocked:false};
-function spent(){var t=0;for(var k in B.picks)t+=B.picks[k].price;return t}
+var OSLIST=[["Windows",30,"🪟"],["macOS",30,"🍎"],["Linux (무료)",0,"🐧"]];
+var APPS=[["한글(HWP)",20,"📝"],["오피스",30,"📊"]];
+var W={os:null,apps:{},blocked:false};   // os: [이름, 가격]
+function swSpent(){var t=W.os?W.os[1]:0;APPS.forEach(function(a){if(W.apps[a[0]])t+=a[1]});return t}
+function spent(){var t=0;for(var k in B.picks)t+=B.picks[k].price;return t+swSpent()}
+function swCard(emoji,name,price,chosen,poor,onpick){
+  var b=document.createElement("button");b.className="pick"+(poor?" poor":"");b.setAttribute("aria-pressed",String(chosen));
+  if(poor){var bd=document.createElement("span");bd.className="badge";bd.textContent="예산 부족";b.appendChild(bd)}
+  var pic=document.createElement("span");pic.className="pic";pic.textContent=emoji;b.appendChild(pic);
+  var pn=document.createElement("span");pn.className="pn";pn.textContent=name;b.appendChild(pn);
+  var pp=document.createElement("span");pp.className="pp";pp.textContent=price?won(price):"무료";b.appendChild(pp);
+  b.onclick=onpick;return b;
+}
+function drawSw(){
+  drawMap("w-map",{active:null,picks:B.picks},W);
+  $("w-bar").innerHTML=barHtml();
+  $("w-warn").hidden=!W.blocked;
+  var rest=S.money-spent();
+  var osBox=$("w-os");osBox.innerHTML="";
+  OSLIST.forEach(function(o){
+    var chosen=!!W.os&&W.os[0]===o[0],extra=o[1]-(W.os?W.os[1]:0),poor=!chosen&&extra>rest;
+    osBox.appendChild(swCard(o[2],o[0],o[1],chosen,poor,function(){
+      if(poor){W.blocked=true;drawSw();$("w-warn").scrollIntoView({behavior:"smooth",block:"center"});return}
+      W.blocked=false;W.os=[o[0],o[1]];drawSw();
+    }));
+  });
+  var appBox=$("w-app");appBox.innerHTML="";
+  APPS.forEach(function(a){
+    var chosen=!!W.apps[a[0]],poor=!chosen&&a[1]>rest;
+    appBox.appendChild(swCard(a[2],a[0],a[1],chosen,poor,function(){
+      if(poor){W.blocked=true;drawSw();$("w-warn").scrollIntoView({behavior:"smooth",block:"center"});return}
+      W.blocked=false;W.apps[a[0]]=!chosen;drawSw();
+    }));
+  });
+  $("w-done").disabled=!W.os;
+  $("w-done").textContent=W.os?"조립 완료 ▶":"조립 완료 (운영체제를 골라 주세요)";
+}
+function drawFinal(){
+  drawMap("f-map",{active:null,picks:B.picks},W);
+  $("f-bar").innerHTML=barHtml();
+  var ul=$("f-list");ul.innerHTML="";
+  function line(label,val,off){var li=document.createElement("li");if(off)li.className="opt";li.appendChild(document.createTextNode(label));var sp=document.createElement("span");sp.textContent=val;li.appendChild(sp);ul.appendChild(li)}
+  PARTS.forEach(function(P){var pk=B.picks[P[0]],none=!pk||pk.tier==="none";line(P[1]+" "+P[0],none?"사지 않음":pk.label+" "+won(pk.price),none)});
+  line("🪟 운영체제",W.os[0]+(W.os[1]?" "+won(W.os[1]):""));
+  APPS.forEach(function(a){line("📦 "+a[0],W.apps[a[0]]?won(a[1]):"사지 않음",!W.apps[a[0]])});
+  try{sessionStorage.setItem("mig|g3|software",JSON.stringify(W))}catch(e){}
+}
 // 남은 돈을 가로로 누운 온도계로 보여 준다. 가득 찬 상태가 시작 자금이다.
 function gauge(rest){
   var pct=S.money>0?Math.max(0,Math.min(100,rest/S.money*100)):0;
@@ -674,10 +789,10 @@ function finish(){
   try{sessionStorage.setItem("mig|g3|budget",String(S.money))}catch(e){}
   show("s-done");
 }
-function startQuiz(){B.picks={};B.i=0;S.i=0;S.money=0;S.right=0;S.earned=[];S.mode="quiz";show("s-quiz");drawQuiz()}
+function startQuiz(){W.os=null;W.apps={};NOTE_BACK="s-buy";B.picks={};B.i=0;S.i=0;S.money=0;S.right=0;S.earned=[];S.mode="quiz";show("s-quiz");drawQuiz()}
 $("go-quiz").onclick=function(){show("s-lead")};
 $("go-q1").onclick=startQuiz;
-$("q-next").onclick=function(){if(!S.solved)return;if(S.mode==="note"){S.mode="quiz";B.blocked=false;drawBuy();show("s-buy");return}if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
+$("q-next").onclick=function(){if(!S.solved)return;if(S.mode==="note"){S.mode="quiz";backFromNote();return}if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
 $("d-retry").onclick=startQuiz;
 $("d-shop").onclick=function(){drawPrice();show("s-price")};
 $("p-back").onclick=function(){show("s-done")};
@@ -698,10 +813,20 @@ function drawNote(){
     b.onclick=function(){S.mode="note";S.i=i;show("s-quiz");drawQuiz()};
     li.appendChild(b);ol.appendChild(li);
   });
-  $("n-lead").textContent=n?"돈을 받지 못한 문제 중 하나를 골라 다시 풀어 보세요. 맞히면 "+PRIZE+"만원을 받고 부품 사러 돌아가요.":"모든 문제의 돈을 이미 받았어요. ◀ 이전으로 돌아가 등급을 낮추거나 선택 부품을 빼 보세요.";
+  $("n-lead").textContent=n?"돈을 받지 못한 문제 중 하나를 골라 다시 풀어 보세요. 맞히면 "+PRIZE+"만원을 받고 사던 곳으로 돌아가요.":"모든 문제의 돈을 이미 받았어요. ◀ 이전으로 돌아가 등급을 낮추거나 선택 부품을 빼 보세요.";
 }
-$("b-note").onclick=function(){drawNote();show("s-note")};
-$("n-back").onclick=function(){B.blocked=false;drawBuy();show("s-buy")};
+$("b-note").onclick=function(){NOTE_BACK="s-buy";drawNote();show("s-note")};
+$("w-note").onclick=function(){NOTE_BACK="s-sw";drawNote();show("s-note")};
+$("h-next").onclick=function(){W.blocked=false;drawSw();show("s-sw")};
+$("w-prev").onclick=function(){drawHw();show("s-hw")};
+$("w-done").onclick=function(){if(!W.os){$("w-os-head").scrollIntoView({behavior:"smooth",block:"center"});return}drawFinal();show("s-final")};
+$("w-map").onclick=function(e){
+  var t=e.target.closest?e.target.closest("[data-os],[data-app]"):null;if(!t)return;
+  $(t.hasAttribute("data-os")?"w-os-head":"w-app-head").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("f-edit").onclick=function(){drawSw();show("s-sw")};
+$("f-restart").onclick=function(){show("s-intro")};
+$("n-back").onclick=backFromNote;
 $("b-next").onclick=function(){go(B.i+1)};
 $("b-done").onclick=function(){
   for(var i=0;i<PARTS.length;i++)if(PARTS[i][2]&&!B.picks[PARTS[i][0]]){go(i);return}
