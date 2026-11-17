@@ -183,6 +183,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <section class="screen" id="s-lead" hidden>
     <h2>먼저 퀴즈를 맞혀 컴퓨터 부품을 살 돈을 벌어 보자</h2>
     <p class="lead">문제마다 <b>50만원</b>씩이야!</p>
+    <p class="dim">문제마다 정답을 고를 기회는 두 번이에요.</p>
     <button class="btn main big" id="go-q1">퀴즈 시작</button>
   </section>
 
@@ -311,7 +312,7 @@ setInterval(function(){if($("gate").hidden)gate()},5000);
 
 
 /* ---------- 퀴즈 ---------- */
-var PRIZE=50;
+var PRIZE=50,CHANCES=2;
 var QUIZ=[
   {q:"컴퓨팅 시스템은 무엇과 무엇으로 구성되어 있을까요?",
    o:["하드웨어와 소프트웨어","모니터와 본체","키보드와 마우스","운영체제와 응용프로그램","중앙처리장치와 저장장치"],a:0,
@@ -351,7 +352,7 @@ function head(){
   $("th-scale").innerHTML=html;
 }
 function drawQuiz(){
-  var Q=QUIZ[S.i];S.solved=false;
+  var Q=QUIZ[S.i];S.solved=false;S.tries=0;
   head();
   $("q-text").textContent=Q.q;
   var ol=$("q-options");ol.innerHTML="";
@@ -379,9 +380,25 @@ function pick(k,btn){
     $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
     $("q-next").hidden=false;$("q-next").focus();
   }else{
+    S.tries++;
     btn.classList.add("wrong");btn.disabled=true;
-    msg.textContent=(Q.each&&Q.each[k])?Q.each[k]:Q.no;
-    fb.className="feedback bad";$("q-next").hidden=true;
+    var hint=(Q.each&&Q.each[k])?Q.each[k]:Q.no;
+    fb.className="feedback bad";
+    if(S.tries<CHANCES){
+      msg.appendChild(document.createTextNode(hint));
+      var left=document.createElement("div");left.className="gain";left.textContent="기회가 "+(CHANCES-S.tries)+"번 남았어!";msg.appendChild(left);
+      $("q-next").hidden=true;
+    }else{
+      // 기회를 다 썼다: 정답을 알려 주고 돈 없이 넘어간다
+      S.solved=true;
+      var btns=$("q-options").querySelectorAll("button");
+      for(var y=0;y<btns.length;y++){btns[y].disabled=true;if(y===Q.a)btns[y].classList.add("right")}
+      msg.appendChild(document.createTextNode(hint));
+      var ans=document.createElement("div");ans.className="gain";
+      ans.textContent="정답은 "+(Q.a+1)+"번이야."+(Q.ok?" "+Q.ok:"")+" 이번 문제는 돈을 받지 못했어. 총액: "+won(S.money);msg.appendChild(ans);
+      $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
+      $("q-next").hidden=false;$("q-next").focus();
+    }
   }
 }
 var MUST=[
