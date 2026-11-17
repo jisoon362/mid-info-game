@@ -126,6 +126,12 @@ p{margin:0}
 .budgetbar .rest{color:var(--ok)}
 .budgetbar .rest.minus{color:var(--red)}
 .budgetbar b.plain{color:var(--ink)}
+.warnbox{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--badbg);border-radius:12px;padding:12px 16px}
+.warnbox p{color:var(--warn);font-weight:700;font-size:17px}
+.notes{list-style:none;margin:0;padding:0;width:100%;max-width:720px;display:flex;flex-direction:column;gap:10px}
+.notes button{width:100%;text-align:left;padding:14px 16px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:17px;display:flex;gap:12px;align-items:baseline}
+.notes button b{flex:none;color:var(--blue);font-weight:700}
+.notes button small{margin-left:auto;flex:none;color:var(--ok);font-weight:600}
 .phead{width:100%;display:flex;align-items:center;gap:10px}
 .phead h2{text-align:left;font-size:24px}
 .phead .tag{font-size:13px;padding:2px 10px;margin:0}
@@ -280,7 +286,10 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
       <summary>부품 가격 한눈에 보기 <small>눌러서 펼치기</small></summary>
       <ul class="brief" id="b-brief"></ul>
     </details>
-    <p class="note" id="b-warn" hidden></p>
+    <div class="warnbox" id="b-warn" hidden>
+      <p id="b-warn-text">예산을 넘어서 구매할 수 없어요.</p>
+      <button class="btn main" id="b-note">오답노트로 돈 더 벌기</button>
+    </div>
     <div class="phead">
       <h2 id="b-name"></h2><span class="tag" id="b-tag"></span>
       <span class="pcount" id="b-count"></span>
@@ -294,6 +303,14 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
       <button class="btn big" id="b-prev">◀ 이전</button>
       <button class="btn main big" id="b-next">다음 부품 ▶</button>
     </div>
+  </section>
+
+  <!-- 오답노트: 틀렸던 문제 중 하나를 골라 다시 풀기 -->
+  <section class="screen" id="s-note" hidden>
+    <h2>오답노트로 돈 더 벌기</h2>
+    <p class="dim" id="n-lead"></p>
+    <ol class="notes" id="n-list"></ol>
+    <div class="row"><button class="btn big" id="n-back">부품 사러 돌아가기</button></div>
   </section>
 
   <!-- 하드웨어 구매 완료 -->
@@ -415,13 +432,13 @@ var QUIZ=[
    each:["이건 보조기억장치","이건 보조기억장치",null,"이건 GPU","이거는 입력장치 중 키보드"]}
 ];
 var MARK=["①","②","③","④","⑤"];
-var S={i:0,money:0,right:0,solved:false};
+var S={i:0,money:0,right:0,solved:false,earned:[],mode:"quiz"};
 
-function show(id){["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw"].forEach(function(s){$(s).hidden=s!==id});setStep(id==="s-buy"||id==="s-hw"?2:1);window.scrollTo(0,0)}
+function show(id){["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw","s-note"].forEach(function(s){$(s).hidden=s!==id});setStep(id==="s-buy"||id==="s-hw"||id==="s-note"||S.mode==="note"?2:1);window.scrollTo(0,0)}
 function won(n){return n+"만원"}
 var MAXMONEY=QUIZ.length*PRIZE;
 function head(){
-  $("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length+" · 모은 자금 "+won(S.money);
+  $("q-no").textContent=(S.mode==="note"?"오답노트 · 퀴즈 "+(S.i+1):"퀴즈 "+(S.i+1)+" / "+QUIZ.length)+" · 모은 자금 "+won(S.money);
   $("th-now").textContent=won(S.money);
   $("th-fill").style.height=Math.min(100,S.money/MAXMONEY*100)+"%";
   var html="";for(var v=0;v<=MAXMONEY;v+=PRIZE)html+='<li class="'+(v<=S.money&&v>0?"on":"")+'">'+v+"</li>";
@@ -446,14 +463,14 @@ function pick(k,btn){
   if(k===Q.a){
     S.solved=true;btn.classList.add("right");
     var all=$("q-options").querySelectorAll("button");for(var x=0;x<all.length;x++)all[x].disabled=true;
-    S.right++;S.money+=PRIZE;head();
+    S.right++;S.money+=PRIZE;S.earned[S.i]=true;head();
     msg.appendChild(document.createTextNode("정답 "+(k+1)+"!"+(Q.ok?" "+Q.ok:"")));
     var line=document.createElement("div");line.className="gain";
     line.appendChild(document.createTextNode("+ "+PRIZE+"만원, "));
     var total=document.createElement("strong");total.textContent="총액: "+won(S.money);line.appendChild(total);
     line.appendChild(document.createTextNode(" !!"));msg.appendChild(line);
     fb.className="feedback good";
-    $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
+    $("q-next").textContent=S.mode==="note"?"부품 사러 돌아가기":S.i===QUIZ.length-1?"결과 보기":"다음 문제";
     $("q-next").hidden=false;$("q-next").focus();
   }else{
     S.tries++;
@@ -472,7 +489,7 @@ function pick(k,btn){
       msg.appendChild(document.createTextNode(hint));
       var ans=document.createElement("div");ans.className="gain";
       ans.textContent="정답은 "+(Q.a+1)+"번이야."+(Q.ok?" "+Q.ok:"")+" 이번 문제는 돈을 받지 못했어. 총액: "+won(S.money);msg.appendChild(ans);
-      $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
+      $("q-next").textContent=S.mode==="note"?"부품 사러 돌아가기":S.i===QUIZ.length-1?"결과 보기":"다음 문제";
       $("q-next").hidden=false;$("q-next").focus();
     }
   }
@@ -573,7 +590,7 @@ var PARTS=[
   ["프린터","🖨️",false,null,20,"결과를 종이에 인쇄하는 출력장치예요."],
   ["스피커","🔊",false,null,10,"소리를 들려주는 출력장치예요."]
 ];
-var B={i:0,picks:{}};
+var B={i:0,picks:{},blocked:false};
 function spent(){var t=0;for(var k in B.picks)t+=B.picks[k].price;return t}
 function barHtml(){
   var use=spent(),rest=S.money-use;
@@ -584,9 +601,7 @@ function drawBuy(){
   if(!must&&!pk){pk=B.picks[name]={tier:"none",label:"사지 않음",price:0}}   // 선택 부품은 처음에 '사지 않기'
   drawMap("b-map",{active:name,picks:B.picks});
   $("b-bar").innerHTML=barHtml();
-  var rest=S.money-spent();
-  $("b-warn").hidden=rest>=0;
-  $("b-warn").textContent=rest<0?"예산을 "+won(-rest)+" 넘었어요! 일반 등급으로 바꾸거나, 선택 부품을 빼 보세요.":"";
+  $("b-warn").hidden=!B.blocked;
   $("b-name").textContent=P[1]+" "+name;
   $("b-tag").textContent=must?"필수":"선택";$("b-tag").className="tag "+(must?"must":"opt");
   $("b-count").textContent=(B.i+1)+" / "+PARTS.length;
@@ -602,7 +617,11 @@ function drawBuy(){
     var pn=document.createElement("span");pn.className="pn";pn.textContent=o[0]==="none"?"사지 않음":o[1]+" "+name;b.appendChild(pn);
     if(o[0]!=="none"){var g=document.createElement("span");g.className="grade "+o[0];g.textContent=o[1];b.appendChild(g)}
     var pp=document.createElement("span");pp.className="pp";pp.textContent=won(o[2]);b.appendChild(pp);
-    b.onclick=function(){B.picks[name]={tier:o[0],label:o[0]==="none"?"사지 않음":o[1],price:o[2]};drawBuy()};
+    b.onclick=function(){
+      var now=B.picks[name]?B.picks[name].price:0;
+      if(spent()-now+o[2]>S.money){B.blocked=true;$("b-warn").hidden=false;$("b-warn").scrollIntoView({behavior:"smooth",block:"center"});return}   // 예산 초과: 사지 못한다
+      B.blocked=false;B.picks[name]={tier:o[0],label:o[0]==="none"?"사지 않음":o[1],price:o[2]};drawBuy();
+    };
     box.appendChild(b);
   });
   $("b-prev").disabled=B.i===0;
@@ -627,19 +646,32 @@ function finish(){
   try{sessionStorage.setItem("mig|g3|budget",String(S.money))}catch(e){}
   show("s-done");
 }
-function startQuiz(){B.picks={};B.i=0;S.i=0;S.money=0;S.right=0;show("s-quiz");drawQuiz()}
+function startQuiz(){B.picks={};B.i=0;S.i=0;S.money=0;S.right=0;S.earned=[];S.mode="quiz";show("s-quiz");drawQuiz()}
 $("go-quiz").onclick=function(){show("s-lead")};
 $("go-q1").onclick=startQuiz;
-$("q-next").onclick=function(){if(!S.solved)return;if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
+$("q-next").onclick=function(){if(!S.solved)return;if(S.mode==="note"){S.mode="quiz";B.blocked=false;drawBuy();show("s-buy");return}if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
 $("d-retry").onclick=startQuiz;
 $("d-shop").onclick=function(){drawPrice();show("s-price")};
 $("p-back").onclick=function(){show("s-done")};
 $("p-next").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
-$("b-prev").onclick=function(){if(B.i>0){B.i--;drawBuy();window.scrollTo(0,0)}};
+$("b-prev").onclick=function(){if(B.i>0){B.i--;B.blocked=false;drawBuy();window.scrollTo(0,0)}};
+function drawNote(){
+  var ol=$("n-list"),n=0;ol.innerHTML="";
+  QUIZ.forEach(function(Q,i){
+    if(S.earned[i])return;n++;
+    var li=document.createElement("li"),b=document.createElement("button"),no=document.createElement("b"),t=document.createElement("span"),m=document.createElement("small");
+    no.textContent="퀴즈 "+(i+1);t.textContent=Q.q;m.textContent="+ "+PRIZE+"만원";b.appendChild(no);b.appendChild(t);b.appendChild(m);
+    b.onclick=function(){S.mode="note";S.i=i;show("s-quiz");drawQuiz()};
+    li.appendChild(b);ol.appendChild(li);
+  });
+  $("n-lead").textContent=n?"돈을 받지 못한 문제 중 하나를 골라 다시 풀어 보세요. 맞히면 "+PRIZE+"만원을 받고 부품 사러 돌아가요.":"모든 문제의 돈을 이미 받았어요. ◀ 이전으로 돌아가 등급을 낮추거나 선택 부품을 빼 보세요.";
+}
+$("b-note").onclick=function(){drawNote();show("s-note")};
+$("n-back").onclick=function(){B.blocked=false;drawBuy();show("s-buy")};
 $("b-next").onclick=function(){
   if(!B.picks[PARTS[B.i][0]])return;
+  B.blocked=false;
   if(B.i<PARTS.length-1){B.i++;drawBuy();window.scrollTo(0,0);return}
-  if(S.money-spent()<0){$("b-warn").hidden=false;$("b-warn").textContent="예산을 넘어서 구매를 끝낼 수 없어요. ◀ 이전으로 돌아가 등급을 바꾸거나 선택 부품을 빼 보세요.";return}
   drawHw();show("s-hw");
 };
 $("h-edit").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
