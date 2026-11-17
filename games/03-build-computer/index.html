@@ -72,7 +72,8 @@ p{margin:0}
 .feedback.bad{background:var(--badbg);color:var(--warn)}
 .feedback.good{background:var(--okbg);color:var(--ok)}
 .feedback span{flex:1;min-width:200px}
-.feedback strong{font-size:1.25em;font-weight:700}
+.feedback .gain{margin-top:10px;font-size:1.15em}
+.feedback strong{font-size:1.5em;font-weight:700;padding:1px 10px;border-radius:8px;background:var(--ok);color:var(--bg)}
 .bigmoney{font-size:clamp(34px,7vw,60px);text-align:center;font-weight:700;color:var(--blue);line-height:1.1;font-variant-numeric:tabular-nums}
 .score{font-size:20px;font-weight:600}
 .choice{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%}
@@ -311,8 +312,11 @@ function pick(k,btn){
     S.solved=true;btn.classList.add("right");
     var all=$("q-options").querySelectorAll("button");for(var x=0;x<all.length;x++)all[x].disabled=true;
     S.right++;S.money+=PRIZE;head();
-    msg.appendChild(document.createTextNode("정답 "+(k+1)+"! "+(Q.ok?Q.ok+" ":"")+PRIZE+"만원 추가! "));
-    var total=document.createElement("strong");total.textContent="총액 "+won(S.money)+"!";msg.appendChild(total);
+    msg.appendChild(document.createTextNode("정답 "+(k+1)+"!"+(Q.ok?" "+Q.ok:"")));
+    var line=document.createElement("div");line.className="gain";
+    line.appendChild(document.createTextNode("+ "+PRIZE+"만원, "));
+    var total=document.createElement("strong");total.textContent="총액: "+won(S.money);line.appendChild(total);
+    line.appendChild(document.createTextNode(" !!"));msg.appendChild(line);
     fb.className="feedback good";
     $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
     $("q-next").hidden=false;$("q-next").focus();
