@@ -52,6 +52,20 @@ p{margin:0}
 .lead{font-size:18px;text-align:center;text-wrap:balance}
 .lead b{color:var(--blue)}
 .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;max-width:720px}
+.screen.quiz{flex-direction:row;align-items:flex-start;justify-content:center;gap:20px}
+.qmain{flex:1;min-width:0;max-width:720px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.thermo{flex:none;width:92px;display:flex;flex-direction:column;align-items:center;position:sticky;top:12px}
+.thermo>b{font-size:19px;font-weight:700;color:var(--red);font-variant-numeric:tabular-nums;margin-bottom:8px;white-space:nowrap}
+.thermo small{font-size:12px;color:var(--dim);margin-top:6px;white-space:nowrap}
+.th-body{display:flex;gap:6px;height:min(46vh,340px)}
+.th-tube{position:relative;width:26px;height:100%;border:3px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;background:var(--cell);overflow:hidden}
+.th-tube i{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--red);transition:height .6s ease-out}
+.th-scale{list-style:none;margin:0;padding:0;height:100%;display:flex;flex-direction:column-reverse;justify-content:space-between;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.th-scale li{line-height:1}
+.th-scale li.on{color:var(--red);font-weight:700}
+.th-bulb{width:46px;height:46px;border-radius:50%;background:var(--red);border:3px solid var(--line);margin-top:-6px;margin-right:26px}
+@media (max-width:560px){.thermo{width:70px}.th-body{height:240px}}
+@media (prefers-reduced-motion:reduce){.th-tube i{transition:none}}
 .qno{width:100%;max-width:720px;font-size:15px;color:var(--blue);font-weight:600;letter-spacing:1px}
 .money{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
 .money small{font-size:12px;color:var(--dim)}
@@ -149,11 +163,22 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   </section>
 
   <!-- 2장: 퀴즈 (문제마다 한 화면) -->
-  <section class="screen" id="s-quiz" hidden>
-    <p class="qno" id="q-no"></p>
-    <h2 class="question" id="q-text" style="text-align:left"></h2>
-    <ol class="options" id="q-options"></ol>
-    <div class="feedback" id="q-feedback" hidden aria-live="polite"><span id="q-msg"></span><button class="btn main" id="q-next" hidden>다음 문제</button></div>
+  <section class="screen quiz" id="s-quiz" hidden>
+    <div class="qmain">
+      <p class="qno" id="q-no"></p>
+      <h2 class="question" id="q-text" style="text-align:left"></h2>
+      <ol class="options" id="q-options"></ol>
+      <div class="feedback" id="q-feedback" hidden aria-live="polite"><span id="q-msg"></span><button class="btn main" id="q-next" hidden>다음 문제</button></div>
+    </div>
+    <aside class="thermo" aria-label="모은 자금">
+      <b id="th-now">0만원</b>
+      <div class="th-body">
+        <div class="th-tube"><i id="th-fill"></i></div>
+        <ol class="th-scale" id="th-scale" aria-hidden="true"></ol>
+      </div>
+      <div class="th-bulb"></div>
+      <small>최대 300만원</small>
+    </aside>
   </section>
 
   <!-- 3장: 퀴즈 완료 -->
@@ -291,7 +316,14 @@ var S={i:0,money:0,right:0,solved:false};
 
 function show(id){["s-intro","s-lead","s-quiz","s-done","s-price"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
 function won(n){return n+"만원"}
-function head(){$("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length+" · 모은 자금 "+won(S.money)}
+var MAXMONEY=QUIZ.length*PRIZE;
+function head(){
+  $("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length+" · 모은 자금 "+won(S.money);
+  $("th-now").textContent=won(S.money);
+  $("th-fill").style.height=Math.min(100,S.money/MAXMONEY*100)+"%";
+  var html="";for(var v=0;v<=MAXMONEY;v+=PRIZE)html+='<li class="'+(v<=S.money&&v>0?"on":"")+'">'+v+"</li>";
+  $("th-scale").innerHTML=html;
+}
 function drawQuiz(){
   var Q=QUIZ[S.i];S.solved=false;
   head();
