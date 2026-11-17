@@ -131,6 +131,7 @@ p{margin:0}
 .budgetbar .rest{color:var(--ok)}
 .budgetbar .rest.minus{color:var(--red)}
 .budgetbar b.plain{color:var(--ink)}
+.tapme{width:100%;text-align:center;font-size:clamp(24px,4.4vw,36px);font-weight:700;color:var(--red);line-height:1.2}
 .warnbox{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--badbg);border-radius:12px;padding:12px 16px}
 .warnbox p{color:var(--warn);font-weight:700;font-size:17px}
 .notes{list-style:none;margin:0;padding:0;width:100%;max-width:720px;display:flex;flex-direction:column;gap:10px}
@@ -287,7 +288,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   </section>
   <!-- 하드웨어 부품 사기: 부품마다 한 화면 -->
   <section class="screen" id="s-buy" hidden>
-    <p class="dim">그림에서 사고 싶은 부품을 눌러 보세요. 순서는 자유이고, 이미 고른 부품도 다시 눌러 바꿀 수 있어요.</p>
+    <p class="tapme">그림에서 부품을 눌러보세요 !</p>
     <div class="map" id="b-map"></div>
     <div class="budgetbar" id="b-bar"></div>
     <details class="fold">
