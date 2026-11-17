@@ -40,8 +40,10 @@ function nowInfo() {
   return { day: day, p: p, time: Utilities.formatDate(d, TZ, "HH:mm:ss") };
 }
 
+// 수업 코드는 날짜·교시·게임 번호마다 다르다. 이 서버는 2번 게임(이어 그리기)의 코드를 확인한다.
+var GAME_NO = 2;
 function codeFor(day, p) {
-  return ("00" + (cyrb(SECRET + "|" + day + "|" + p) % 1000)).slice(-3);
+  return ("00" + (cyrb(SECRET + "|" + day + "|" + p + "|g" + GAME_NO) % 1000)).slice(-3);
 }
 
 function out(obj) {

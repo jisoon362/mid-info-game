@@ -277,7 +277,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 
   <form class="gate-card" id="g-code" hidden>
     <h2><span id="g-hello"></span>님, 수업 코드를 넣어요</h2>
-    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다 바뀌어요.</p>
+    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다, 게임마다 달라요.</p>
     <label class="field" for="g-class">수업 코드
       <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
     </label>
@@ -334,10 +334,10 @@ function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++)
 var SECRET="bfc536cdefd2262ab9bb49bb";
 var TPIN=3498242298754679;
 var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]]; /* 분 단위: 9:15~10:10 ... 15:35~16:30 */
-var K={acc:"cardrelay|accounts",ses:"cardrelay|session",pass:"cardrelay|pass",lock:"cardrelay|lock",code:"cardrelay|code"};
+var K={acc:"cardrelay|accounts",ses:"cardrelay|session",pass:"cardrelay|pass|g1",lock:"cardrelay|lock",code:"cardrelay|code|g1"};
 var G={started:false};
 function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
-function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)}
+function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g1")%1000).slice(-3)}
 function verifyCode(code){
   var d=new Date(),p=period(d);
   if(p<0)return -1;

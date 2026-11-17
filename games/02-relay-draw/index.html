@@ -244,7 +244,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
 <div class="gate" id="gate" hidden>
   <form class="gate-card" id="g-code" hidden>
     <h2>수업 코드를 넣어요</h2>
-    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다 바뀌어요.</p>
+    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다, 게임마다 달라요.</p>
     <label class="field" for="g-class">수업 코드
       <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
     </label>
@@ -279,9 +279,9 @@ function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(
 function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
 var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=3498242298754679;
 var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
-var K={pass:"cardrelay|pass",lock:"cardrelay|lock",code:"cardrelay|code"};
+var K={pass:"cardrelay|pass|g2",lock:"cardrelay|lock",code:"cardrelay|code|g2"};
 function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
-function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)}
+function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g2")%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
   var pass=sget(K.pass,0),free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
