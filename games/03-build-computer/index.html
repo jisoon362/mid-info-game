@@ -14,7 +14,7 @@
   --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
   --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  --soft:#eff4ff;--okbg:#dcfce7;--gold:#d99a00;--badbg:#fee2e2;--note:#fffbea;--cover:rgba(255,255,255,.97);
+  --soft:#eff4ff;--okbg:#dcfce7;--gold:#d4a017;--bronze:#a9642f;--badbg:#fee2e2;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -110,11 +110,16 @@ p{margin:0}
 .map .wire{fill:none;stroke:var(--dim);stroke-width:2.5}
 .map text{fill:var(--ink);font-family:var(--font-body);text-anchor:middle}
 .map .nm{font-weight:700}
-.map .pr{fill:var(--blue);font-weight:600}
+.map .pr{fill:var(--bronze);font-weight:600}
 .map .hi{fill:var(--gold);font-weight:700}
-.map .mid{fill:var(--blue)}
+.map .mid{fill:var(--bronze)}
 .map .sep{fill:var(--dim)}
 .map .cap{text-anchor:start;font-weight:700}
+.map text{pointer-events:none}
+.map [data-part]{cursor:pointer}
+.map .case[data-part]{pointer-events:stroke}
+.map .tab{fill:var(--cell);stroke:var(--line);stroke-width:2}
+.map .tab.on{stroke:var(--red);stroke-width:4;fill:var(--note)}
 .map .on{stroke:var(--red);stroke-width:6;fill:var(--note);stroke-dasharray:none}
 .map .case.on{fill:none}
 .map .got{fill:var(--okbg)}
@@ -145,15 +150,17 @@ p{margin:0}
 .pick .pn{font-size:17px;font-weight:600}
 .pick .grade{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--cell);color:var(--dim)}
 .pick .grade.hi{background:#fdecc0;color:#8a5a00}
-.pick .grade.mid{background:var(--soft);color:var(--blue)}
+.pick .grade.hi~.pp{color:var(--gold)}
+.pick .grade.mid~.pp{color:var(--bronze)}
+.pick .grade.mid{background:#f1dccd;color:#7c4a22}
 .pick .pp{font-size:17px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums}
 .pick[aria-pressed="true"]{border-color:var(--ok);background:var(--okbg)}
 .pick[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-weight:700}
 .pnav{width:100%;display:flex;justify-content:space-between;gap:10px}
-.pnav .btn[disabled]{opacity:.45;cursor:default}
+.pnav .btn[disabled],#b-done[disabled]{opacity:.45;cursor:default}
 .legend2{font-size:14px;color:var(--dim);text-align:center}
 .legend2 b{font-weight:600;color:var(--ink)}
-.legend2 .hi{color:var(--gold)}.legend2 .mid{color:var(--blue)}.legend2 .low{color:var(--dim)}
+.legend2 .hi{color:var(--gold)}.legend2 .mid{color:var(--bronze)}.legend2 .low{color:var(--dim)}
 .soft,.brief{list-style:none;margin:0;padding:0;width:100%}
 .soft{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .soft li{border:2px solid var(--ink);border-radius:10px;padding:8px 14px;font-size:15px}
@@ -166,7 +173,7 @@ p{margin:0}
 .fold .brief{padding-bottom:12px}
 .brief{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 18px;font-size:15px}
 .brief li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
-.brief li span{color:var(--blue);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brief li span{color:var(--bronze);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .brief li.opt{color:var(--dim)}
 .brief li b{font-weight:600}
 .brief li b.hi{color:var(--gold);font-weight:700}
@@ -198,7 +205,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
 .issued{background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;font-size:14px;color:var(--dim)}
 .issued b{display:block;font-size:56px;font-weight:600;letter-spacing:8px;color:var(--blue);line-height:1.15;font-variant-numeric:tabular-nums}
 
-:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--gold:#fbbf24;--badbg:#3f1d1d;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--gold:#f5c542;--bronze:#d99a6c;--badbg:#3f1d1d;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
@@ -280,6 +287,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   </section>
   <!-- 하드웨어 부품 사기: 부품마다 한 화면 -->
   <section class="screen" id="s-buy" hidden>
+    <p class="dim">그림에서 사고 싶은 부품을 눌러 보세요. 순서는 자유이고, 이미 고른 부품도 다시 눌러 바꿀 수 있어요.</p>
     <div class="map" id="b-map"></div>
     <div class="budgetbar" id="b-bar"></div>
     <details class="fold">
@@ -301,8 +309,9 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
     <div class="picks" id="b-picks"></div>
     <div class="pnav">
       <button class="btn big" id="b-prev">◀ 이전</button>
-      <button class="btn main big" id="b-next">다음 부품 ▶</button>
+      <button class="btn big" id="b-next">다음 부품 ▶</button>
     </div>
+    <div class="row"><button class="btn main big" id="b-done">구매 완료</button></div>
   </section>
 
   <!-- 오답노트: 틀렸던 문제 중 하나를 골라 다시 풀기 -->
@@ -526,6 +535,7 @@ function drawMap(target,st){
     var pk=st.picks[name];
     return pk?(pk.tier==="none"?" skip":" got"):"";
   }
+  function at(name){return st?' data-part="'+name+'"':""}
   function price(name,normal){
     var pk=st&&st.picks[name];
     if(!pk||st.active===name)return normal;
@@ -534,23 +544,24 @@ function drawMap(target,st){
   var inside=[["CPU",150,40,250,200,26],["메인보드",150,240,250,130,22],["저장장치",400,40,190,150,20],["RAM",400,190,190,180,26],["전원공급장치",150,370,250,90,19]];
   var h='<svg viewBox="0 0 900 480" role="img" aria-label="컴퓨터 본체 안의 부품과 바깥에 연결된 입출력장치, 그리고 가격">';
   var c=part("케이스");
-  h+='<text class="cap" x="150" y="26" font-size="19">'+c[0]+" 케이스  "+'<tspan class="pr">'+price("케이스",tri(c))+"</tspan></text>";
   h+='<path class="wire" d="M590 90 C630 150 655 20 700 70"/><path class="wire" d="M590 180 C630 240 665 130 712 195"/><path class="wire" d="M590 330 C630 390 665 280 715 345"/>';
   h+='<path class="wire" d="M150 130 C135 100 130 160 120 130"/><path class="wire" d="M150 320 C135 290 130 350 120 320"/>';
   inside.forEach(function(b){
     var r=part(b[0]),cx=b[1]+b[3]/2,cy=b[2]+b[4]/2;
-    h+='<rect class="box'+cls(b[0])+'" x="'+b[1]+'" y="'+b[2]+'" width="'+b[3]+'" height="'+b[4]+'"/>';
+    h+='<rect'+at(b[0])+' class="box'+cls(b[0])+'" x="'+b[1]+'" y="'+b[2]+'" width="'+b[3]+'" height="'+b[4]+'"/>';
     h+='<text class="nm" x="'+cx+'" y="'+(cy-4)+'" font-size="'+b[5]+'">'+r[0]+" "+r[1]+"</text>";
     h+='<text class="pr" x="'+cx+'" y="'+(cy+22)+'" font-size="16">'+price(b[0],tri(r))+"</text>";
   });
-  h+='<rect class="box opt'+cls("그래픽카드")+'" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드 (선택)</text><text class="pr" x="495" y="435" font-size="16">'+price("그래픽카드",'<tspan class="hi">'+GPU_HI+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+GPU_MID+"만</tspan>")+"</text>";
-  h+='<rect class="case'+cls("케이스")+'" x="150" y="40" width="440" height="420"/>';
+  h+='<rect'+at("그래픽카드")+' class="box opt'+cls("그래픽카드")+'" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드 (선택)</text><text class="pr" x="495" y="435" font-size="16">'+price("그래픽카드",'<tspan class="hi">'+GPU_HI+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+GPU_MID+"만</tspan>")+"</text>";
+  h+='<rect'+at("케이스")+' class="case'+cls("케이스")+'" x="150" y="40" width="440" height="420"/>';
+  if(st)h+='<rect data-part="케이스" class="tab'+(st.active==="케이스"?" on":"")+'" x="144" y="2" width="330" height="34" rx="8"/>';
   var mo=part("모니터"),ms=part("마우스"),kb=part("키보드");
-  h+='<rect class="box'+cls("모니터")+'" x="700" y="30" width="180" height="84" rx="6"/><text class="nm" x="790" y="66" font-size="19">'+mo[0]+" 모니터</text>"+'<text class="pr" x="790" y="92" font-size="15">'+price("모니터",tri(mo))+"</text>";
-  h+='<path class="box'+cls("마우스")+'" d="M790 140 L888 198 L790 256 L692 198 Z"/><text class="nm" x="790" y="194" font-size="18">'+ms[0]+" 마우스</text>"+'<text class="pr" x="790" y="217" font-size="14">'+price("마우스",tri(ms))+"</text>";
-  h+='<rect class="box'+cls("키보드")+'" x="715" y="290" width="150" height="150" rx="6"/><text class="nm" x="790" y="358" font-size="19">'+kb[0]+" 키보드</text>"+'<text class="pr" x="790" y="384" font-size="15">'+price("키보드",tri(kb))+"</text>";
-  h+='<rect class="box opt'+cls("스피커")+'" x="6" y="90" width="114" height="80" rx="6"/><text class="nm" x="63" y="124" font-size="16">🔊 스피커</text><text class="pr" x="63" y="148" font-size="14">'+price("스피커","선택 · 10만")+"</text>";
-  h+='<rect class="box opt'+cls("프린터")+'" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">'+price("프린터","선택 · 20만")+"</text>";
+  h+='<rect'+at("모니터")+' class="box'+cls("모니터")+'" x="700" y="30" width="180" height="84" rx="6"/><text class="nm" x="790" y="66" font-size="19">'+mo[0]+" 모니터</text>"+'<text class="pr" x="790" y="92" font-size="15">'+price("모니터",tri(mo))+"</text>";
+  h+='<path'+at("마우스")+' class="box'+cls("마우스")+'" d="M790 140 L888 198 L790 256 L692 198 Z"/><text class="nm" x="790" y="194" font-size="18">'+ms[0]+" 마우스</text>"+'<text class="pr" x="790" y="217" font-size="14">'+price("마우스",tri(ms))+"</text>";
+  h+='<rect'+at("키보드")+' class="box'+cls("키보드")+'" x="715" y="290" width="150" height="150" rx="6"/><text class="nm" x="790" y="358" font-size="19">'+kb[0]+" 키보드</text>"+'<text class="pr" x="790" y="384" font-size="15">'+price("키보드",tri(kb))+"</text>";
+  h+='<rect'+at("스피커")+' class="box opt'+cls("스피커")+'" x="6" y="90" width="114" height="80" rx="6"/><text class="nm" x="63" y="124" font-size="16">🔊 스피커</text><text class="pr" x="63" y="148" font-size="14">'+price("스피커","선택 · 10만")+"</text>";
+  h+='<rect'+at("프린터")+' class="box opt'+cls("프린터")+'" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">'+price("프린터","선택 · 20만")+"</text>";
+  h+='<text class="cap" x="150" y="26" font-size="19">'+c[0]+" 케이스  "+'<tspan class="pr">'+price("케이스",tri(c))+"</tspan></text>";
   $(target).innerHTML=h+"</svg>";
 }
 function fillBrief(ul){
@@ -624,9 +635,10 @@ function drawBuy(){
     };
     box.appendChild(b);
   });
-  $("b-prev").disabled=B.i===0;
-  $("b-next").disabled=!B.picks[name];
-  $("b-next").textContent=B.i===PARTS.length-1?"구매 완료 ▶":"다음 부품 ▶";
+  var need=0,have=0;
+  PARTS.forEach(function(Q){if(Q[2]){need++;if(B.picks[Q[0]])have++}});
+  $("b-done").disabled=have<need;
+  $("b-done").textContent=have<need?"구매 완료 (필수 부품 "+have+" / "+need+" 고름)":"구매 완료 ▶";
 }
 function drawHw(){
   drawMap("h-map",{active:null,picks:B.picks});
@@ -654,7 +666,13 @@ $("d-retry").onclick=startQuiz;
 $("d-shop").onclick=function(){drawPrice();show("s-price")};
 $("p-back").onclick=function(){show("s-done")};
 $("p-next").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
-$("b-prev").onclick=function(){if(B.i>0){B.i--;B.blocked=false;drawBuy();window.scrollTo(0,0)}};
+function go(i){B.i=(i+PARTS.length)%PARTS.length;B.blocked=false;drawBuy()}
+$("b-prev").onclick=function(){go(B.i-1)};
+$("b-map").onclick=function(e){
+  var t=e.target.closest?e.target.closest("[data-part]"):null;if(!t)return;
+  var name=t.getAttribute("data-part");
+  for(var i=0;i<PARTS.length;i++)if(PARTS[i][0]===name){go(i);$("b-name").scrollIntoView({behavior:"smooth",block:"center"});return}
+};
 function drawNote(){
   var ol=$("n-list"),n=0;ol.innerHTML="";
   QUIZ.forEach(function(Q,i){
@@ -668,10 +686,9 @@ function drawNote(){
 }
 $("b-note").onclick=function(){drawNote();show("s-note")};
 $("n-back").onclick=function(){B.blocked=false;drawBuy();show("s-buy")};
-$("b-next").onclick=function(){
-  if(!B.picks[PARTS[B.i][0]])return;
-  B.blocked=false;
-  if(B.i<PARTS.length-1){B.i++;drawBuy();window.scrollTo(0,0);return}
+$("b-next").onclick=function(){go(B.i+1)};
+$("b-done").onclick=function(){
+  for(var i=0;i<PARTS.length;i++)if(PARTS[i][2]&&!B.picks[PARTS[i][0]]){go(i);return}
   drawHw();show("s-hw");
 };
 $("h-edit").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
