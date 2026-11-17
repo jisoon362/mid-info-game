@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../../theme.js"></script>
+<title>컴퓨팅 시스템 조립하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 1번 게임과 같은 흰 바탕 도구 화면. 가운데 큰 도화지 하나, 위에는 차례와 남은 시간, 아래에는 맞히기 칸 */
+  --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
+  --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --soft:#eff4ff;--okbg:#dcfce7;--badbg:#fee2e2;--note:#fffbea;--cover:rgba(255,255,255,.97);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
+h1{font-size:20px;font-weight:600;margin:0}
+.btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.big{padding:13px 22px;font-size:18px}
+.back{border-radius:999px;padding:6px 14px;font-size:14px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.left{margin-left:auto;font-size:14px;color:var(--dim)}
+.left b{color:var(--ink)}
+
+main{flex:1;min-height:0;padding:18px 20px 28px;display:flex;flex-direction:column;align-items:center}
+.screen{width:100%;max-width:880px;display:flex;flex-direction:column;gap:16px;align-items:center}
+h2{font-size:clamp(20px,3vw,26px);font-weight:600;margin:0;text-align:center;text-wrap:balance}
+p{margin:0}
+.dim{color:var(--dim);font-size:15px;text-align:center}
+
+
+/* 조립하기: 한 화면에 한 가지. 위에는 진행과 모은 자금, 가운데 문제, 아래 선택지 */
+.goal{width:100%;max-width:640px;border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.goal small{font-size:13px;color:var(--dim);font-weight:500}
+.goal p{font-size:19px;font-weight:600;text-wrap:balance}
+.goal ol{margin:0;padding-left:22px;font-size:16px}
+.goal li{margin:4px 0}
+.steps3{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:14px;color:var(--dim)}
+.steps3 b{color:var(--ink);font-weight:600}
+.lead{font-size:18px;text-align:center;text-wrap:balance}
+.lead b{color:var(--blue)}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;max-width:720px}
+.qno{font-size:15px;color:var(--dim);font-weight:500}
+.money{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.money small{font-size:12px;color:var(--dim)}
+.money b{font-size:clamp(26px,5vw,38px);font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
+.money.bump b{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.25)}}
+.question{width:100%;max-width:720px;font-size:clamp(20px,3.2vw,26px);font-weight:600;text-wrap:balance}
+.options{list-style:none;margin:0;padding:0;width:100%;max-width:720px;display:flex;flex-direction:column;gap:10px}
+.option{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:14px 16px;border-radius:12px;border:2px solid var(--line);background:var(--bg);font-size:18px}
+.option i{font-style:normal;flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--cell);font-weight:600;font-size:16px}
+.option.wrong{border-color:var(--warn);color:var(--dim);animation:shake .25s}
+.option.wrong i{background:var(--warn);color:#fff}
+.option.right{border-color:var(--ok);background:var(--okbg)}
+.option.right i{background:var(--ok);color:#fff}
+.option[disabled]{cursor:default}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.feedback{width:100%;max-width:720px;min-height:58px;border-radius:12px;padding:12px 16px;font-size:17px;font-weight:600;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.feedback.bad{background:var(--badbg);color:var(--warn)}
+.feedback.good{background:var(--okbg);color:var(--ok)}
+.feedback span{flex:1;min-width:200px}
+.bigmoney{font-size:clamp(44px,9vw,72px);font-weight:700;color:var(--blue);line-height:1.1;font-variant-numeric:tabular-nums}
+.score{font-size:20px;font-weight:600}
+.choice{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%}
+.choice button{flex:1;min-width:230px;max-width:340px;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:2px;align-items:center}
+.choice button small{font-size:14px;color:var(--dim)}
+.choice button b{font-size:19px;font-weight:600}
+.choice button.go{border-color:var(--blue)}
+.choice button.go b{color:var(--blue)}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.note{font-size:15px;color:var(--warn);text-align:center;font-weight:600}
+.budgetbar{width:100%;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:600}
+.budgetbar b{color:var(--blue);font-size:22px}
+.budgetbar span{font-size:14px;color:var(--dim);font-weight:400}
+.tablewrap{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+caption{text-align:left;font-size:18px;font-weight:600;padding:6px 0}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:13px;font-weight:500;color:var(--dim)}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+td:first-child{font-weight:600}
+td small{display:block;font-weight:400;color:var(--dim);font-size:12px}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.tag.must{background:var(--badbg);color:var(--warn)}
+.tag.opt{background:var(--cell);color:var(--dim)}
+td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
+:root[data-theme="dark"] td.hi{color:#fbbf24}
+/* 수업 코드 */
+.gate{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;display:grid;place-items:center;padding:20px 16px}
+.gate-card{width:min(100%,400px);display:flex;flex-direction:column;gap:12px}
+.gate-card h2{text-align:left;font-size:24px}
+.gate-card p{color:var(--dim);font-size:14px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500}
+.field input{padding:11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:18px;width:100%}
+.field input.digits{font-size:32px;font-weight:600;letter-spacing:10px;text-align:center;font-variant-numeric:tabular-nums}
+.gate-btns{display:flex;gap:8px}
+.gate-btns .btn{flex:1;padding:12px}
+.gate-err{min-height:22px;color:var(--warn)!important;font-weight:600}
+.linkbtn{background:none;border:0;color:var(--dim);text-decoration:underline;padding:8px;align-self:center;font-size:13px}
+.issued{background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;font-size:14px;color:var(--dim)}
+.issued b{display:block;font-size:56px;font-weight:600;letter-spacing:8px;color:var(--blue);line-height:1.15;font-variant-numeric:tabular-nums}
+
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--badbg:#3f1d1d;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn back" href="../../">← 목록으로</a>
+  <h1>컴퓨팅 시스템 조립하기</h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
+  <span class="left">남은 시간 <b id="left"></b></span>
+</header>
+
+<main>
+  <!-- 1장: 학습 목표 -->
+  <section class="screen" id="s-intro">
+    <div class="steps3"><b>1. 퀴즈로 돈 벌기</b><span>→</span><span>2. 하드웨어 사기</span><span>→</span><span>3. 소프트웨어 사기</span></div>
+    <div class="goal">
+      <small>학습 목표</small>
+      <p>컴퓨팅 시스템이 하드웨어와 소프트웨어로 구성됨을 이해한다.</p>
+      <ol>
+        <li>하드웨어 구성 요소(CPU·메인보드·RAM·저장장치·전원·입출력장치)의 역할을 안다.</li>
+        <li>운영체제와 응용소프트웨어의 차이와 역할을 안다.</li>
+      </ol>
+    </div>
+    <button class="btn main big" id="go-quiz">조립하러 가기</button>
+  </section>
+
+  <!-- 2장: 퀴즈 안내 -->
+  <section class="screen" id="s-lead" hidden>
+    <h2>먼저 퀴즈를 맞혀 컴퓨터 부품을 살 돈을 벌어 보자</h2>
+    <p class="lead">문제마다 <b>50만원</b>씩이야!</p>
+    <p class="dim">처음 고른 답이 정답이면 50만원을 받아요. 틀려도 맞힐 때까지 다시 고를 수 있지만, 그 문제의 돈은 받지 못해요.</p>
+    <button class="btn main big" id="go-q1">퀴즈 시작</button>
+  </section>
+
+  <!-- 2장: 퀴즈 (문제마다 한 화면) -->
+  <section class="screen" id="s-quiz" hidden>
+    <div class="qhead">
+      <span class="qno" id="q-no"></span>
+      <div class="money" id="money"><small>모은 자금</small><b id="q-money">0만원</b></div>
+    </div>
+    <h2 class="question" id="q-text" style="text-align:left"></h2>
+    <ol class="options" id="q-options"></ol>
+    <div class="feedback" id="q-feedback" hidden aria-live="polite"><span id="q-msg"></span><button class="btn main" id="q-next" hidden>다음 문제</button></div>
+  </section>
+
+  <!-- 3장: 퀴즈 완료 -->
+  <section class="screen" id="s-done" hidden>
+    <h2>퀴즈 완료, 돈을 얼마나 벌었는지 보자!</h2>
+    <p class="score" id="d-score"></p>
+    <p class="dim">나의 예산</p>
+    <div class="bigmoney" id="d-money"></div>
+    <p class="note" id="d-note" hidden></p>
+    <div class="choice">
+      <button id="d-retry"><small>돈을 좀 더 벌어야지</small><b>퀴즈 다시 풀기</b></button>
+      <button class="go" id="d-shop"><small>난 만족해, 부품 사러 고고</small><b>구매 시작</b></button>
+    </div>
+  </section>
+
+  <!-- 부품 가격표 -->
+  <section class="screen" id="s-price" hidden>
+    <h2>부품 가격을 알려 줄게</h2>
+    <div class="budgetbar"><span>나의 예산</span><b id="p-budget"></b><span id="p-min"></span></div>
+    <div class="tablewrap"><table id="t-must"></table></div>
+    <div class="tablewrap"><table id="t-opt"></table></div>
+    <p class="dim">가격표를 보고 무엇을 어떤 등급으로 살지 계획해 보세요.</p>
+    <div class="row">
+      <button class="btn big" id="p-back">예산 화면으로</button>
+      <button class="btn main big" id="p-next" disabled>하드웨어 사러 가기 (준비 중)</button>
+    </div>
+  </section>
+</main>
+
+<div class="gate" id="gate" hidden>
+  <form class="gate-card" id="g-code" hidden>
+    <h2>수업 코드를 넣어요</h2>
+    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다, 게임마다 달라요.</p>
+    <label class="field" for="g-class">수업 코드
+      <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-code-err" aria-live="polite"></p>
+    <div class="gate-btns"><button class="btn main" type="submit">시작하기</button></div>
+    <button class="linkbtn" type="button" id="g-teacher-open">선생님 메뉴</button>
+  </form>
+  <form class="gate-card" id="g-tpin" hidden>
+    <h2>선생님 메뉴</h2>
+    <label class="field" for="g-pin">선생님 비밀번호
+      <input id="g-pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+    </label>
+    <p class="gate-err" id="g-pin-err" aria-live="polite"></p>
+    <div class="issued" id="g-issued" hidden><span id="g-now-label"></span><b id="g-now-code"></b></div>
+    <div class="gate-btns">
+      <button class="btn main" type="submit">열기</button>
+      <button class="btn" type="button" id="g-back">돌아가기</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+
+/* ---------- 수업 코드 (1번 게임과 같은 코드, 같은 저장 위치) ---------- */
+var mem={};
+function sget(k,def){try{var v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?mem[k]:def}
+function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=3498242298754679;
+var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
+var K={pass:"cardrelay|pass|g3",lock:"cardrelay|lock",code:"cardrelay|code|g3"};
+function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
+function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g3")%1000).slice(-3)}
+function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
+function gate(){
+  var pass=sget(K.pass,0),free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
+  gshow(null);
+  $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
+}
+function locked(err){
+  var lock=sget(K.lock,{n:0,until:0}),t=Date.now();
+  if(t<lock.until){err.textContent="여러 번 틀렸어요. "+Math.ceil((lock.until-t)/1000)+"초 뒤에 다시 넣을 수 있어요.";return null}
+  return lock;
+}
+function fail(lock){lock.n++;if(lock.n%3===0)lock.until=Date.now()+20000*Math.pow(2,Math.min(6,lock.n/3-1));sset(K.lock,lock)}
+$("g-code").onsubmit=function(e){
+  e.preventDefault();
+  var err=$("g-code-err"),lock=locked(err);if(!lock)return;
+  var d=new Date(),p=period(d),code=$("g-class").value.replace(/\D/g,"");
+  if(p<0){err.textContent="지금은 수업 시간이 아니에요. 수업이 시작되면 코드를 넣을 수 있어요.";return}
+  if(code!==codeFor(d,p)){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
+  var end=new Date(d);end.setHours(0,PERIODS[p][1],0,0);
+  var saved=sget(K.code,{})||{};saved.code=code;saved.day=d.toDateString();sset(K.code,saved);
+  sset(K.lock,{n:0,until:0});sset(K.pass,end.getTime());err.textContent="";gate();
+};
+$("g-teacher-open").onclick=function(){$("g-pin-err").textContent="";$("g-issued").hidden=true;gshow("g-tpin");$("g-pin").focus()};
+$("g-back").onclick=function(){$("g-tpin").hidden=true;gate()};
+$("g-tpin").onsubmit=function(e){
+  e.preventDefault();
+  var err=$("g-pin-err"),lock=locked(err);if(!lock)return;
+  if(cyrb("T|"+SECRET+"|"+$("g-pin").value)!==TPIN){fail(lock);err.textContent="비밀번호가 달라요.";return}
+  sset(K.lock,{n:0,until:0});$("g-pin").value="";err.textContent="";
+  var d=new Date(),p=period(d);
+  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":(p+1)+"교시 수업 코드";
+  $("g-now-code").textContent=p<0?"---":codeFor(d,p);
+  $("g-issued").hidden=false;
+};
+setInterval(function(){if($("gate").hidden)gate()},5000);
+
+
+/* ---------- 퀴즈 ---------- */
+var PRIZE=50;
+var QUIZ=[
+  {q:"컴퓨팅 시스템은 무엇과 무엇으로 구성되어 있을까요?",
+   o:["하드웨어와 소프트웨어","모니터와 본체","키보드와 마우스","운영체제와 응용프로그램","중앙처리장치와 저장장치"],a:0,
+   ok:"컴퓨팅 시스템은 하드웨어와 소프트웨어로 이루어져 있어!",no:"아쉽군.. 눈에 보이는 장치와 보이지 않는 프로그램을 함께 묶은 것을 찾아보자!"},
+  {q:"다음 중 입력장치가 아닌 것은?",
+   o:["키보드","마우스","모니터","마이크","스캐너"],a:2,
+   ok:"모니터는 출력장치!",no:"아쉽군.. 출력장치를 찾아보자!"},
+  {q:"운영체제(OS)의 역할로 가장 알맞은 것은?",
+   o:["그림을 그리거나 사진을 편집하는 작업을 전문으로 하는 프로그램이다","하드웨어를 제어하고 응용프로그램이 동작할 환경을 제공한다","작성한 문서를 저장장치에 안전하게 보관하는 일만 하는 프로그램이다","웹 사이트를 검색하고 화면에 보여 주는 인터넷 전용 프로그램이다","CPU 내부에서 처리 속도를 높여 주는 하드웨어 장치이다"],a:1,
+   ok:"나머지는 응용소프트웨어나 다른 하드웨어!",no:"아쉽군.. 하드웨어를 다루는, 좀 더 근본이 되는 역할을 찾아보자!"},
+  {q:"컴퓨터의 두뇌라고 불리며 명령을 처리하는 장치는?",
+   o:["RAM","HDD","CPU","GPU","SSD"],a:2,
+   ok:"중앙처리장치인데 Central Processing Unit의 약자야!",
+   each:["RAM은 당장 쓰는 데이터를 저장하는 공간이야",
+         "HDD는 느리지만, 오래 기억할 데이터를 저장하는 공간이야",null,
+         "GPU는 컴퓨터 그래픽을 처리하는 장치야",
+         "SSD는 빠르게, 오래 기억할 데이터를 저장하는 공간이야"]},
+  {q:"응용소프트웨어에 해당하는 것은?",
+   o:["Windows","macOS","Linux","한글(HWP)","안드로이드(Android)"],a:3,
+   ok:"나머지는 운영체제!",no:"특정 작업을 위한 프로그램을 다시 찾아보자!"},
+  {q:"RAM(메모리, 주기억장치)에 대한 설명으로 옳은 것은?",
+   o:["전원이 꺼져도 데이터가 남는다","데이터를 영구히 저장한다","CPU가 현재 작업할 데이터를 임시 저장한다","그래픽 신호를 출력한다","키보드로 입력한 내용을 화면에 표시한다"],a:2,
+   ok:"'임시'로 저장한다는 점이 핵심!",
+   each:["이건 보조기억장치","이건 보조기억장치",null,"이건 GPU","이거는 입력장치 중 키보드"]}
+];
+var MARK=["①","②","③","④","⑤"];
+var S={i:0,money:0,right:0,missed:false,solved:false};
+
+function show(id){["s-intro","s-lead","s-quiz","s-done","s-price"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+function won(n){return n+"만원"}
+function drawQuiz(){
+  var Q=QUIZ[S.i];S.missed=false;S.solved=false;
+  $("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length;
+  $("q-money").textContent=won(S.money);
+  $("q-text").textContent=Q.q;
+  var ol=$("q-options");ol.innerHTML="";
+  Q.o.forEach(function(text,k){
+    var li=document.createElement("li"),b=document.createElement("button"),n=document.createElement("i"),t=document.createElement("span");
+    b.className="option";n.textContent=MARK[k];t.textContent=text;b.appendChild(n);b.appendChild(t);
+    b.onclick=function(){pick(k,b)};li.appendChild(b);ol.appendChild(li);
+  });
+  $("q-feedback").hidden=true;$("q-next").hidden=true;
+}
+function pick(k,btn){
+  var Q=QUIZ[S.i],fb=$("q-feedback");
+  if(S.solved||btn.disabled)return;
+  fb.hidden=false;
+  if(k===Q.a){
+    S.solved=true;btn.classList.add("right");
+    var all=$("q-options").querySelectorAll("button");for(var x=0;x<all.length;x++)all[x].disabled=true;
+    if(!S.missed){
+      S.right++;S.money+=PRIZE;
+      $("q-money").textContent=won(S.money);
+      var m=$("money");m.classList.remove("bump");void m.offsetWidth;m.classList.add("bump");
+      $("q-msg").textContent="정답! "+Q.ok+" "+PRIZE+"만원 추가! 총액 "+won(S.money)+"!";
+    }else{
+      $("q-msg").textContent="정답! "+Q.ok+" 하지만 처음에 틀려서 이번 문제의 돈은 받지 못했어. 총액 "+won(S.money)+".";
+    }
+    fb.className="feedback good";
+    $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
+    $("q-next").hidden=false;$("q-next").focus();
+  }else{
+    S.missed=true;btn.classList.add("wrong");btn.disabled=true;
+    $("q-msg").textContent=(Q.each&&Q.each[k])?"아쉽군.. "+Q.each[k]:Q.no;
+    fb.className="feedback bad";$("q-next").hidden=true;
+  }
+}
+var MUST=[
+  ["🖥️","케이스","",30,15,5],
+  ["🔌","메인보드","주기판",50,25,10],
+  ["🧠","CPU","중앙처리장치",100,50,20],
+  ["⚡","RAM","메모리·주기억장치",40,20,8],
+  ["💾","저장장치","보조기억장치",30,15,null],
+  ["🔋","전원공급장치","",25,12,5],
+  ["🖼️","모니터","",50,25,10],
+  ["⌨️","키보드","",15,8,3],
+  ["🖱️","마우스","",10,5,2]
+];
+var OS=[["Windows",30],["macOS",30],["Linux",0]];
+var OPT=[["🎮","그래픽카드","그래픽처리장치",60],["🖨️","프린터","",20],["🔊","스피커","",10],["📦","응용프로그램 · 한글(HWP)","",20],["📦","응용프로그램 · 오피스","",30]];
+function minCost(){var t=0;MUST.forEach(function(r){t+=r[5]==null?r[4]:r[5]});return t}
+function cell(tr,text,cls){var td=document.createElement("td");if(cls)td.className=cls;td.textContent=text;tr.appendChild(td);return td}
+function nameCell(tr,emoji,name,sub,tag,tagCls){
+  var td=document.createElement("td");td.appendChild(document.createTextNode(emoji+" "+name));
+  var t=document.createElement("span");t.className="tag "+tagCls;t.textContent=tag;td.appendChild(t);
+  if(sub){var s=document.createElement("small");s.textContent=sub;td.appendChild(s)}
+  tr.appendChild(td);
+}
+function drawPrice(){
+  var t=$("t-must");t.innerHTML="<caption>꼭 사야 하는 부품</caption><tr><th>부품</th><th>고급</th><th>일반</th><th>저가</th></tr>";
+  MUST.forEach(function(r){
+    var tr=document.createElement("tr");nameCell(tr,r[0],r[1],r[2],"필수","must");
+    cell(tr,won(r[3]),"hi");cell(tr,won(r[4]),"mid");cell(tr,r[5]==null?"-":won(r[5]),"low");t.appendChild(tr);
+  });
+  var tr=document.createElement("tr");nameCell(tr,"🪟","운영체제","종류에 따라 가격이 달라요","필수","must");
+  OS.forEach(function(o){cell(tr,o[0]+" "+(o[1]?won(o[1]):"무료"),"mid").style.whiteSpace="normal"});t.appendChild(tr);
+  var u=$("t-opt");u.innerHTML="<caption>사고 싶으면 사는 부품</caption><tr><th>부품</th><th>가격</th></tr>";
+  OPT.forEach(function(r){var tr=document.createElement("tr");nameCell(tr,r[0],r[1],r[2],"선택","opt");cell(tr,won(r[3]),"mid");u.appendChild(tr)});
+  $("p-budget").textContent=won(S.money);
+  $("p-min").textContent="필수 부품을 모두 가장 싸게 사면 "+won(minCost())+"이에요.";
+}
+function finish(){
+  $("d-score").textContent="정답 "+S.right+" / "+QUIZ.length+" 문제";
+  $("d-money").textContent=won(S.money)+"!!";
+  var low=S.money<minCost();
+  $("d-note").hidden=!low;
+  $("d-note").textContent=low?"필수 부품을 모두 사려면 적어도 "+won(minCost())+"이 필요해요. 퀴즈를 다시 풀어 돈을 더 벌어 보세요.":"";
+  try{sessionStorage.setItem("mig|g3|budget",String(S.money))}catch(e){}
+  show("s-done");
+}
+function startQuiz(){S.i=0;S.money=0;S.right=0;show("s-quiz");drawQuiz()}
+$("go-quiz").onclick=function(){show("s-lead")};
+$("go-q1").onclick=startQuiz;
+$("q-next").onclick=function(){if(!S.solved)return;if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
+$("d-retry").onclick=startQuiz;
+$("d-shop").onclick=function(){drawPrice();show("s-price")};
+$("p-back").onclick=function(){show("s-done")};
+
+gate();
+})();
+</script>
+</body>
+</html>

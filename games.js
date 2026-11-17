@@ -14,5 +14,6 @@ window.CURRICULUM = [
    grade: 학년, area: 대단원 번호, unit: 소단원 번호 (위 단원 위계에서의 위치) */
 window.GAMES = [
   { no: 1, folder: "01-card-move", title: "카드 옮기기", grade: "2학년", area: 2, unit: 1, desc: "파란 카드를 눌러서 빨간 카드를 제일 구석으로 옮기기 · 개인전과 릴레이" },
-  { no: 2, folder: "02-relay-draw", title: "이어 그리기", grade: "2학년", area: 2, unit: 1, desc: "3초씩 이어 그리고 맞히기 · 핵심요소 적기 · 모둠 활동" }
+  { no: 2, folder: "02-relay-draw", title: "이어 그리기", grade: "2학년", area: 2, unit: 1, desc: "3초씩 이어 그리고 맞히기 · 핵심요소 적기 · 모둠 활동" },
+  { no: 3, folder: "03-build-computer", title: "컴퓨팅 시스템 조립하기", grade: "2학년", area: 1, unit: 1, desc: "퀴즈로 돈을 벌어 컴퓨터 부품 사기 · 지금은 퀴즈와 가격표까지" }
 ];

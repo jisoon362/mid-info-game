@@ -13,6 +13,8 @@ games/
     index.html
   02-relay-draw/        2번 게임: 이어 그리기 (추상화)
     index.html
+  03-build-computer/    3번 게임: 컴퓨팅 시스템 조립하기
+    index.html
 ```
 
 ## 새 게임 추가하는 법
