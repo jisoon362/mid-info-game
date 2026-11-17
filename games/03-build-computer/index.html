@@ -14,7 +14,7 @@
   --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
   --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  --soft:#eff4ff;--okbg:#dcfce7;--badbg:#fee2e2;--note:#fffbea;--cover:rgba(255,255,255,.97);
+  --soft:#eff4ff;--okbg:#dcfce7;--gold:#d99a00;--badbg:#fee2e2;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -110,11 +110,13 @@ p{margin:0}
 .map text{fill:var(--ink);font-family:var(--font-body);text-anchor:middle}
 .map .nm{font-weight:700}
 .map .pr{fill:var(--blue);font-weight:600}
+.map .hi{fill:var(--gold);font-weight:700}
+.map .mid{fill:var(--blue)}
+.map .sep{fill:var(--dim)}
 .map .cap{text-anchor:start;font-weight:700}
 .legend2{font-size:14px;color:var(--dim);text-align:center}
 .legend2 b{font-weight:600;color:var(--ink)}
-.legend2 .hi{color:#b45309}.legend2 .mid{color:var(--blue)}.legend2 .low{color:var(--dim)}
-:root[data-theme="dark"] .legend2 .hi{color:#fbbf24}
+.legend2 .hi{color:var(--gold)}.legend2 .mid{color:var(--blue)}.legend2 .low{color:var(--dim)}
 .soft,.brief{list-style:none;margin:0;padding:0;width:100%}
 .soft{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .soft li{border:2px solid var(--ink);border-radius:10px;padding:8px 14px;font-size:15px}
@@ -129,6 +131,8 @@ p{margin:0}
 .brief li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
 .brief li span{color:var(--blue);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .brief li.opt{color:var(--dim)}
+.brief li b{font-weight:600}
+.brief li b.hi{color:var(--gold);font-weight:700}
 .tablewrap{width:100%;overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 caption{text-align:left;font-size:18px;font-weight:600;padding:6px 0}
@@ -157,7 +161,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
 .issued{background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;font-size:14px;color:var(--dim)}
 .issued b{display:block;font-size:56px;font-weight:600;letter-spacing:8px;color:var(--blue);line-height:1.15;font-variant-numeric:tabular-nums}
 
-:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--badbg:#3f1d1d;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--gold:#fbbf24;--badbg:#3f1d1d;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
@@ -428,7 +432,7 @@ function nameCell(tr,emoji,name,sub,tag,tagCls){
   if(sub){var s=document.createElement("small");s.textContent=sub;td.appendChild(s)}
   tr.appendChild(td);
 }
-function tri(r){return r[3]+"만 / "+r[4]+"만"}
+function tri(r){return '<tspan class="hi">'+r[3]+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+r[4]+"만</tspan>"}
 function part(name){for(var i=0;i<MUST.length;i++)if(MUST[i][1]===name)return MUST[i];return null}
 function drawMap(){
   // 가운데 큰 상자가 본체(케이스), 그 안이 부품, 바깥이 선으로 이어진 입출력장치
@@ -459,7 +463,12 @@ function drawPrice(){
   $("p-soft").innerHTML='<li><b>🪟 운영체제</b> (필수) <span>Windows 30만 · macOS 30만 · Linux 무료</span></li><li class="opt"><b>📦 응용프로그램</b> (선택) <span>한글(HWP) 20만 · 오피스 30만</span></li>';
   var ul=$("p-brief");ul.innerHTML="";
   function line(label,price,opt){var li=document.createElement("li");if(opt)li.className="opt";li.appendChild(document.createTextNode(label));var sp=document.createElement("span");sp.textContent=price;li.appendChild(sp);ul.appendChild(li)}
-  MUST.forEach(function(r){line(r[0]+" "+r[1],r[3]+" / "+r[4])});
+  MUST.forEach(function(r){
+    var li=document.createElement("li");li.appendChild(document.createTextNode(r[0]+" "+r[1]));
+    var sp=document.createElement("span"),a=document.createElement("b"),b=document.createElement("b");
+    a.className="hi";a.textContent=r[3]+"만";b.textContent=r[4]+"만";
+    sp.appendChild(a);sp.appendChild(document.createTextNode(" / "));sp.appendChild(b);li.appendChild(sp);ul.appendChild(li);
+  });
   line("🪟 운영체제","Windows 30 · macOS 30 · Linux 무료");
   OPT.forEach(function(r){line(r[0]+" "+r[1]+" (선택)",String(r[3]),true)});
   $("p-budget").textContent=won(S.money);
