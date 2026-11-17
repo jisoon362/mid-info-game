@@ -48,7 +48,8 @@ p{margin:0}
 .goal ol{margin:0;padding-left:22px;font-size:16px}
 .goal li{margin:4px 0}
 .steps3{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;max-width:880px;margin-bottom:16px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;color:var(--dim)}
-.steps3 b{background:var(--blue);color:#fff;font-weight:600;padding:3px 12px;border-radius:8px}
+.steps3 i{font-style:normal}
+.steps3 .cur{background:var(--blue);color:#fff;font-weight:600;padding:3px 12px;border-radius:8px}
 .lead{font-size:18px;text-align:center;text-wrap:balance}
 .lead b{color:var(--blue)}
 .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;max-width:720px}
@@ -114,6 +115,36 @@ p{margin:0}
 .map .mid{fill:var(--blue)}
 .map .sep{fill:var(--dim)}
 .map .cap{text-anchor:start;font-weight:700}
+.map .on{stroke:var(--red);stroke-width:6;fill:var(--note);stroke-dasharray:none}
+.map .case.on{fill:none}
+.map .got{fill:var(--okbg)}
+.map .case.got{fill:none;stroke:var(--ok)}
+.map .skip{fill:var(--cell)}
+.map .done{fill:var(--ok);font-weight:700}
+.map .off{fill:var(--dim)}
+.budgetbar .use{color:var(--red)}
+.budgetbar .rest{color:var(--ok)}
+.budgetbar .rest.minus{color:var(--red)}
+.budgetbar b.plain{color:var(--ink)}
+.phead{width:100%;display:flex;align-items:center;gap:10px}
+.phead h2{text-align:left;font-size:24px}
+.phead .tag{font-size:13px;padding:2px 10px;margin:0}
+.pcount{margin-left:auto;font-size:14px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pdesc{width:100%;background:var(--cell);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;font-size:16px}
+.pdesc .tip{font-size:14.5px;color:var(--dim)}
+.pdesc .tip b{color:var(--ink);font-weight:600}
+.picks{width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.pick{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--bg)}
+.pick .pic{width:100%;border-radius:10px;background:var(--cell);font-size:54px;line-height:1;padding:18px 0;text-align:center}
+.pick .pn{font-size:17px;font-weight:600}
+.pick .grade{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--cell);color:var(--dim)}
+.pick .grade.hi{background:#fdecc0;color:#8a5a00}
+.pick .grade.mid{background:var(--soft);color:var(--blue)}
+.pick .pp{font-size:17px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums}
+.pick[aria-pressed="true"]{border-color:var(--ok);background:var(--okbg)}
+.pick[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-weight:700}
+.pnav{width:100%;display:flex;justify-content:space-between;gap:10px}
+.pnav .btn[disabled]{opacity:.45;cursor:default}
 .legend2{font-size:14px;color:var(--dim);text-align:center}
 .legend2 b{font-weight:600;color:var(--ink)}
 .legend2 .hi{color:var(--gold)}.legend2 .mid{color:var(--blue)}.legend2 .low{color:var(--dim)}
@@ -173,7 +204,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
 </header>
 
 <main>
-  <nav class="steps3" aria-label="진행 단계"><b>1. 퀴즈</b><span>›</span><span>2. 하드웨어 부품 사기</span><span>›</span><span>3. 소프트웨어 부품 사기</span></nav>
+  <nav class="steps3" aria-label="진행 단계"><span id="st1" class="cur">1. 퀴즈</span><i>›</i><span id="st2">2. 하드웨어 부품 사기</span><i>›</i><span id="st3">3. 소프트웨어 부품 사기</span></nav>
   <!-- 1장: 학습 목표 -->
   <section class="screen" id="s-intro">
     <div class="goal">
@@ -238,7 +269,38 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
     </details>
     <div class="row">
       <button class="btn big" id="p-back">예산 화면으로</button>
-      <button class="btn main big" id="p-next" disabled>하드웨어 사러 가기 (준비 중)</button>
+      <button class="btn main big" id="p-next">하드웨어 사러 가기</button>
+    </div>
+  </section>
+  <!-- 하드웨어 부품 사기: 부품마다 한 화면 -->
+  <section class="screen" id="s-buy" hidden>
+    <div class="map" id="b-map"></div>
+    <div class="budgetbar" id="b-bar"></div>
+    <p class="note" id="b-warn" hidden></p>
+    <div class="phead">
+      <h2 id="b-name"></h2><span class="tag" id="b-tag"></span>
+      <span class="pcount" id="b-count"></span>
+    </div>
+    <div class="pdesc">
+      <p id="b-desc"></p>
+      <p class="tip" id="b-tip"></p>
+    </div>
+    <div class="picks" id="b-picks"></div>
+    <div class="pnav">
+      <button class="btn big" id="b-prev">◀ 이전</button>
+      <button class="btn main big" id="b-next">다음 부품 ▶</button>
+    </div>
+  </section>
+
+  <!-- 하드웨어 구매 완료 -->
+  <section class="screen" id="s-hw" hidden>
+    <h2>하드웨어 구매 완료!</h2>
+    <div class="map" id="h-map"></div>
+    <div class="budgetbar" id="h-bar"></div>
+    <ul class="brief" id="h-list"></ul>
+    <div class="row">
+      <button class="btn big" id="h-edit">부품 다시 고르기</button>
+      <button class="btn main big" disabled>소프트웨어 사러 가기 (준비 중)</button>
     </div>
   </section>
 </main>
@@ -351,7 +413,7 @@ var QUIZ=[
 var MARK=["①","②","③","④","⑤"];
 var S={i:0,money:0,right:0,solved:false};
 
-function show(id){["s-intro","s-lead","s-quiz","s-done","s-price"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+function show(id){["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw"].forEach(function(s){$(s).hidden=s!==id});setStep(id==="s-buy"||id==="s-hw"?2:1);window.scrollTo(0,0)}
 function won(n){return n+"만원"}
 var MAXMONEY=QUIZ.length*PRIZE;
 function head(){
@@ -434,32 +496,43 @@ function nameCell(tr,emoji,name,sub,tag,tagCls){
 }
 function tri(r){return '<tspan class="hi">'+r[3]+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+r[4]+"만</tspan>"}
 function part(name){for(var i=0;i<MUST.length;i++)if(MUST[i][1]===name)return MUST[i];return null}
-function drawMap(){
-  // 가운데 큰 상자가 본체(케이스), 그 안이 부품, 바깥이 선으로 이어진 입출력장치
+// 그림 그리기. st가 있으면 지금 고르는 부품(st.active)을 강조하고, 산 부품(st.picks)을 표시한다
+function drawMap(target,st){
+  function cls(name){
+    if(!st)return "";
+    if(st.active===name)return " on";
+    var pk=st.picks[name];
+    return pk?(pk.tier==="none"?" skip":" got"):"";
+  }
+  function price(name,normal){
+    var pk=st&&st.picks[name];
+    if(!pk||st.active===name)return normal;
+    return pk.tier==="none"?'<tspan class="off">사지 않음</tspan>':'<tspan class="done">✓ '+pk.label+" "+pk.price+"만</tspan>";
+  }
   var inside=[["CPU",150,40,250,200,26],["메인보드",150,240,250,130,22],["저장장치",400,40,190,150,20],["RAM",400,190,190,180,26],["전원공급장치",150,370,250,90,19]];
   var h='<svg viewBox="0 0 900 480" role="img" aria-label="컴퓨터 본체 안의 부품과 바깥에 연결된 입출력장치, 그리고 가격">';
   var c=part("케이스");
-  h+='<text class="cap" x="150" y="26" font-size="19">'+c[0]+" 케이스  "+'<tspan class="pr">'+tri(c)+"</tspan></text>";
+  h+='<text class="cap" x="150" y="26" font-size="19">'+c[0]+" 케이스  "+'<tspan class="pr">'+price("케이스",tri(c))+"</tspan></text>";
   h+='<path class="wire" d="M590 90 C630 150 655 20 700 70"/><path class="wire" d="M590 180 C630 240 665 130 712 195"/><path class="wire" d="M590 330 C630 390 665 280 715 345"/>';
   h+='<path class="wire" d="M150 130 C135 100 130 160 120 130"/><path class="wire" d="M150 320 C135 290 130 350 120 320"/>';
   inside.forEach(function(b){
     var r=part(b[0]),cx=b[1]+b[3]/2,cy=b[2]+b[4]/2;
-    h+='<rect class="box" x="'+b[1]+'" y="'+b[2]+'" width="'+b[3]+'" height="'+b[4]+'"/>';
+    h+='<rect class="box'+cls(b[0])+'" x="'+b[1]+'" y="'+b[2]+'" width="'+b[3]+'" height="'+b[4]+'"/>';
     h+='<text class="nm" x="'+cx+'" y="'+(cy-4)+'" font-size="'+b[5]+'">'+r[0]+" "+r[1]+"</text>";
-    h+='<text class="pr" x="'+cx+'" y="'+(cy+22)+'" font-size="16">'+tri(r)+"</text>";
+    h+='<text class="pr" x="'+cx+'" y="'+(cy+22)+'" font-size="16">'+price(b[0],tri(r))+"</text>";
   });
-  h+='<rect class="box opt" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드</text><text class="pr" x="495" y="435" font-size="16">선택 · 60만</text>';
-  h+='<rect class="case" x="150" y="40" width="440" height="420"/>';
+  h+='<rect class="box opt'+cls("그래픽카드")+'" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드</text><text class="pr" x="495" y="435" font-size="16">'+price("그래픽카드","선택 · 60만")+"</text>";
+  h+='<rect class="case'+cls("케이스")+'" x="150" y="40" width="440" height="420"/>';
   var mo=part("모니터"),ms=part("마우스"),kb=part("키보드");
-  h+='<rect class="box" x="700" y="30" width="180" height="84" rx="6"/><text class="nm" x="790" y="66" font-size="19">'+mo[0]+" 모니터</text>"+'<text class="pr" x="790" y="92" font-size="15">'+tri(mo)+"</text>";
-  h+='<path class="box" d="M790 140 L888 198 L790 256 L692 198 Z"/><text class="nm" x="790" y="194" font-size="18">'+ms[0]+" 마우스</text>"+'<text class="pr" x="790" y="217" font-size="14">'+tri(ms)+"</text>";
-  h+='<rect class="box" x="715" y="290" width="150" height="150" rx="6"/><text class="nm" x="790" y="358" font-size="19">'+kb[0]+" 키보드</text>"+'<text class="pr" x="790" y="384" font-size="15">'+tri(kb)+"</text>";
-  h+='<rect class="box opt" x="6" y="90" width="114" height="80" rx="6"/><text class="nm" x="63" y="124" font-size="16">🔊 스피커</text><text class="pr" x="63" y="148" font-size="14">선택 · 10만</text>';
-  h+='<rect class="box opt" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">선택 · 20만</text>';
-  $("p-map").innerHTML=h+"</svg>";
+  h+='<rect class="box'+cls("모니터")+'" x="700" y="30" width="180" height="84" rx="6"/><text class="nm" x="790" y="66" font-size="19">'+mo[0]+" 모니터</text>"+'<text class="pr" x="790" y="92" font-size="15">'+price("모니터",tri(mo))+"</text>";
+  h+='<path class="box'+cls("마우스")+'" d="M790 140 L888 198 L790 256 L692 198 Z"/><text class="nm" x="790" y="194" font-size="18">'+ms[0]+" 마우스</text>"+'<text class="pr" x="790" y="217" font-size="14">'+price("마우스",tri(ms))+"</text>";
+  h+='<rect class="box'+cls("키보드")+'" x="715" y="290" width="150" height="150" rx="6"/><text class="nm" x="790" y="358" font-size="19">'+kb[0]+" 키보드</text>"+'<text class="pr" x="790" y="384" font-size="15">'+price("키보드",tri(kb))+"</text>";
+  h+='<rect class="box opt'+cls("스피커")+'" x="6" y="90" width="114" height="80" rx="6"/><text class="nm" x="63" y="124" font-size="16">🔊 스피커</text><text class="pr" x="63" y="148" font-size="14">'+price("스피커","선택 · 10만")+"</text>";
+  h+='<rect class="box opt'+cls("프린터")+'" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">'+price("프린터","선택 · 20만")+"</text>";
+  $(target).innerHTML=h+"</svg>";
 }
 function drawPrice(){
-  drawMap();
+  drawMap("p-map",null);
   $("p-soft").innerHTML='<li><b>🪟 운영체제</b> (필수) <span>Windows 30만 · macOS 30만 · Linux 무료</span></li><li class="opt"><b>📦 응용프로그램</b> (선택) <span>한글(HWP) 20만 · 오피스 30만</span></li>';
   var ul=$("p-brief");ul.innerHTML="";
   function line(label,price,opt){var li=document.createElement("li");if(opt)li.className="opt";li.appendChild(document.createTextNode(label));var sp=document.createElement("span");sp.textContent=price;li.appendChild(sp);ul.appendChild(li)}
@@ -474,19 +547,90 @@ function drawPrice(){
   $("p-budget").textContent=won(S.money);
   $("p-min").textContent="";
 }
+/* ---------- 하드웨어 부품 사기 ---------- */
+// [이름, 이모지, 필수 여부, 고급가, 일반가, 역할 설명]  (선택 부품은 일반가만)
+var PARTS=[
+  ["케이스","🖥️",true,30,15,"컴퓨터 본체를 담는 외관이에요. 안의 부품을 보호하고 열을 식혀 줘요."],
+  ["메인보드","🔌",true,50,25,"주기판이라고도 해요. 모든 부품을 꽂아 서로 연결해 주는 판이에요."],
+  ["CPU","🧠",true,100,50,"중앙처리장치. 컴퓨터의 두뇌로, 명령을 해석하고 계산을 처리해요."],
+  ["RAM","⚡",true,40,20,"주기억장치. CPU가 지금 작업 중인 데이터를 임시로 기억해요. 전원이 꺼지면 지워져요."],
+  ["그래픽카드","🎮",false,null,60,"그래픽처리장치(GPU). 화면에 보일 그림을 계산해요. 게임이나 영상 작업을 할 때 필요해요."],
+  ["저장장치","💾",true,30,15,"보조기억장치. 전원이 꺼져도 프로그램과 파일을 오래 보관해요."],
+  ["전원공급장치","🔋",true,25,12,"콘센트의 전기를 부품이 쓸 수 있게 바꿔서 나눠 줘요."],
+  ["모니터","🖼️",true,50,25,"처리한 결과를 화면으로 보여 주는 출력장치예요."],
+  ["키보드","⌨️",true,15,8,"글자와 명령을 넣는 입력장치예요."],
+  ["마우스","🖱️",true,10,5,"화면에서 위치를 가리키고 고르는 입력장치예요."],
+  ["프린터","🖨️",false,null,20,"결과를 종이에 인쇄하는 출력장치예요."],
+  ["스피커","🔊",false,null,10,"소리를 들려주는 출력장치예요."]
+];
+var B={i:0,picks:{}};
+function spent(){var t=0;for(var k in B.picks)t+=B.picks[k].price;return t}
+function barHtml(){
+  var use=spent(),rest=S.money-use;
+  return "<span>시작 자금</span><b class=\"plain\">"+won(S.money)+"</b><span>사용 합계</span><b class=\"use\">"+won(use)+"</b><span>남은 예산</span><b class=\"rest"+(rest<0?" minus":"")+"\">"+won(rest)+"</b>";
+}
+function drawBuy(){
+  var P=PARTS[B.i],name=P[0],must=P[2],pk=B.picks[name];
+  if(!must&&!pk){pk=B.picks[name]={tier:"none",label:"사지 않음",price:0}}   // 선택 부품은 처음에 '사지 않기'
+  drawMap("b-map",{active:name,picks:B.picks});
+  $("b-bar").innerHTML=barHtml();
+  var rest=S.money-spent();
+  $("b-warn").hidden=rest>=0;
+  $("b-warn").textContent=rest<0?"예산을 "+won(-rest)+" 넘었어요! 일반 등급으로 바꾸거나, 선택 부품을 빼 보세요.":"";
+  $("b-name").textContent=P[1]+" "+name;
+  $("b-tag").textContent=must?"필수":"선택";$("b-tag").className="tag "+(must?"must":"opt");
+  $("b-count").textContent=(B.i+1)+" / "+PARTS.length;
+  $("b-desc").textContent=P[5];
+  $("b-tip").innerHTML=must?"💡 등급 안내 — <b>고급</b>: 성능이 높지만 가격이 비싸요 · <b>일반</b>: 성능과 가격이 균형 잡혀 있어요":"💡 선택 부품이에요. 필요하면 사고, 아니면 사지 않아도 컴퓨터는 동작해요.";
+  var opts=must?[["hi","고급",P[3]],["mid","일반",P[4]]]:[["none","사지 않기",0],["mid","일반",P[4]]];
+  var box=$("b-picks");box.innerHTML="";
+  opts.forEach(function(o){
+    var b=document.createElement("button");b.className="pick";b.setAttribute("aria-pressed",String(!!pk&&pk.tier===o[0]));
+    var pic=document.createElement("span");pic.className="pic";pic.textContent=o[0]==="none"?"🚫":P[1];b.appendChild(pic);
+    var pn=document.createElement("span");pn.className="pn";pn.textContent=o[0]==="none"?"사지 않기":o[1]+" "+name;b.appendChild(pn);
+    if(o[0]!=="none"){var g=document.createElement("span");g.className="grade "+o[0];g.textContent=o[1];b.appendChild(g)}
+    var pp=document.createElement("span");pp.className="pp";pp.textContent=won(o[2]);b.appendChild(pp);
+    b.onclick=function(){B.picks[name]={tier:o[0],label:o[0]==="none"?"사지 않음":o[1],price:o[2]};drawBuy()};
+    box.appendChild(b);
+  });
+  $("b-prev").disabled=B.i===0;
+  $("b-next").disabled=!B.picks[name];
+  $("b-next").textContent=B.i===PARTS.length-1?"구매 완료 ▶":"다음 부품 ▶";
+}
+function drawHw(){
+  drawMap("h-map",{active:null,picks:B.picks});
+  $("h-bar").innerHTML=barHtml();
+  var ul=$("h-list");ul.innerHTML="";
+  PARTS.forEach(function(P){
+    var pk=B.picks[P[0]],li=document.createElement("li");if(!pk||pk.tier==="none")li.className="opt";
+    li.appendChild(document.createTextNode(P[1]+" "+P[0]));
+    var sp=document.createElement("span");sp.textContent=!pk||pk.tier==="none"?"사지 않음":pk.label+" "+won(pk.price);li.appendChild(sp);ul.appendChild(li);
+  });
+  try{sessionStorage.setItem("mig|g3|hardware",JSON.stringify(B.picks))}catch(e){}
+}
+function setStep(n){for(var i=1;i<=3;i++)$("st"+i).className=i===n?"cur":""}
 function finish(){
   $("d-score").textContent="정답 "+S.right+" / "+QUIZ.length+" 문제";
   $("d-money").textContent="나의 예산 : "+won(S.money)+"!!";
   try{sessionStorage.setItem("mig|g3|budget",String(S.money))}catch(e){}
   show("s-done");
 }
-function startQuiz(){S.i=0;S.money=0;S.right=0;show("s-quiz");drawQuiz()}
+function startQuiz(){B.picks={};B.i=0;S.i=0;S.money=0;S.right=0;show("s-quiz");drawQuiz()}
 $("go-quiz").onclick=function(){show("s-lead")};
 $("go-q1").onclick=startQuiz;
 $("q-next").onclick=function(){if(!S.solved)return;if(S.i===QUIZ.length-1)finish();else{S.i++;drawQuiz();window.scrollTo(0,0)}};
 $("d-retry").onclick=startQuiz;
 $("d-shop").onclick=function(){drawPrice();show("s-price")};
 $("p-back").onclick=function(){show("s-done")};
+$("p-next").onclick=function(){B.i=0;drawBuy();show("s-buy")};
+$("b-prev").onclick=function(){if(B.i>0){B.i--;drawBuy();window.scrollTo(0,0)}};
+$("b-next").onclick=function(){
+  if(!B.picks[PARTS[B.i][0]])return;
+  if(B.i<PARTS.length-1){B.i++;drawBuy();window.scrollTo(0,0);return}
+  if(S.money-spent()<0){$("b-warn").hidden=false;$("b-warn").textContent="예산을 넘어서 구매를 끝낼 수 없어요. ◀ 이전으로 돌아가 등급을 바꾸거나 선택 부품을 빼 보세요.";return}
+  drawHw();show("s-hw");
+};
+$("h-edit").onclick=function(){B.i=0;drawBuy();show("s-buy")};
 
 gate();
 })();
