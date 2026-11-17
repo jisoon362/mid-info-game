@@ -47,12 +47,12 @@ p{margin:0}
 .goal p{font-size:19px;font-weight:600;text-wrap:balance}
 .goal ol{margin:0;padding-left:22px;font-size:16px}
 .goal li{margin:4px 0}
-.steps3{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:14px;color:var(--dim)}
-.steps3 b{color:var(--ink);font-weight:600}
+.steps3{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;max-width:880px;margin-bottom:16px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;color:var(--dim)}
+.steps3 b{background:var(--blue);color:#fff;font-weight:600;padding:3px 12px;border-radius:8px}
 .lead{font-size:18px;text-align:center;text-wrap:balance}
 .lead b{color:var(--blue)}
 .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;max-width:720px}
-.qno{font-size:15px;color:var(--dim);font-weight:500}
+.qno{width:100%;max-width:720px;font-size:15px;color:var(--blue);font-weight:600;letter-spacing:1px}
 .money{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
 .money small{font-size:12px;color:var(--dim)}
 .money b{font-size:clamp(26px,5vw,38px);font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
@@ -72,7 +72,8 @@ p{margin:0}
 .feedback.bad{background:var(--badbg);color:var(--warn)}
 .feedback.good{background:var(--okbg);color:var(--ok)}
 .feedback span{flex:1;min-width:200px}
-.bigmoney{font-size:clamp(44px,9vw,72px);font-weight:700;color:var(--blue);line-height:1.1;font-variant-numeric:tabular-nums}
+.feedback strong{font-size:1.25em;font-weight:700}
+.bigmoney{font-size:clamp(34px,7vw,60px);text-align:center;font-weight:700;color:var(--blue);line-height:1.1;font-variant-numeric:tabular-nums}
 .score{font-size:20px;font-weight:600}
 .choice{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%}
 .choice button{flex:1;min-width:230px;max-width:340px;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--bg);display:flex;flex-direction:column;gap:2px;align-items:center}
@@ -125,11 +126,11 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
 </header>
 
 <main>
+  <nav class="steps3" aria-label="진행 단계"><b>1. 퀴즈</b><span>›</span><span>2. 하드웨어 부품 사기</span><span>›</span><span>3. 소프트웨어 부품 사기</span></nav>
   <!-- 1장: 학습 목표 -->
   <section class="screen" id="s-intro">
-    <div class="steps3"><b>1. 퀴즈로 돈 벌기</b><span>→</span><span>2. 하드웨어 사기</span><span>→</span><span>3. 소프트웨어 사기</span></div>
     <div class="goal">
-      <small>학습 목표</small>
+      <small>🎯 학습 목표</small>
       <p>컴퓨팅 시스템이 하드웨어와 소프트웨어로 구성됨을 이해한다.</p>
       <ol>
         <li>하드웨어 구성 요소(CPU·메인보드·RAM·저장장치·전원·입출력장치)의 역할을 안다.</li>
@@ -143,16 +144,12 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <section class="screen" id="s-lead" hidden>
     <h2>먼저 퀴즈를 맞혀 컴퓨터 부품을 살 돈을 벌어 보자</h2>
     <p class="lead">문제마다 <b>50만원</b>씩이야!</p>
-    <p class="dim">처음 고른 답이 정답이면 50만원을 받아요. 틀려도 맞힐 때까지 다시 고를 수 있지만, 그 문제의 돈은 받지 못해요.</p>
     <button class="btn main big" id="go-q1">퀴즈 시작</button>
   </section>
 
   <!-- 2장: 퀴즈 (문제마다 한 화면) -->
   <section class="screen" id="s-quiz" hidden>
-    <div class="qhead">
-      <span class="qno" id="q-no"></span>
-      <div class="money" id="money"><small>모은 자금</small><b id="q-money">0만원</b></div>
-    </div>
+    <p class="qno" id="q-no"></p>
     <h2 class="question" id="q-text" style="text-align:left"></h2>
     <ol class="options" id="q-options"></ol>
     <div class="feedback" id="q-feedback" hidden aria-live="polite"><span id="q-msg"></span><button class="btn main" id="q-next" hidden>다음 문제</button></div>
@@ -162,9 +159,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <section class="screen" id="s-done" hidden>
     <h2>퀴즈 완료, 돈을 얼마나 벌었는지 보자!</h2>
     <p class="score" id="d-score"></p>
-    <p class="dim">나의 예산</p>
     <div class="bigmoney" id="d-money"></div>
-    <p class="note" id="d-note" hidden></p>
     <div class="choice">
       <button id="d-retry"><small>돈을 좀 더 벌어야지</small><b>퀴즈 다시 풀기</b></button>
       <button class="go" id="d-shop"><small>난 만족해, 부품 사러 고고</small><b>구매 시작</b></button>
@@ -268,13 +263,13 @@ var PRIZE=50;
 var QUIZ=[
   {q:"컴퓨팅 시스템은 무엇과 무엇으로 구성되어 있을까요?",
    o:["하드웨어와 소프트웨어","모니터와 본체","키보드와 마우스","운영체제와 응용프로그램","중앙처리장치와 저장장치"],a:0,
-   ok:"컴퓨팅 시스템은 하드웨어와 소프트웨어로 이루어져 있어!",no:"아쉽군.. 눈에 보이는 장치와 보이지 않는 프로그램을 함께 묶은 것을 찾아보자!"},
+   ok:"",no:"아쉽군.. 다시 찾아보자!"},
   {q:"다음 중 입력장치가 아닌 것은?",
    o:["키보드","마우스","모니터","마이크","스캐너"],a:2,
    ok:"모니터는 출력장치!",no:"아쉽군.. 출력장치를 찾아보자!"},
   {q:"운영체제(OS)의 역할로 가장 알맞은 것은?",
    o:["그림을 그리거나 사진을 편집하는 작업을 전문으로 하는 프로그램이다","하드웨어를 제어하고 응용프로그램이 동작할 환경을 제공한다","작성한 문서를 저장장치에 안전하게 보관하는 일만 하는 프로그램이다","웹 사이트를 검색하고 화면에 보여 주는 인터넷 전용 프로그램이다","CPU 내부에서 처리 속도를 높여 주는 하드웨어 장치이다"],a:1,
-   ok:"나머지는 응용소프트웨어나 다른 하드웨어!",no:"아쉽군.. 하드웨어를 다루는, 좀 더 근본이 되는 역할을 찾아보자!"},
+   ok:"나머지는 소프트웨어나 다른 하드웨어!",no:"아쉽군.. 좀더 근본이 되는 하드웨어를 찾아보자!"},
   {q:"컴퓨터의 두뇌라고 불리며 명령을 처리하는 장치는?",
    o:["RAM","HDD","CPU","GPU","SSD"],a:2,
    ok:"중앙처리장치인데 Central Processing Unit의 약자야!",
@@ -284,21 +279,21 @@ var QUIZ=[
          "SSD는 빠르게, 오래 기억할 데이터를 저장하는 공간이야"]},
   {q:"응용소프트웨어에 해당하는 것은?",
    o:["Windows","macOS","Linux","한글(HWP)","안드로이드(Android)"],a:3,
-   ok:"나머지는 운영체제!",no:"특정 작업을 위한 프로그램을 다시 찾아보자!"},
+   ok:"나머지는 운영체제",no:"특정 작업을 위한 프로그램을 다시 찾아보자!"},
   {q:"RAM(메모리, 주기억장치)에 대한 설명으로 옳은 것은?",
    o:["전원이 꺼져도 데이터가 남는다","데이터를 영구히 저장한다","CPU가 현재 작업할 데이터를 임시 저장한다","그래픽 신호를 출력한다","키보드로 입력한 내용을 화면에 표시한다"],a:2,
    ok:"'임시'로 저장한다는 점이 핵심!",
    each:["이건 보조기억장치","이건 보조기억장치",null,"이건 GPU","이거는 입력장치 중 키보드"]}
 ];
 var MARK=["①","②","③","④","⑤"];
-var S={i:0,money:0,right:0,missed:false,solved:false};
+var S={i:0,money:0,right:0,solved:false};
 
 function show(id){["s-intro","s-lead","s-quiz","s-done","s-price"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
 function won(n){return n+"만원"}
+function head(){$("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length+" · 모은 자금 "+won(S.money)}
 function drawQuiz(){
-  var Q=QUIZ[S.i];S.missed=false;S.solved=false;
-  $("q-no").textContent="퀴즈 "+(S.i+1)+" / "+QUIZ.length;
-  $("q-money").textContent=won(S.money);
+  var Q=QUIZ[S.i];S.solved=false;
+  head();
   $("q-text").textContent=Q.q;
   var ol=$("q-options");ol.innerHTML="";
   Q.o.forEach(function(text,k){
@@ -309,26 +304,21 @@ function drawQuiz(){
   $("q-feedback").hidden=true;$("q-next").hidden=true;
 }
 function pick(k,btn){
-  var Q=QUIZ[S.i],fb=$("q-feedback");
+  var Q=QUIZ[S.i],fb=$("q-feedback"),msg=$("q-msg");
   if(S.solved||btn.disabled)return;
-  fb.hidden=false;
+  fb.hidden=false;msg.textContent="";
   if(k===Q.a){
     S.solved=true;btn.classList.add("right");
     var all=$("q-options").querySelectorAll("button");for(var x=0;x<all.length;x++)all[x].disabled=true;
-    if(!S.missed){
-      S.right++;S.money+=PRIZE;
-      $("q-money").textContent=won(S.money);
-      var m=$("money");m.classList.remove("bump");void m.offsetWidth;m.classList.add("bump");
-      $("q-msg").textContent="정답! "+Q.ok+" "+PRIZE+"만원 추가! 총액 "+won(S.money)+"!";
-    }else{
-      $("q-msg").textContent="정답! "+Q.ok+" 하지만 처음에 틀려서 이번 문제의 돈은 받지 못했어. 총액 "+won(S.money)+".";
-    }
+    S.right++;S.money+=PRIZE;head();
+    msg.appendChild(document.createTextNode("정답 "+(k+1)+"! "+(Q.ok?Q.ok+" ":"")+PRIZE+"만원 추가! "));
+    var total=document.createElement("strong");total.textContent="총액 "+won(S.money)+"!";msg.appendChild(total);
     fb.className="feedback good";
     $("q-next").textContent=S.i===QUIZ.length-1?"결과 보기":"다음 문제";
     $("q-next").hidden=false;$("q-next").focus();
   }else{
-    S.missed=true;btn.classList.add("wrong");btn.disabled=true;
-    $("q-msg").textContent=(Q.each&&Q.each[k])?"아쉽군.. "+Q.each[k]:Q.no;
+    btn.classList.add("wrong");btn.disabled=true;
+    msg.textContent=(Q.each&&Q.each[k])?Q.each[k]:Q.no;
     fb.className="feedback bad";$("q-next").hidden=true;
   }
 }
@@ -368,10 +358,7 @@ function drawPrice(){
 }
 function finish(){
   $("d-score").textContent="정답 "+S.right+" / "+QUIZ.length+" 문제";
-  $("d-money").textContent=won(S.money)+"!!";
-  var low=S.money<minCost();
-  $("d-note").hidden=!low;
-  $("d-note").textContent=low?"필수 부품을 모두 사려면 적어도 "+won(minCost())+"이 필요해요. 퀴즈를 다시 풀어 돈을 더 벌어 보세요.":"";
+  $("d-money").textContent="나의 예산 : "+won(S.money)+"!!";
   try{sessionStorage.setItem("mig|g3|budget",String(S.money))}catch(e){}
   show("s-done");
 }
