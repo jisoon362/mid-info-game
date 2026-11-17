@@ -276,6 +276,10 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <section class="screen" id="s-buy" hidden>
     <div class="map" id="b-map"></div>
     <div class="budgetbar" id="b-bar"></div>
+    <details class="fold">
+      <summary>부품 가격 한눈에 보기 <small>눌러서 펼치기</small></summary>
+      <ul class="brief" id="b-brief"></ul>
+    </details>
     <p class="note" id="b-warn" hidden></p>
     <div class="phead">
       <h2 id="b-name"></h2><span class="tag" id="b-tag"></span>
@@ -485,6 +489,7 @@ var MUST=[
   ["🖱️","마우스","",10,5,2]
 ];
 var OS=[["Windows",30],["macOS",30],["Linux",0]];
+var GPU_HI=150,GPU_MID=60;
 var OPT=[["🎮","그래픽카드","그래픽처리장치",60],["🖨️","프린터","",20],["🔊","스피커","",10],["📦","응용프로그램 · 한글(HWP)","",20],["📦","응용프로그램 · 오피스","",30]];
 function minCost(){var t=0;MUST.forEach(function(r){t+=r[4]});return t}
 function cell(tr,text,cls){var td=document.createElement("td");if(cls)td.className=cls;td.textContent=text;tr.appendChild(td);return td}
@@ -521,7 +526,7 @@ function drawMap(target,st){
     h+='<text class="nm" x="'+cx+'" y="'+(cy-4)+'" font-size="'+b[5]+'">'+r[0]+" "+r[1]+"</text>";
     h+='<text class="pr" x="'+cx+'" y="'+(cy+22)+'" font-size="16">'+price(b[0],tri(r))+"</text>";
   });
-  h+='<rect class="box opt'+cls("그래픽카드")+'" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드</text><text class="pr" x="495" y="435" font-size="16">'+price("그래픽카드","선택 · 60만")+"</text>";
+  h+='<rect class="box opt'+cls("그래픽카드")+'" x="400" y="370" width="190" height="90"/><text class="nm" x="495" y="411" font-size="18">🎮 그래픽카드 (선택)</text><text class="pr" x="495" y="435" font-size="16">'+price("그래픽카드",'<tspan class="hi">'+GPU_HI+'만</tspan><tspan class="sep">\u00a0/\u00a0</tspan><tspan class="mid">'+GPU_MID+"만</tspan>")+"</text>";
   h+='<rect class="case'+cls("케이스")+'" x="150" y="40" width="440" height="420"/>';
   var mo=part("모니터"),ms=part("마우스"),kb=part("키보드");
   h+='<rect class="box'+cls("모니터")+'" x="700" y="30" width="180" height="84" rx="6"/><text class="nm" x="790" y="66" font-size="19">'+mo[0]+" 모니터</text>"+'<text class="pr" x="790" y="92" font-size="15">'+price("모니터",tri(mo))+"</text>";
@@ -531,19 +536,24 @@ function drawMap(target,st){
   h+='<rect class="box opt'+cls("프린터")+'" x="6" y="280" width="114" height="80" rx="6"/><text class="nm" x="63" y="314" font-size="16">🖨️ 프린터</text><text class="pr" x="63" y="338" font-size="14">'+price("프린터","선택 · 20만")+"</text>";
   $(target).innerHTML=h+"</svg>";
 }
+function fillBrief(ul){
+  ul.innerHTML="";
+  function two(label,hi,mid,opt){
+    var li=document.createElement("li");if(opt)li.className="opt";li.appendChild(document.createTextNode(label));
+    var sp=document.createElement("span"),a=document.createElement("b"),b=document.createElement("b");
+    a.className="hi";a.textContent=hi+"만";b.textContent=mid+"만";
+    sp.appendChild(a);sp.appendChild(document.createTextNode(" / "));sp.appendChild(b);li.appendChild(sp);ul.appendChild(li);
+  }
+  function line(label,price,opt){var li=document.createElement("li");if(opt)li.className="opt";li.appendChild(document.createTextNode(label));var sp=document.createElement("span");sp.textContent=price;li.appendChild(sp);ul.appendChild(li)}
+  MUST.forEach(function(r){two(r[0]+" "+r[1],r[3],r[4],false)});
+  line("🪟 운영체제","Windows 30만 · macOS 30만 · Linux 무료");
+  two("🎮 그래픽카드 (선택)",GPU_HI,GPU_MID,true);
+  OPT.forEach(function(r){if(r[1]!=="그래픽카드")line(r[0]+" "+r[1]+" (선택)",r[3]+"만",true)});
+}
 function drawPrice(){
   drawMap("p-map",null);
   $("p-soft").innerHTML='<li><b>🪟 운영체제</b> (필수) <span>Windows 30만 · macOS 30만 · Linux 무료</span></li><li class="opt"><b>📦 응용프로그램</b> (선택) <span>한글(HWP) 20만 · 오피스 30만</span></li>';
-  var ul=$("p-brief");ul.innerHTML="";
-  function line(label,price,opt){var li=document.createElement("li");if(opt)li.className="opt";li.appendChild(document.createTextNode(label));var sp=document.createElement("span");sp.textContent=price;li.appendChild(sp);ul.appendChild(li)}
-  MUST.forEach(function(r){
-    var li=document.createElement("li");li.appendChild(document.createTextNode(r[0]+" "+r[1]));
-    var sp=document.createElement("span"),a=document.createElement("b"),b=document.createElement("b");
-    a.className="hi";a.textContent=r[3]+"만";b.textContent=r[4]+"만";
-    sp.appendChild(a);sp.appendChild(document.createTextNode(" / "));sp.appendChild(b);li.appendChild(sp);ul.appendChild(li);
-  });
-  line("🪟 운영체제","Windows 30 · macOS 30 · Linux 무료");
-  OPT.forEach(function(r){line(r[0]+" "+r[1]+" (선택)",String(r[3]),true)});
+  fillBrief($("p-brief"));
   $("p-budget").textContent=won(S.money);
   $("p-min").textContent="";
 }
@@ -554,7 +564,7 @@ var PARTS=[
   ["메인보드","🔌",true,50,25,"주기판이라고도 해요. 모든 부품을 꽂아 서로 연결해 주는 판이에요."],
   ["CPU","🧠",true,100,50,"중앙처리장치. 컴퓨터의 두뇌로, 명령을 해석하고 계산을 처리해요."],
   ["RAM","⚡",true,40,20,"주기억장치. CPU가 지금 작업 중인 데이터를 임시로 기억해요. 전원이 꺼지면 지워져요."],
-  ["그래픽카드","🎮",false,null,60,"그래픽처리장치(GPU). 화면에 보일 그림을 계산해요. 게임이나 영상 작업을 할 때 필요해요."],
+  ["그래픽카드","🎮",false,GPU_HI,GPU_MID,"그래픽처리장치(GPU). 화면에 보일 그림을 계산해요. 게임이나 영상 작업을 할 때 필요해요."],
   ["저장장치","💾",true,30,15,"보조기억장치. 전원이 꺼져도 프로그램과 파일을 오래 보관해요."],
   ["전원공급장치","🔋",true,25,12,"콘센트의 전기를 부품이 쓸 수 있게 바꿔서 나눠 줘요."],
   ["모니터","🖼️",true,50,25,"처리한 결과를 화면으로 보여 주는 출력장치예요."],
@@ -581,13 +591,15 @@ function drawBuy(){
   $("b-tag").textContent=must?"필수":"선택";$("b-tag").className="tag "+(must?"must":"opt");
   $("b-count").textContent=(B.i+1)+" / "+PARTS.length;
   $("b-desc").textContent=P[5];
-  $("b-tip").innerHTML=must?"💡 등급 안내 — <b>고급</b>: 성능이 높지만 가격이 비싸요 · <b>일반</b>: 성능과 가격이 균형 잡혀 있어요":"💡 선택 부품이에요. 필요하면 사고, 아니면 사지 않아도 컴퓨터는 동작해요.";
-  var opts=must?[["hi","고급",P[3]],["mid","일반",P[4]]]:[["none","사지 않기",0],["mid","일반",P[4]]];
+  $("b-tip").innerHTML=must?"💡 등급 안내 — <b>고급</b>: 성능이 높지만 가격이 비싸요 · <b>일반</b>: 성능과 가격이 균형 잡혀 있어요":(P[3]!=null?"💡 선택 부품이에요. <b>고급</b>, <b>일반</b> 중에서 사거나, 사지 않아도 컴퓨터는 동작해요.":"💡 선택 부품이에요. 필요하면 사고, 아니면 사지 않아도 컴퓨터는 동작해요.");
+  var opts=must?[["hi","고급",P[3]],["mid","일반",P[4]]]
+    :P[3]!=null?[["hi","고급",P[3]],["mid","일반",P[4]],["none","사지 않음",0]]
+    :[["none","사지 않음",0],["mid","일반",P[4]]];
   var box=$("b-picks");box.innerHTML="";
   opts.forEach(function(o){
     var b=document.createElement("button");b.className="pick";b.setAttribute("aria-pressed",String(!!pk&&pk.tier===o[0]));
     var pic=document.createElement("span");pic.className="pic";pic.textContent=o[0]==="none"?"🚫":P[1];b.appendChild(pic);
-    var pn=document.createElement("span");pn.className="pn";pn.textContent=o[0]==="none"?"사지 않기":o[1]+" "+name;b.appendChild(pn);
+    var pn=document.createElement("span");pn.className="pn";pn.textContent=o[0]==="none"?"사지 않음":o[1]+" "+name;b.appendChild(pn);
     if(o[0]!=="none"){var g=document.createElement("span");g.className="grade "+o[0];g.textContent=o[1];b.appendChild(g)}
     var pp=document.createElement("span");pp.className="pp";pp.textContent=won(o[2]);b.appendChild(pp);
     b.onclick=function(){B.picks[name]={tier:o[0],label:o[0]==="none"?"사지 않음":o[1],price:o[2]};drawBuy()};
@@ -622,7 +634,7 @@ $("q-next").onclick=function(){if(!S.solved)return;if(S.i===QUIZ.length-1)finish
 $("d-retry").onclick=startQuiz;
 $("d-shop").onclick=function(){drawPrice();show("s-price")};
 $("p-back").onclick=function(){show("s-done")};
-$("p-next").onclick=function(){B.i=0;drawBuy();show("s-buy")};
+$("p-next").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
 $("b-prev").onclick=function(){if(B.i>0){B.i--;drawBuy();window.scrollTo(0,0)}};
 $("b-next").onclick=function(){
   if(!B.picks[PARTS[B.i][0]])return;
@@ -630,7 +642,7 @@ $("b-next").onclick=function(){
   if(S.money-spent()<0){$("b-warn").hidden=false;$("b-warn").textContent="예산을 넘어서 구매를 끝낼 수 없어요. ◀ 이전으로 돌아가 등급을 바꾸거나 선택 부품을 빼 보세요.";return}
   drawHw();show("s-hw");
 };
-$("h-edit").onclick=function(){B.i=0;drawBuy();show("s-buy")};
+$("h-edit").onclick=function(){B.i=0;fillBrief($("b-brief"));drawBuy();show("s-buy")};
 
 gate();
 })();
