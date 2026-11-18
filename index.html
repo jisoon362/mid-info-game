@@ -37,12 +37,23 @@ h1{font-size:24px;font-weight:600;margin:0}
 .cols{display:grid;grid-template-columns:1fr minmax(260px,340px);gap:20px;align-items:start}
 .left{display:flex;flex-direction:column;gap:14px;min-width:0}
 .grade{font-size:22px;font-weight:600;margin:0}
-.areabox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
-.areabox h3{font-size:17px;font-weight:600;margin:0}
-.sub{display:flex;flex-direction:column;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
-.sub h4{font-size:15px;font-weight:500;margin:0;display:flex;align-items:baseline;gap:8px}
-.sub h4 small{font-size:12px;color:var(--dim);font-weight:400}
-.sub.empty h4{color:var(--dim)}
+.areabox{border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.areabox summary,.sub summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px}
+.areabox summary::-webkit-details-marker,.sub summary::-webkit-details-marker{display:none}
+.areabox summary::before,.sub summary::before{content:"▶";font-size:11px;color:var(--dim);transition:transform .15s;flex:none;align-self:center}
+.areabox[open]>summary::before,.sub[open]>summary::before{transform:rotate(90deg)}
+.areabox>summary{padding:14px 16px}
+.areabox>summary .t{font-size:18px;font-weight:600}
+.areabox summary small,.sub summary small{font-size:12px;color:var(--dim);font-weight:400;margin-left:auto}
+.areabox.empty>summary .t{color:var(--dim)}
+.units{display:flex;flex-direction:column;padding:0 16px 12px 30px}
+.sub{border-top:1px solid var(--line)}
+.sub>summary{padding:11px 0}
+.sub>summary .t{font-size:15.5px;font-weight:500}
+.sub.empty>summary .t{color:var(--dim)}
+.sub>.list,.sub>.none{margin:0 0 12px}
+.sub>.none{padding:0;font-size:14px}
+@media (prefers-reduced-motion:reduce){.areabox summary::before,.sub summary::before{transition:none}}
 .unit{font-size:19px;font-weight:600;margin:0;display:flex;align-items:baseline;gap:8px}
 .unit small{font-size:13px;font-weight:400;color:var(--dim)}
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;list-style:none;margin:0;padding:0}
@@ -112,17 +123,32 @@ h1{font-size:24px;font-weight:600;margin:0}
     $("t-game").setAttribute("aria-selected",String(view==="game"));
     $("search").hidden=view!=="game";
     if(view==="unit"){
+      var open=loadOpen();
       (window.CURRICULUM||[]).forEach(function(G){
         left.appendChild(el("h2","grade",G.grade));
         G.areas.forEach(function(A){
-          var box=el("section","areabox");box.appendChild(el("h3","",A.no+". "+A.title));
+          var inArea=games.filter(function(g){return g.grade===G.grade&&g.area===A.no});
+          var akey=G.grade+"|"+A.no;
+          var box=el("details","areabox"+(inArea.length?"":" empty"));
+          if(open[akey])box.open=true;
+          box.addEventListener("toggle",function(){saveOpen(akey,box.open)});
+          var sum=el("summary");sum.appendChild(el("span","t",A.no+". "+A.title));
+          sum.appendChild(el("small","",inArea.length?"게임 "+inArea.length+"개":"준비 중"));
+          box.appendChild(sum);
+          var inner=el("div","units");
           A.units.forEach(function(u,k){
-            var mine=games.filter(function(g){return g.grade===G.grade&&g.area===A.no&&g.unit===k+1});
-            var sub=el("div","sub"+(mine.length?"":" empty")),h=el("h4","","("+(k+1)+") "+u);
+            var mine=inArea.filter(function(g){return g.unit===k+1});
+            var ukey=akey+"|"+(k+1);
+            var sub=el("details","sub"+(mine.length?"":" empty"));
+            if(open[ukey])sub.open=true;
+            sub.addEventListener("toggle",function(){saveOpen(ukey,sub.open)});
+            var h=el("summary");h.appendChild(el("span","t","("+(k+1)+") "+u));
             h.appendChild(el("small","",mine.length?"게임 "+mine.length+"개":"준비 중"));sub.appendChild(h);
             if(mine.length){var ul=el("ul","list");mine.forEach(function(g){ul.appendChild(card(g,false))});sub.appendChild(ul)}
-            box.appendChild(sub);
+            else sub.appendChild(el("p","none","아직 게임이 없어요."));
+            inner.appendChild(sub);
           });
+          box.appendChild(inner);
           left.appendChild(box);
         });
       });
@@ -133,6 +159,9 @@ h1{font-size:24px;font-weight:600;margin:0}
       var ul=el("ul","list");shown.forEach(function(g){ul.appendChild(card(g,true))});left.appendChild(ul);
     }
   }
+  // 펼친 단원은 이 기기에 기억해 두었다가 다시 들어오면 그대로 펼친다
+  function loadOpen(){try{return JSON.parse(localStorage.getItem("mig|open"))||{}}catch(e){return {}}}
+  function saveOpen(k,v){var o=loadOpen();if(v)o[k]=1;else delete o[k];try{localStorage.setItem("mig|open",JSON.stringify(o))}catch(e){}}
   function setView(v){view=v;try{sessionStorage.setItem("mig|view",v)}catch(e){}draw()}
   $("t-unit").onclick=function(){setView("unit")};
   $("t-game").onclick=function(){setView("game")};
