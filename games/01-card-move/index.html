@@ -23,7 +23,7 @@
   --goal:var(--blue);
   --chalk-dim:var(--dim);
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-  --soft:#eff4ff;--note:#fffbea;--cover:rgba(255,255,255,.97);
+  --soft:#eff4ff;--okbg:#dcfce7;--note:#fffbea;--cover:rgba(255,255,255,.97);
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -51,6 +51,10 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 .box small,.box h2{font-size:13px;font-weight:500;color:var(--dim);margin:0}
 .num{font-size:34px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
 .sub{font-size:13px;color:var(--dim)}
+.state{margin:0;padding:4px 16px;border-radius:999px;font-size:clamp(16px,2.4vw,20px);font-weight:700;border:2px solid currentColor}
+.state.ready{color:var(--dim)}
+.state.now{color:var(--blue)}
+.state.goal{color:var(--ok);background:var(--okbg,transparent)}
 .clock{display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .clock .big{font-size:clamp(22px,3.4vw,30px);font-weight:600}
 .clock b{font-size:clamp(44px,7vw,64px);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:1px}
@@ -126,6 +130,9 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 .result h2{font-size:26px;font-weight:600;margin:0;text-wrap:balance}
 .result h2.first{color:var(--red);font-size:30px}
 .result .new{display:inline-block;margin-top:6px;padding:2px 12px;border-radius:999px;background:var(--blue);color:#fff;font-size:14px;font-weight:600}
+.result .ask{margin:10px 0 0;font-size:17px;font-weight:600;color:var(--ink)}
+.result .path{margin:4px 0 8px;font-size:17px;color:var(--ink);background:var(--cell);border-radius:10px;padding:10px}
+.result .path b{font-weight:700;letter-spacing:1px}
 .result .big{font-size:56px;font-weight:600;line-height:1.15;margin:6px 0 2px;font-variant-numeric:tabular-nums}
 .result dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
 .result dl div{background:var(--cell);border-radius:10px;padding:8px}
@@ -164,7 +171,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
   .tile,.card .in{transition:none}
   .tile.no>span,.card.swap{animation:none}
 }
-:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
 </style>
 </head>
 <body>
@@ -182,6 +189,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 <main>
   <section class="stage">
     <p class="mission" id="mission"></p>
+    <p class="state ready" id="hud-state">초기상태</p>
     <div class="clock"><b id="hud-time">0:00.0</b><span class="sub" id="hud-status"></span></div>
     <div class="grid" id="grid" aria-label="카드 판"></div>
 
@@ -231,8 +239,11 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
   <div class="result" role="dialog" aria-modal="true" aria-labelledby="res-title">
     <h2 id="res-title">도착!</h2>
     <div id="res-new" class="new" hidden></div>
+    <p class="state goal" style="display:inline-block;margin-top:10px">목표상태 도달!</p>
+    <p class="ask" id="res-ask"></p>
     <div class="big" id="res-time">0:00.0</div>
     <dl id="res-stats"></dl>
+    <p class="path">문제해결 과정: <b>ㅊㄱ 상태</b> → <b>ㅎㅈ 상태</b> → <b>ㅁㅍ 상태</b></p>
     <p id="res-note"></p>
     <div class="btns">
       <button class="btn main" id="res-again">다시 하기</button>
@@ -389,9 +400,10 @@ var S={
 var tick=null;
 
 function now(){return S.running?(performance.now()-S.startAt+S.penalty):S.elapsed}
-function startTimer(){if(S.running||S.finished)return;$("hud-status").textContent="진행 중";S.running=true;S.startAt=performance.now();tick=setInterval(function(){$("hud-time").textContent=fmt(now())},100)}
-function stopTimer(){if(!S.running)return;S.elapsed=performance.now()-S.startAt+S.penalty;S.running=false;clearInterval(tick);$("hud-time").textContent=fmt(S.elapsed);$("hud-status").textContent="멈춤"}
-function resetTimer(){clearInterval(tick);S.running=false;S.finished=false;S.elapsed=0;S.penalty=0;S.a=0;S.b=0;S.turn=0;$("hud-time").textContent=fmt(0);$("hud-status").textContent="대기 중 · 첫 이동에서 시작"}
+function setState(k){var el=$("hud-state");el.textContent=k==="ready"?"초기상태":k==="now"?"현재상태":"목표상태 도달!";el.className="state "+k}
+function startTimer(){if(S.running||S.finished)return;$("hud-status").textContent="진행 중";setState("now");S.running=true;S.startAt=performance.now();tick=setInterval(function(){$("hud-time").textContent=fmt(now())},100)}
+function stopTimer(){if(!S.running)return;S.elapsed=performance.now()-S.startAt+S.penalty;S.running=false;clearInterval(tick);$("hud-time").textContent=fmt(S.elapsed);$("hud-status").textContent="멈춤";if(S.finished)setState("goal")}
+function resetTimer(){clearInterval(tick);S.running=false;S.finished=false;S.elapsed=0;S.penalty=0;S.a=0;S.b=0;S.turn=0;$("hud-time").textContent=fmt(0);$("hud-status").textContent="첫 이동에서 시간 시작";setState("ready")}
 function say(text,cls){var m=$("msg");m.textContent=text||"";m.className="msg"+(cls?" "+cls:"")}
 
 /* ---------- 차례 표시 ---------- */
@@ -610,11 +622,18 @@ function checkSort(){
 }
 
 /* ---------- 결과 창 ---------- */
+// 닉네임 뒤에 '이가/가'를 붙인다 (받침이 있으면 '이가')
+function josaIga(name){
+  var c=name.charCodeAt(name.length-1);
+  if(c>=0xAC00&&c<=0xD7A3)return name+((c-0xAC00)%28?"이가":"가");
+  return name+"(이)가";
+}
 function showResult(o){
   var detail=" ("+(S.elapsed/1000).toFixed(1)+"초 "+S.a+"회)";
   $("res-title").textContent=o.rank===1?"축하합니다 이번 교시 1위 !!"+detail:"아쉽습니다 이번 교시 "+o.rank+"위"+detail;
   $("res-title").className=o.rank===1?"first":"";
   $("res-new").hidden=false;$("res-new").textContent=sget(K.ses,"");
+  $("res-ask").textContent=josaIga(sget(K.ses,"")||"나")+" 문제해결에 걸린 시간은?";
   $("res-time").textContent=fmt(S.elapsed);
   $("res-stats").innerHTML=o.stats.map(function(s){return "<div><dt>"+s[0]+"</dt><dd>"+s[1]+"</dd></div>"}).join("");
   $("res-note").textContent=o.note;
