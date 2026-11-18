@@ -176,7 +176,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
     <button class="tab" role="tab" id="tab-slide" aria-selected="true">카드 옮기기</button>
     <button class="tab" role="tab" id="tab-sort" aria-selected="false">정렬 카드</button>
   </div>
-  <div class="who"><span><b id="who-id"></b> · 남은 시간 <b id="who-left"></b></span><button class="btn" id="logout">로그아웃</button></div>
+  <div class="who"><span><b id="who-id"></b> · 남은 시간 <b id="who-left"></b></span><button class="btn" id="logout">닉네임 바꾸기</button></div>
 </header>
 
 <main>
@@ -243,36 +243,16 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 
 <div class="gate" id="gate">
   <form class="gate-card" id="g-auth" hidden>
-    <h2>카드 옮기기</h2>
-    <p>닉네임과 비밀번호로 들어오세요. 닉네임은 이 태블릿에만 저장돼요.</p>
+    <h2>닉네임 만들기</h2>
+    <p>게임에서 쓸 닉네임만 정하면 바로 참여할 수 있어요. 이름, 학번 같은 개인정보는 쓰지 말고 별명으로 만들어요.</p>
     <label class="field" for="g-id">닉네임 (한글·영문·숫자 1~6자)
       <input id="g-id" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false">
     </label>
-    <label class="field" for="g-pw">비밀번호 (4자리)
-      <input id="g-pw" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
-    </label>
     <p class="gate-err" id="g-auth-err" aria-live="polite"></p>
     <div class="gate-btns">
-      <button class="btn main" type="submit" id="g-login">로그인</button>
-      <button class="btn" type="button" id="g-join">새로 만들기</button>
+      <button class="btn main" type="submit" id="g-login">참여하기</button>
     </div>
     <button class="linkbtn" type="button" data-teacher>선생님 메뉴</button>
-  </form>
-
-  <form class="gate-card" id="g-new" hidden>
-    <h2>새로 만들기</h2>
-    <p>이름, 학번, 전화번호 같은 개인정보는 쓰지 말고 별명으로 만들어요.</p>
-    <label class="field" for="g-nid">새로운 닉네임 (한글·영문·숫자 1~6자)
-      <input id="g-nid" maxlength="6" autocomplete="off" autocapitalize="off" spellcheck="false">
-    </label>
-    <label class="field" for="g-npw">비밀번호 (4자리)
-      <input id="g-npw" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
-    </label>
-    <p class="gate-err" id="g-new-err" aria-live="polite"></p>
-    <div class="gate-btns">
-      <button class="btn main" type="submit">만들기</button>
-      <button class="btn" type="button" data-back>돌아가기</button>
-    </div>
   </form>
 
   <form class="gate-card" id="g-code" hidden>
@@ -284,7 +264,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
     <p class="gate-err" id="g-code-err" aria-live="polite"></p>
     <div class="gate-btns">
       <button class="btn main" type="submit">시작하기</button>
-      <button class="btn" type="button" id="g-switch">다른 닉네임으로</button>
+      <button class="btn" type="button" id="g-switch">닉네임 바꾸기</button>
     </div>
     <button class="linkbtn" type="button" data-teacher>선생님 메뉴</button>
   </form>
@@ -307,7 +287,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
     <div class="box">
       <h2 style="font-size:17px;color:var(--chalk-dim)">이 태블릿에 만든 닉네임</h2>
       <ul class="acct" id="g-accts"></ul>
-      <p class="hint">비밀번호를 잊은 학생은 닉네임을 지운 뒤 다시 만들게 하세요.</p>
+      <p class="hint">장난으로 만든 닉네임은 여기서 지울 수 있어요.</p>
     </div>
     <div class="gate-btns"><button class="btn" type="button" data-back>닫기</button></div>
   </div>
@@ -346,7 +326,7 @@ function verifyCode(code){
 }
 function clock(ms){var d=new Date(ms),h=d.getHours(),m=d.getMinutes();return h+"시 "+(m<10?"0":"")+m+"분"}
 function gshow(id){
-  ["g-auth","g-new","g-code","g-tpin","g-teacher"].forEach(function(v){$(v).hidden=v!==id});
+  ["g-auth","g-code","g-tpin","g-teacher"].forEach(function(v){$(v).hidden=v!==id});
   $("gate").hidden=!id;
   document.querySelector("main").inert=!!id;
 }
@@ -365,20 +345,13 @@ function gate(){
   $("who-left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
   if(!G.started){G.started=true;newGame()}
 }
-function auth(join){
-  var idEl=$(join?"g-nid":"g-id"),pwEl=$(join?"g-npw":"g-pw"),err=$(join?"g-new-err":"g-auth-err");
-  var id=idEl.value.trim(),pw=pwEl.value,accs=sget(K.acc,{});
+function auth(){
+  var idEl=$("g-id"),err=$("g-auth-err");
+  var id=idEl.value.trim(),accs=sget(K.acc,{});
   if(!/^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]{1,6}$/.test(id)){err.textContent="닉네임은 한글·영문·숫자로 1~6자여야 해요. 띄어쓰기와 특수문자는 쓸 수 없어요.";return}
-  if(!/^[0-9]{4}$/.test(pw)){err.textContent="비밀번호는 숫자 4자리여야 해요.";return}
-  var h=cyrb("P|"+SECRET+"|"+id+"|"+pw);
-  if(join){
-    if(accs[id]&&accs[id].h!==h){err.textContent="이 태블릿에 이미 있는 닉네임이에요. 다른 닉네임을 쓰세요.";return}
-    accs[id]={h:h};sset(K.acc,accs);
-  }else{
-    if(!accs[id]){err.textContent="이 태블릿에 없는 닉네임이에요. 처음이라면 새로 만들기를 누르세요.";return}
-    if(accs[id].h!==h){err.textContent="비밀번호가 달라요.";return}
-  }
-  err.textContent="";idEl.value="";pwEl.value="";
+  // 비밀번호 없이 닉네임만 기억한다. 같은 닉네임을 다시 쓰면 그 닉네임의 기록을 이어 간다
+  if(!accs[id]){accs[id]={};sset(K.acc,accs)}
+  err.textContent="";idEl.value="";
   sset(K.ses,id);G.started=false;gate();
 }
 function enterCode(){
@@ -690,9 +663,7 @@ $("do-check").onclick=checkSort;
 $("res-again").onclick=newGame;
 $("res-close").onclick=hideResult;
 
-$("g-auth").onsubmit=function(e){e.preventDefault();auth(false)};
-$("g-join").onclick=function(){$("g-new-err").textContent="";gshow("g-new");$("g-nid").focus()};
-$("g-new").onsubmit=function(e){e.preventDefault();auth(true)};
+$("g-auth").onsubmit=function(e){e.preventDefault();auth()};
 $("g-code").onsubmit=function(e){e.preventDefault();enterCode()};
 $("g-switch").onclick=function(){sset(K.ses,null);gate()};
 $("logout").onclick=function(){sset(K.ses,null);hideResult();gate()};
