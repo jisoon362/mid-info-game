@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../../theme.js"></script>
+<title>시간 맞히기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 다른 게임과 같은 흰 바탕. 가운데 큰 스톱워치 하나, 그 아래 큰 시작·멈춤 버튼 */
+  --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
+  --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;--gold:#d4a017;
+  --okbg:#dcfce7;--badbg:#fee2e2;--face:#fbfbf8;--metal:#9aa3ae;--door:#8b5a2b;--door2:#6f4520;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;
+  --red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--gold:#f5c542;
+  --okbg:#173a26;--badbg:#3f1d1d;--face:#1f2924;--metal:#5d6b63;--door:#7a4f27;--door2:#5c3b1c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 20px;border-bottom:1px solid var(--line)}
+h1{font-size:20px;font-weight:600;margin:0}
+.btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);white-space:nowrap;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.big{padding:13px 22px;font-size:18px}
+.back{border-radius:999px;padding:6px 14px;font-size:14px}
+main{flex:1;padding:18px 20px 32px;display:flex;flex-direction:column;align-items:center}
+.screen{width:100%;max-width:760px;display:flex;flex-direction:column;gap:16px;align-items:center}
+h2{font-size:clamp(22px,3.4vw,28px);font-weight:700;margin:0;text-align:center;text-wrap:balance}
+p{margin:0}
+.dim{color:var(--dim);font-size:15px;text-align:center;text-wrap:balance}
+.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+/* 고르기 화면 */
+.targets{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+.target{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 10px;border-radius:16px;border:2px solid var(--line);background:var(--bg)}
+.target b{font-size:clamp(36px,7vw,52px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.target span{font-size:14px;color:var(--dim)}
+.target small{font-size:13px;color:var(--ok);font-weight:600;min-height:1.4em}
+.target:hover{border-color:var(--blue)}
+.howto{width:100%;margin:0;padding:14px 18px 14px 36px;border-radius:12px;background:var(--cell);font-size:15.5px}
+.howto li{margin:3px 0}
+.howto b{font-weight:600}
+
+/* 플레이 화면 */
+.goal{font-size:clamp(20px,3vw,24px);font-weight:700}
+.goal em{font-style:normal;color:var(--red)}
+.watch{position:relative;width:min(100%,52vh,400px);aspect-ratio:360/400}
+.watch svg{display:block;width:100%;height:100%}
+.case{fill:var(--metal)}
+.crown{fill:var(--metal)}
+.faceplate{fill:var(--face);stroke:var(--line);stroke-width:2}
+.tick{stroke:var(--ink);stroke-linecap:round}
+.tick.minor{stroke:var(--dim)}
+.num{fill:var(--ink);font-family:var(--font-body);font-weight:600;text-anchor:middle;dominant-baseline:central}
+.goalline{stroke:var(--red);stroke-width:5;stroke-linecap:round}
+.goalwedge{fill:var(--red);opacity:.14}
+.goalpill{fill:var(--red)}
+.goallabel{fill:#fff;font-family:var(--font-body);font-weight:700;text-anchor:middle;dominant-baseline:central}
+.needle{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.needle-tail{stroke:var(--ink);stroke-width:6;stroke-linecap:round}
+.hub{fill:var(--ink)}
+.hub2{fill:var(--red)}
+.unit{fill:var(--dim);font-family:var(--font-body);font-size:13px;text-anchor:middle}
+.cover{position:absolute;left:6.67%;top:16%;width:86.67%;height:78%;border-radius:50%;background:var(--cell);border:3px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:12%}
+.cover b{font-size:clamp(46px,10vw,72px);line-height:1;color:var(--dim)}
+.cover span{font-size:15px;color:var(--dim);text-wrap:balance}
+.cover.counting b{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.readout{font-size:clamp(40px,8vw,60px);font-weight:700;font-variant-numeric:tabular-nums;line-height:1;min-height:1em}
+.readout small{font-size:.45em;font-weight:600;color:var(--dim);margin-left:4px}
+.readout.early{color:var(--warn)}
+.readout.late{color:var(--blue)}
+.readout.exact{color:var(--ok)}
+
+/* 문 */
+.door{position:absolute;left:6.67%;top:16%;width:86.67%;height:78%;border-radius:50%;overflow:hidden;pointer-events:none}
+.door i{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,var(--door) 0 22px,var(--door2) 22px 25px);transition:transform .35s cubic-bezier(.3,1.4,.6,1)}
+.door i:first-child{left:0;transform:translateX(-102%);border-right:3px solid var(--door2)}
+.door i:last-child{right:0;transform:translateX(102%);border-left:3px solid var(--door2)}
+.door.shut i{transform:translateX(0)}
+.door i:first-child::after{content:"";position:absolute;right:14px;top:50%;width:12px;height:12px;border-radius:50%;background:var(--gold)}
+.door .bang{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;font-size:clamp(34px,7vw,52px);font-weight:800;color:#fff;text-shadow:0 2px 0 var(--door2),0 0 14px rgba(0,0,0,.4);transition:transform .25s .3s,opacity .25s .3s;white-space:nowrap}
+.door.shut .bang{transform:translate(-50%,-50%) scale(1);opacity:1}
+.door.shut{animation:thud .35s .3s}
+@keyframes thud{30%{transform:translateX(-6px)}60%{transform:translateX(5px)}}
+
+.go{min-width:220px;padding:20px 30px;border-radius:999px;border:0;font-size:clamp(22px,4vw,28px);font-weight:700;background:var(--ink);color:var(--bg)}
+.go.stop{background:var(--red);color:#fff}
+.go[disabled]{opacity:.4;cursor:default}
+.msg{min-height:28px;font-size:18px;font-weight:600;text-align:center;text-wrap:balance}
+.msg.bad{color:var(--warn)}
+
+/* 결과 창 */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:grid;place-items:center;padding:16px;z-index:10;overflow:auto}
+.result{width:min(100%,520px);background:var(--bg);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.3)}
+.result h2{font-size:26px}
+.result h2.exact{color:var(--ok)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--cell);border-radius:10px;padding:8px}
+.stats dt{font-size:13px;color:var(--dim)}
+.stats dd{margin:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.concept{border:2px solid var(--blue);border-radius:14px;padding:14px;font-size:clamp(18px,3vw,21px);font-weight:600;line-height:2.2}
+.pickset{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden;vertical-align:middle;margin:0 2px}
+.pickset button{border:0;background:var(--bg);padding:2px 12px;font-size:.92em;font-weight:600;color:var(--dim)}
+.pickset button+button{border-left:2px solid var(--line)}
+.pickset button[aria-pressed="true"]{background:var(--blue);color:#fff}
+.pickset.right{border-color:var(--ok)}
+.pickset.right button[aria-pressed="true"]{background:var(--ok)}
+.pickset.wrong{border-color:var(--warn);animation:shake .25s}
+.pickset.wrong button[aria-pressed="true"]{background:var(--warn)}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.verdict{min-height:24px;font-size:16px;font-weight:600;text-wrap:balance}
+.verdict.good{color:var(--ok)}
+.verdict.bad{color:var(--warn)}
+.explain{font-size:15px;background:var(--okbg);border-radius:10px;padding:10px 12px;text-align:left}
+
+@media (max-width:520px){.targets{gap:8px}.target{padding:16px 6px}}
+@media (prefers-reduced-motion:reduce){.door i,.door .bang{transition:none}.door.shut{animation:none}.cover.counting b{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn back" href="../../">← 목록으로</a>
+  <h1>시간 맞히기</h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
+</header>
+
+<main>
+  <!-- 목표 시간 고르기 -->
+  <section class="screen" id="s-pick">
+    <h2>시계 없이, 마음속으로 시간을 세어 보자!</h2>
+    <p class="dim">목표 시간을 고르세요. 시작을 누른 뒤 정확히 그 시간이 됐다고 생각할 때 멈춤을 눌러요.</p>
+    <div class="targets" id="targets"></div>
+    <ol class="howto">
+      <li>시작을 누르면 스톱워치가 <b>가려져요</b>. 숫자도 바늘도 보이지 않아요.</li>
+      <li>목표 시간이 됐다고 생각하면 <b>멈춤</b>을 눌러요.</li>
+      <li>목표보다 <b>일찍</b> 누르면 문이 쾅 닫혀요. 다시 도전!</li>
+      <li>목표에 <b>딱 맞추거나 조금 늦으면</b> 통과! 바늘이 어디를 가리키는지 확인해요.</li>
+    </ol>
+  </section>
+
+  <!-- 도전 -->
+  <section class="screen" id="s-play" hidden>
+    <p class="goal">목표: <em id="p-goal">5.00초</em></p>
+    <div class="watch">
+      <svg id="dial" viewBox="0 0 360 400" role="img" aria-label="스톱워치"></svg>
+      <div class="cover" id="cover"><b>?</b><span id="cover-text">시작을 누르면 시계가 가려져요</span></div>
+      <div class="door" id="door"><i></i><i></i><span class="bang">쾅! 🚪</span></div>
+    </div>
+    <div class="readout" id="readout"></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <button class="go" id="go">시작</button>
+    <div class="row" id="after" hidden>
+      <button class="btn main big" id="retry">다시 도전</button>
+      <button class="btn big" id="to-pick">다른 시간 고르기</button>
+    </div>
+  </section>
+</main>
+
+<!-- 마지막 결과 창 -->
+<div class="overlay" id="overlay" hidden>
+  <div class="result" role="dialog" aria-modal="true" aria-labelledby="r-title">
+    <h2 id="r-title">통과!</h2>
+    <dl class="stats" id="r-stats"></dl>
+    <div class="concept" id="concept">
+      이것은 시간이
+      <span class="pickset" id="ps1" role="group" aria-label="디지털 또는 아날로그"><button data-v="d">디지털</button><button data-v="a">아날로그</button></span>
+      시간이라서
+      <span class="pickset" id="ps2" role="group" aria-label="연속적 또는 불연속적"><button data-v="c">연속적</button><button data-v="n">불연속적</button></span>
+      이라 딱 떨어진다는 뜻!
+    </div>
+    <button class="btn main big" id="r-check">확인</button>
+    <p class="verdict" id="r-verdict" aria-live="polite"></p>
+    <p class="explain" id="r-explain" hidden>디지털 시간은 0.01초처럼 정해진 칸 단위로 <b>끊어서</b> 세요(불연속적). 그래서 2.00초, 5.00초처럼 <b>딱 떨어지는 값</b>으로 나타나고, 바늘도 그 칸에 딱 맞춰 멈춰요. 아날로그 시간은 끊김 없이 <b>이어져</b> 있어서(연속적) 정확히 한 점을 가리키기가 어려워요.</p>
+    <div class="row">
+      <button class="btn main big" id="r-again">다시 도전</button>
+      <button class="btn big" id="r-pick">다른 시간 고르기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var TARGETS=[2,5,10];
+// 목표마다 스톱워치 눈금: 한 바퀴 길이, 큰 눈금 간격, 작은 눈금 간격, 숫자 간격
+var SCALE={2:{max:3,major:.5,minor:.1,label:.5},5:{max:8,major:1,minor:.2,label:1},10:{max:15,major:1,minor:.5,label:5}};
+var S={target:5,state:"ready",t0:0,t:0,anim:0};
+var KEY="mig|g5|best";
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+function f2(n){return n.toFixed(2)}
+function show(id){["s-pick","s-play"].forEach(function(s){$(s).hidden=s!==id});window.scrollTo(0,0)}
+
+/* ---------- 고르기 ---------- */
+function drawPick(){
+  var best=load(),box=$("targets");box.innerHTML="";
+  TARGETS.forEach(function(t){
+    var b=document.createElement("button");b.className="target";
+    var big=document.createElement("b");big.textContent=t;b.appendChild(big);
+    var sp=document.createElement("span");sp.textContent="초";b.appendChild(sp);
+    var sm=document.createElement("small");sm.textContent=best[t]!=null?"최고 "+(best[t]===0?"딱 맞춤!":f2(best[t])+"초 차이"):"";b.appendChild(sm);
+    b.onclick=function(){S.target=t;start();};
+    box.appendChild(b);
+  });
+}
+
+/* ---------- 스톱워치 그리기 ---------- */
+var CX=180,CY=220,R=150;
+function pt(sec,r){var sc=SCALE[S.target],a=(sec/sc.max)*2*Math.PI-Math.PI/2;return [CX+r*Math.cos(a),CY+r*Math.sin(a)]}
+function drawDial(needleSec){
+  var sc=SCALE[S.target],h="";
+  // 몸체와 꼭지
+  h+='<rect class="crown" x="160" y="20" width="40" height="26" rx="6"/><rect class="crown" x="172" y="44" width="16" height="14"/>';
+  h+='<circle class="case" cx="'+CX+'" cy="'+CY+'" r="'+(R+20)+'"/><circle class="faceplate" cx="'+CX+'" cy="'+CY+'" r="'+(R+6)+'"/>';
+  // 목표 구간 표시와 목표선
+  var g0=pt(S.target,R+4),gi=pt(S.target,R-22);
+  var w1=pt(S.target-sc.minor/2,R),w2=pt(S.target+sc.minor/2,R);
+  h+='<path class="goalwedge" d="M'+CX+" "+CY+" L"+w1[0]+" "+w1[1]+" A"+R+" "+R+" 0 0 1 "+w2[0]+" "+w2[1]+' Z"/>';
+  h+='<line class="goalline" x1="'+gi[0]+'" y1="'+gi[1]+'" x2="'+g0[0]+'" y2="'+g0[1]+'"/>';
+  // 눈금
+  var steps=Math.round(sc.max/sc.minor);
+  for(var i=0;i<steps;i++){
+    var sec=i*sc.minor,isMajor=Math.abs(sec/sc.major-Math.round(sec/sc.major))<1e-6;
+    var a=pt(sec,R),b=pt(sec,R-(isMajor?18:9));
+    h+='<line class="tick'+(isMajor?"":" minor")+'" stroke-width="'+(isMajor?3:1.5)+'" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"/>';
+    if(Math.abs(sec/sc.label-Math.round(sec/sc.label))<1e-6){
+      var n=pt(sec,R-36);h+='<text class="num" font-size="'+(S.target===2?17:19)+'" x="'+n[0]+'" y="'+n[1]+'">'+(Math.round(sec*10)/10)+"</text>";
+    }
+  }
+  var gl=pt(S.target,R+13);
+  h+='<rect class="goalpill" x="'+(gl[0]-19)+'" y="'+(gl[1]-9)+'" width="38" height="18" rx="9"/>';
+  h+='<text class="goallabel" font-size="12" x="'+gl[0]+'" y="'+(gl[1]+.5)+'">목표</text>';
+  h+='<text class="unit" x="'+CX+'" y="'+(CY+56)+'">초</text>';
+  // 바늘
+  if(needleSec!=null){
+    var cap=Math.min(needleSec,sc.max),tip=pt(cap,R-6),tail=pt(cap+sc.max/2,24);
+    h+='<line class="needle-tail" x1="'+CX+'" y1="'+CY+'" x2="'+tail[0]+'" y2="'+tail[1]+'"/>';
+    h+='<line class="needle" x1="'+CX+'" y1="'+CY+'" x2="'+tip[0]+'" y2="'+tip[1]+'"/>';
+  }
+  h+='<circle class="hub" cx="'+CX+'" cy="'+CY+'" r="10"/><circle class="hub2" cx="'+CX+'" cy="'+CY+'" r="4"/>';
+  $("dial").innerHTML=h;
+}
+
+/* ---------- 진행 ---------- */
+function start(){
+  S.state="ready";cancelAnimationFrame(S.anim);
+  $("p-goal").textContent=f2(S.target)+"초";
+  drawDial(null);
+  $("cover").hidden=false;$("cover").className="cover";$("cover-text").textContent="시작을 누르면 시계가 가려져요";
+  $("door").className="door";
+  $("readout").textContent="";$("readout").className="readout";
+  $("msg").textContent="";$("msg").className="msg";
+  var go=$("go");go.hidden=false;go.disabled=false;go.textContent="시작";go.className="go";
+  $("after").hidden=true;$("overlay").hidden=true;
+  show("s-play");go.focus();
+}
+function press(){
+  if(S.state==="ready"){
+    S.state="run";S.t0=performance.now();
+    $("cover").className="cover counting";$("cover-text").textContent="마음속으로 "+S.target+"초를 세어 보세요";
+    var go=$("go");go.textContent="멈춤";go.className="go stop";
+  }else if(S.state==="run"){
+    var ms=performance.now()-S.t0;
+    S.state="reveal";S.t=Math.round(ms/10)/100;   // 0.01초 단위로 끊어서 잰다
+    $("go").disabled=true;$("go").hidden=true;
+    reveal();
+  }
+}
+function reveal(){
+  $("cover").hidden=true;
+  var dur=matchMedia("(prefers-reduced-motion: reduce)").matches?0:Math.min(1400,500+S.t*90),t0=performance.now();
+  (function step(now){
+    var k=dur?Math.min(1,(now-t0)/dur):1,e=1-Math.pow(1-k,3),v=S.t*e;
+    drawDial(v);
+    $("readout").innerHTML=f2(k<1?Math.floor(v*100)/100:S.t)+"<small>초</small>";
+    if(k<1){S.anim=requestAnimationFrame(step);return}
+    finish();
+  })(t0);
+}
+function finish(){
+  var diff=Math.round((S.t-S.target)*100)/100;
+  if(diff<0){
+    S.state="door";
+    $("readout").className="readout early";
+    $("door").className="door shut";
+    $("msg").className="msg bad";
+    $("msg").textContent="문에 가로막혔어요! 목표보다 "+f2(-diff)+"초 일렀어요.";
+    $("after").hidden=false;$("retry").focus();
+    return;
+  }
+  S.state="done";
+  $("readout").className="readout "+(diff===0?"exact":"late");
+  $("msg").className="msg";
+  $("msg").textContent=diff===0?"바늘이 목표를 딱 가리켰어요!":"목표보다 "+f2(diff)+"초 늦었어요.";
+  var best=load();if(best[S.target]==null||diff<best[S.target]){best[S.target]=diff;save(best)}
+  setTimeout(function(){openResult(diff)},700);
+}
+
+/* ---------- 마지막 결과 창 ---------- */
+var CH={ps1:null,ps2:null};
+function openResult(diff){
+  $("r-title").textContent=diff===0?"딱 맞췄어요! 🎯":"통과!";
+  $("r-title").className=diff===0?"exact":"";
+  var best=load()[S.target];
+  $("r-stats").innerHTML="";
+  [["목표",f2(S.target)+"초"],["내 기록",f2(S.t)+"초"],["차이",diff===0?"0.00초":"+"+f2(diff)+"초"]].forEach(function(r){
+    var d=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);$("r-stats").appendChild(d);
+  });
+  CH.ps1=null;CH.ps2=null;
+  ["ps1","ps2"].forEach(function(id){var g=$(id);g.className="pickset";var bs=g.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed","false")});
+  $("r-verdict").textContent="";$("r-verdict").className="verdict";$("r-explain").hidden=true;$("r-check").hidden=false;
+  $("overlay").hidden=false;$("r-check").focus();
+}
+["ps1","ps2"].forEach(function(id){
+  $(id).onclick=function(e){
+    var b=e.target.closest("button");if(!b)return;
+    CH[id]=b.getAttribute("data-v");$(id).className="pickset";
+    var bs=$(id).querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed",String(bs[i]===b));
+  };
+});
+$("r-check").onclick=function(){
+  var v=$("r-verdict");
+  if(!CH.ps1||!CH.ps2){v.className="verdict bad";v.textContent="두 칸 모두 골라 주세요.";return}
+  var ok1=CH.ps1==="d",ok2=CH.ps2==="n";
+  $("ps1").className="pickset "+(ok1?"right":"wrong");$("ps2").className="pickset "+(ok2?"right":"wrong");
+  if(ok1&&ok2){
+    v.className="verdict good";v.textContent="정답! 디지털 시간은 불연속적이라 딱 떨어져요.";
+    $("r-explain").hidden=false;$("r-check").hidden=true;
+  }else{
+    v.className="verdict bad";v.textContent="다시 골라 보자! 숫자가 0.01초씩 뚝뚝 끊어져 나오는 시계를 떠올려 봐.";
+  }
+};
+
+$("go").addEventListener("pointerdown",function(e){if(e.button&&e.button!==0)return;e.preventDefault();press()});
+$("go").addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();press()}});
+$("retry").onclick=start;
+$("r-again").onclick=start;
+$("to-pick").onclick=function(){drawPick();show("s-pick")};
+$("r-pick").onclick=function(){$("overlay").hidden=true;drawPick();show("s-pick")};
+
+drawPick();
+})();
+</script>
+</body>
+</html>
