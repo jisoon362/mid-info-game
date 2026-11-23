@@ -13,14 +13,14 @@
   /* 다른 게임과 같은 흰 바탕. 가운데 큰 스톱워치 하나, 그 아래 큰 시작·멈춤 버튼 */
   --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;
   --red:#e02424;--blue:#2563eb;--ok:#16a34a;--warn:#dc2626;--gold:#d4a017;
-  --okbg:#dcfce7;--badbg:#fee2e2;--face:#fbfbf8;--metal:#9aa3ae;--door:#8b5a2b;--door2:#6f4520;
+  --okbg:#dcfce7;--badbg:#fee2e2;--face:#fbfbf8;--metal:#9aa3ae;
   --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
   --bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;
   --red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--gold:#f5c542;
-  --okbg:#173a26;--badbg:#3f1d1d;--face:#1f2924;--metal:#5d6b63;--door:#7a4f27;--door2:#5c3b1c;
+  --okbg:#173a26;--badbg:#3f1d1d;--face:#1f2924;--metal:#5d6b63;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -84,18 +84,6 @@ p{margin:0}
 .readout.late{color:var(--blue)}
 .readout.exact{color:var(--ok)}
 
-/* 문 */
-.door{position:absolute;left:6.67%;top:16%;width:86.67%;height:78%;border-radius:50%;overflow:hidden;pointer-events:none}
-.door i{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,var(--door) 0 22px,var(--door2) 22px 25px);transition:transform .35s cubic-bezier(.3,1.4,.6,1)}
-.door i:first-child{left:0;transform:translateX(-102%);border-right:3px solid var(--door2)}
-.door i:last-child{right:0;transform:translateX(102%);border-left:3px solid var(--door2)}
-.door.shut i{transform:translateX(0)}
-.door i:first-child::after{content:"";position:absolute;right:14px;top:50%;width:12px;height:12px;border-radius:50%;background:var(--gold)}
-.door .bang{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;font-size:clamp(34px,7vw,52px);font-weight:800;color:#fff;text-shadow:0 2px 0 var(--door2),0 0 14px rgba(0,0,0,.4);transition:transform .25s .3s,opacity .25s .3s;white-space:nowrap}
-.door.shut .bang{transform:translate(-50%,-50%) scale(1);opacity:1}
-.door.shut{animation:thud .35s .3s}
-@keyframes thud{30%{transform:translateX(-6px)}60%{transform:translateX(5px)}}
-
 .go{min-width:220px;padding:20px 30px;border-radius:999px;border:0;font-size:clamp(22px,4vw,28px);font-weight:700;background:var(--ink);color:var(--bg)}
 .go.stop{background:var(--red);color:#fff}
 .go[disabled]{opacity:.4;cursor:default}
@@ -127,7 +115,7 @@ p{margin:0}
 .explain{font-size:15px;background:var(--okbg);border-radius:10px;padding:10px 12px;text-align:left}
 
 @media (max-width:520px){.targets{gap:8px}.target{padding:16px 6px}}
-@media (prefers-reduced-motion:reduce){.door i,.door .bang{transition:none}.door.shut{animation:none}.cover.counting b{animation:none}}
+@media (prefers-reduced-motion:reduce){.cover.counting b{animation:none}}
 </style>
 </head>
 <body>
@@ -146,7 +134,7 @@ p{margin:0}
     <ol class="howto">
       <li>시작을 누르면 스톱워치가 <b>가려져요</b>. 숫자도 바늘도 보이지 않아요.</li>
       <li>목표 시간이 됐다고 생각하면 <b>멈춤</b>을 눌러요.</li>
-      <li>목표보다 <b>일찍</b> 누르면 문이 쾅 닫혀요. 다시 도전!</li>
+      <li>목표보다 <b>일찍</b> 누르면 통과하지 못해요. 다시 도전!</li>
       <li>목표에 <b>딱 맞추거나 조금 늦으면</b> 통과! 바늘이 어디를 가리키는지 확인해요.</li>
     </ol>
   </section>
@@ -157,7 +145,6 @@ p{margin:0}
     <div class="watch">
       <svg id="dial" viewBox="0 0 360 400" role="img" aria-label="스톱워치"></svg>
       <div class="cover" id="cover"><b>?</b><span id="cover-text">시작을 누르면 시계가 가려져요</span></div>
-      <div class="door" id="door"><i></i><i></i><span class="bang">쾅! 🚪</span></div>
     </div>
     <div class="readout" id="readout"></div>
     <p class="msg" id="msg" aria-live="polite"></p>
@@ -262,7 +249,6 @@ function start(){
   $("p-goal").textContent=f2(S.target)+"초";
   drawDial(null);
   $("cover").hidden=false;$("cover").className="cover";$("cover-text").textContent="시작을 누르면 시계가 가려져요";
-  $("door").className="door";
   $("readout").textContent="";$("readout").className="readout";
   $("msg").textContent="";$("msg").className="msg";
   var go=$("go");go.hidden=false;go.disabled=false;go.textContent="시작";go.className="go";
@@ -297,9 +283,8 @@ function finish(){
   if(diff<0){
     S.state="door";
     $("readout").className="readout early";
-    $("door").className="door shut";
     $("msg").className="msg bad";
-    $("msg").textContent="문에 가로막혔어요! 목표보다 "+f2(-diff)+"초 일렀어요.";
+    $("msg").textContent="아직이에요! 목표보다 "+f2(-diff)+"초 일렀어요.";
     $("after").hidden=false;$("retry").focus();
     return;
   }
