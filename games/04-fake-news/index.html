@@ -111,7 +111,7 @@ p{margin:6px 0}
     <a class="btn back" href="../../">← 목록으로</a>
     <h1>가짜뉴스·피싱 판별<small>5. 디지털 문화 · 디지털 윤리</small></h1>
     <button class="ghost" data-theme-toggle></button>
-    <span class="left">남은 시간 <b id="left"></b></span>
+    <span class="left" hidden><b id="left"></b></span>
   </header>
 
   <!-- 시작 -->
@@ -220,7 +220,7 @@ function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.le
 function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g4")%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
-  var pass=sget(K.pass,0),free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  var pass=sget(K.pass,0),free=true;   // 수업 코드 없이 언제나 열린다
   if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
   gshow(null);
   $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";

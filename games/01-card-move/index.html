@@ -183,7 +183,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
     <button class="tab" role="tab" id="tab-slide" aria-selected="true">카드 옮기기</button>
     <button class="tab" role="tab" id="tab-sort" aria-selected="false">정렬 카드</button>
   </div>
-  <div class="who"><span><b id="who-id"></b> · 남은 시간 <b id="who-left"></b></span><button class="btn" id="logout">닉네임 바꾸기</button></div>
+  <div class="who"><span><b id="who-id"></b><b id="who-left" hidden></b></span><button class="btn" id="logout">닉네임 바꾸기</button></div>
 </header>
 
 <main>
@@ -344,7 +344,7 @@ function gshow(id){
 function gate(){
   var ses=sget(K.ses,null),pass=sget(K.pass,0),accs=sget(K.acc,{});
   if(!ses||!accs[ses]){G.back="auth";gshow("g-auth");return}
-  var free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  var free=true;   // 수업 코드 없이 언제나 열린다
   if(!free&&pass<=Date.now()){
     G.back="code";$("g-hello").textContent=ses;$("g-class").value="";
     if(G.started)$("g-code-err").textContent="수업 코드 시간이 끝났어요. 새 코드를 받아야 계속할 수 있어요.";
@@ -427,9 +427,9 @@ function drawHud(){
 }
 
 /* ---------- 기록 ---------- */
-function recKey(){var c=sget(K.code,{day:"",code:""});if(period(new Date())<0)c={day:new Date().toDateString(),code:"수업 외"};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
+function recKey(){var p=period(new Date()),c={day:new Date().toDateString(),code:p<0?"수업 외":(p+1)+"교시"};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
 function drawRecords(){
-  var list=load(recKey()),c=period(new Date())<0?{code:"없음"}:sget(K.code,{code:""});
+  var list=load(recKey()),c={code:""};
   $("rec-key").textContent="(수업 코드 "+c.code+" · "+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
   if(!list.length){$("records").innerHTML='<li class="none">아직 성공한 사람이 없어요. 첫 기록의 주인공이 되어 보세요.</li>';return}
   var me=sget(K.ses,"");

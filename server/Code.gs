@@ -73,7 +73,7 @@ function doPost(e) {
   try { q = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false, error: "format" }); }
   var n = nowInfo();
   // 수업 시간에는 그 교시의 수업 코드가 맞아야 받고, 수업 시간이 아니면 코드 없이 받는다
-  if (n.p >= 0 && String(q.code) !== codeFor(n.day, n.p)) return out({ ok: false, error: "code" });
+  // 수업 코드 확인은 하지 않는다
 
   var group = Math.round(Number(q.group));
   if (!(group >= 1 && group <= 20)) return out({ ok: false, error: "group" });
@@ -106,7 +106,7 @@ function doGet(e) {
   var n = nowInfo();
   // 선생님 비밀번호면 오늘 전체, 학생은 지금 시간대(이번 교시 또는 수업 외) 결과만 볼 수 있다
   var teacher = cyrb("T|" + SECRET + "|" + String(q.pin || "")) === TPIN;
-  var student = !teacher && !q.pin && (n.p < 0 || String(q.code || "") === codeFor(n.day, n.p));
+  var student = !teacher && !q.pin;
   if (!teacher && !student) return out({ ok: false, error: q.code ? "code" : "pin" });
   var sh = getSheet();
   var last = sh.getLastRow();

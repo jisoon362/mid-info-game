@@ -150,7 +150,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   <a class="btn back" href="../../">← 목록으로</a>
   <h1>이어 그리기</h1>
   <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
-  <span class="left">남은 시간 <b id="left"></b></span>
+  <span class="left" hidden><b id="left"></b></span>
 </header>
 
 <main>
@@ -284,7 +284,7 @@ function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.le
 function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g2")%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
-  var pass=sget(K.pass,0),free=period(new Date())<0;   // 수업 시간이 아니면 코드 없이 열린다
+  var pass=sget(K.pass,0),free=true;   // 수업 코드 없이 언제나 열린다
   if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
   gshow(null);
   $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
