@@ -62,7 +62,9 @@ p{margin:0}
 .kind[aria-pressed="true"] b{color:var(--blue)}
 .dwatch{position:relative;width:min(100%,460px)}
 .lcd{position:relative;border-radius:22px;padding:34px 22px 30px;background:#2c3530;border:10px solid var(--metal);box-shadow:inset 0 4px 14px rgba(0,0,0,.45);display:flex;align-items:baseline;justify-content:center;gap:10px}
-.lcd b{font-family:"Orbitron",ui-monospace,monospace;font-weight:800;font-size:clamp(56px,13vw,92px);letter-spacing:4px;color:#a6f3a1;text-shadow:0 0 12px rgba(150,255,150,.35);font-variant-numeric:tabular-nums;line-height:1}
+.lcd b{display:inline-flex;font-family:"Orbitron",ui-monospace,monospace;font-weight:800;font-size:clamp(56px,13vw,92px);letter-spacing:0;color:#a6f3a1;text-shadow:0 0 12px rgba(150,255,150,.35);font-variant-numeric:tabular-nums;line-height:1}
+.lcd .dg{display:inline-block;width:.82em;text-align:center}
+.lcd .dg.dot{width:.36em}
 .lcd .lcdunit{font-family:"Orbitron",ui-monospace,monospace;font-weight:600;font-size:16px;color:#7fbf7b}
 .lcd .lcdgoal{position:absolute;top:10px;left:16px;font-family:"Orbitron",ui-monospace,monospace;font-size:13px;color:#ff8a7a;letter-spacing:1px}
 .lcd.early b{color:#ff9a8a}
@@ -105,6 +107,7 @@ p{margin:0}
 .result{width:min(100%,520px);background:var(--bg);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.3)}
 .result h2{font-size:26px}
 .result h2.exact{color:var(--ok)}
+.result h2.early{color:var(--warn)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stats div{background:var(--cell);border-radius:10px;padding:8px}
 .stats dt{font-size:13px;color:var(--dim)}
@@ -186,11 +189,11 @@ p{margin:0}
       !
     </div>
     <button class="btn main big" id="r-check">확인</button>
-    <p class="dim" id="r-lock">정답을 맞혀야 게임을 처음부터 다시 할 수 있어요.</p>
+    <p class="dim" id="r-lock">퀴즈를 맞혀야 다시 도전할 수 있어요.</p>
     <p class="verdict" id="r-verdict" aria-live="polite"></p>
     <p class="explain" id="r-explain" hidden></p>
     <div class="row">
-      <button class="btn main big" id="r-again" hidden>처음부터 다시</button>
+      <button class="btn main big" id="r-again" hidden>다시 도전</button>
       <button class="btn big" id="r-pick" hidden>다른 시간 고르기</button>
     </div>
   </div>
@@ -273,15 +276,21 @@ function start(){
   $("watch").hidden=dig;$("dwatch").hidden=!dig;
   drawDial(0);
   $("lcd-goal").textContent="GOAL "+("0"+f2(S.target)).slice(-5);
-  $("lcd").textContent="00.00";$("lcd").parentNode.className="lcd";
+  lcdSet("00.00");$("lcd").parentNode.className="lcd";
   $("readout").textContent="";$("readout").className="readout";$("readout").hidden=dig;
   $("msg").textContent="";$("msg").className="msg";
   var go=$("go");go.hidden=false;go.disabled=false;go.textContent="시작";go.className="go";
   $("after").hidden=true;$("overlay").hidden=true;
   show("s-play");go.focus();
 }
+var LCD_CELLS=null;
+function lcdSet(txt){
+  var el=$("lcd");
+  if(!LCD_CELLS){el.textContent="";LCD_CELLS=[];for(var i=0;i<5;i++){var c=document.createElement("span");c.className=i===2?"dg dot":"dg";el.appendChild(c);LCD_CELLS.push(c)}}
+  for(var k=0;k<5;k++)if(LCD_CELLS[k].textContent!==txt[k])LCD_CELLS[k].textContent=txt[k];
+}
 function paint(v,final){
-  if(S.kind==="digital")$("lcd").textContent=("0"+f2(final?v:Math.floor(v*100)/100)).slice(-5);
+  if(S.kind==="digital")lcdSet(("0"+f2(final?v:Math.floor(v*100)/100)).slice(-5));
   else{drawDial(v);if(final)$("readout").innerHTML=fmtT(v)+"<small>초</small>"}
 }
 function press(){
@@ -308,7 +317,7 @@ function finish(){
     $("readout").className="readout early";$("lcd").parentNode.className="lcd early";
     $("msg").className="msg bad";
     $("msg").textContent="아직이에요! 목표보다 "+fmtD(-diff)+"초 일렀어요.";
-    $("after").hidden=false;$("retry").focus();
+    setTimeout(function(){openResult(diff)},700);
     return;
   }
   S.state="done";
@@ -324,12 +333,13 @@ function finish(){
 var CH={ps1:null,ps2:null};
 function openResult(diff){
   var dig=S.kind==="digital",exact=dig&&diff===0;
-  $("r-title").textContent=exact?"딱 맞췄어요! 🎯":"통과!";
-  $("r-title").className=exact?"exact":"";
+  var early=diff<0;
+  $("r-title").textContent=early?"아직이에요! "+fmtD(-diff)+"초 일렀어요":exact?"딱 맞췄어요! 🎯":"통과!";
+  $("r-title").className=early?"early":exact?"exact":"";
   $("c-kind").textContent=dig?"디지털":"아날로그";
   var best=load()[S.target];
   $("r-stats").innerHTML="";
-  [["목표",f2(S.target)+"초"],["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":"+"+fmtD(diff)+"초"]].forEach(function(r){
+  [["목표",f2(S.target)+"초"],["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":(early?"-"+fmtD(-diff):"+"+fmtD(diff))+"초"]].forEach(function(r){
     var d=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);$("r-stats").appendChild(d);
   });
   CH.ps1=null;CH.ps2=null;
