@@ -143,8 +143,8 @@ p{margin:0}
 <main>
   <!-- 목표 시간 고르기 -->
   <section class="screen" id="s-pick">
-    <h2>시계 없이, 마음속으로 시간을 세어 보자!</h2>
-    <p class="dim">목표 시간을 고르세요. 시작을 누른 뒤 정확히 그 시간이 됐다고 생각할 때 멈춤을 눌러요.</p>
+    <h2>목표 시간에 딱 맞춰 멈춰 보자!</h2>
+    <p class="dim">시작을 누르면 시계가 실제 속도로 돌아가요. 목표 시간이 되는 순간 멈춤을 눌러요.</p>
     <div class="kinds" role="group" aria-label="시계 종류">
       <button class="kind" data-kind="analog"><span class="ico">⏱️</span><b>아날로그 초시계</b><small>바늘이 끊김 없이 돌아가요</small></button>
       <button class="kind" data-kind="digital"><span class="ico">🔢</span><b>디지털 시계</b><small>숫자가 0.01초씩 바뀌어요</small></button>
@@ -152,8 +152,8 @@ p{margin:0}
     <div class="targets" id="targets"></div>
     <ol class="howto">
       <li>시계 종류와 목표 시간을 골라요.</li>
-      <li>시작을 누르면 시계가 <b>가려져요</b>. 숫자도 바늘도 보이지 않아요.</li>
-      <li>목표 시간이 됐다고 생각하면 <b>멈춤</b>을 눌러요.</li>
+      <li>시작을 누르면 시계가 <b>실제 속도로</b> 돌아가요.</li>
+      <li>목표 시간이 되는 순간 <b>멈춤</b>을 눌러요.</li>
       <li>목표보다 <b>일찍</b> 누르면 통과하지 못해요. 다시 도전!</li>
       <li>목표에 <b>딱 맞추거나 조금 늦으면</b> 통과! 시계가 어디에 멈췄는지 확인해요.</li>
     </ol>
@@ -277,42 +277,35 @@ function start(){
   var dig=S.kind==="digital";
   $("p-goal").textContent=f2(S.target)+"초";
   $("watch").hidden=dig;$("dwatch").hidden=!dig;
-  drawDial(null);
+  drawDial(0);
   $("lcd-goal").textContent="GOAL "+("0"+f2(S.target)).slice(-5);
   $("lcd").textContent="00.00";$("lcd").parentNode.className="lcd";
-  ["cover","dcover"].forEach(function(id){$(id).hidden=false});
-  $("cover-text").textContent=$("dcover-text").textContent="시작을 누르면 시계가 가려져요";
+  $("cover").hidden=true;$("dcover").hidden=true;   // 시계는 처음부터 보인다
   $("readout").textContent="";$("readout").className="readout";$("readout").hidden=dig;
   $("msg").textContent="";$("msg").className="msg";
   var go=$("go");go.hidden=false;go.disabled=false;go.textContent="시작";go.className="go";
   $("after").hidden=true;$("overlay").hidden=true;
   show("s-play");go.focus();
 }
+function paint(v,final){
+  if(S.kind==="digital")$("lcd").textContent=("0"+f2(final?v:Math.floor(v*100)/100)).slice(-5);
+  else{drawDial(v);if(final)$("readout").innerHTML=fmtT(v)+"<small>초</small>"}
+}
 function press(){
   if(S.state==="ready"){
     S.state="run";S.t0=performance.now();
-    $("cover-text").textContent=$("dcover-text").textContent="마음속으로 "+S.target+"초를 세어 보세요";
     var go=$("go");go.textContent="멈춤";go.className="go stop";
+    // 실제 시간대로 바늘과 숫자를 움직인다
+    (function tick(now){if(S.state!=="run")return;paint(Math.max(0,(now-S.t0)/1000),false);S.anim=requestAnimationFrame(tick)})(S.t0);
   }else if(S.state==="run"){
     var ms=performance.now()-S.t0;
-    S.state="reveal";
+    S.state="stopped";cancelAnimationFrame(S.anim);
     // 디지털은 0.01초 칸으로 끊어서 재고, 아날로그는 끊지 않고 그대로 잰다
     S.t=S.kind==="digital"?Math.round(ms/10)/100:ms/1000;
     $("go").disabled=true;$("go").hidden=true;
-    reveal();
-  }
-}
-function reveal(){
-  $("cover").hidden=true;$("dcover").hidden=true;
-  var dig=S.kind==="digital";
-  var dur=matchMedia("(prefers-reduced-motion: reduce)").matches?0:Math.min(1400,500+S.t*90),t0=performance.now();
-  (function step(now){
-    var k=dur?Math.min(1,(now-t0)/dur):1,e=dig?k:1-Math.pow(1-k,3),v=S.t*e;
-    if(dig){$("lcd").textContent=("0"+f2(k<1?Math.floor(v*100)/100:S.t)).slice(-5)}
-    else{drawDial(v);$("readout").innerHTML=(k<1?v.toFixed(2):fmtT(S.t))+"<small>초</small>"}
-    if(k<1){S.anim=requestAnimationFrame(step);return}
+    paint(S.t,true);
     finish();
-  })(t0);
+  }
 }
 function finish(){
   var dig=S.kind==="digital";
