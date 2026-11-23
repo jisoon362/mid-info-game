@@ -364,7 +364,7 @@ $("r-check").onclick=function(){
     v.className="verdict good";v.textContent=dig?"정답! 시간이 디지털로 표현될 때 불연속적이라 딱 떨어진다!":"정답! 시간이 아날로그로 표현될 때 연속적이라 딱 안 떨어진다!";
     $("r-explain").innerHTML=dig
       ?"디지털 시계는 0.01초처럼 정해진 칸 단위로 <b>끊어서</b> 세요(불연속적). 그래서 2.00초, 5.00초처럼 <b>딱 떨어지는 값</b>이 나올 수 있어요."
-      :"아날로그 초시계의 바늘은 끊김 없이 <b>이어서</b> 움직여요(연속적). 그래서 "+fmtT(S.t)+"초처럼 끝없이 이어지는 값이 되고, 목표에 <b>딱 떨어지게</b> 멈추기는 아주 어려워요.";
+      :"아날로그 초시계의 바늘은 끊김 없이 이어서 "+fmtT(S.t)+"초처럼 끝없이 이어지는 값이 되고, 목표에 딱 떨어지게 멈추기는 아주 어려워요. ㅠㅠ";
     $("r-explain").hidden=false;$("r-check").hidden=true;$("r-lock").hidden=true;$("r-again").hidden=false;$("r-pick").hidden=false;$("r-again").focus();
   }else{
     v.className="verdict bad";v.textContent=dig?"다시 골라 보자! 숫자가 0.01초씩 뚝뚝 끊어져 나오는 시계를 떠올려 봐.":"다시 골라 보자! 바늘이 멈추지 않고 미끄러지듯 도는 모습을 떠올려 봐.";
