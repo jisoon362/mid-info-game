@@ -150,6 +150,12 @@ p{margin:0}
 .budgetbar .rest.minus{color:var(--red)}
 .budgetbar b.plain{color:var(--ink)}
 .tapme{width:100%;text-align:center;font-size:clamp(24px,4.4vw,36px);font-weight:700;color:var(--red);line-height:1.2}
+.namecard{width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:14px;padding:18px}
+.namecard input::placeholder{color:var(--dim);font-size:15px}
+.mycard{width:100%;max-width:560px;border:3px solid var(--blue);border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:6px;text-align:center}
+.mycard b{font-size:clamp(24px,4.4vw,32px);font-weight:700;color:var(--blue)}
+.mycard p{font-size:16px}
+.mycard p small{color:var(--dim);margin-right:6px;font-weight:600}
 .warnbox{width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--badbg);border-radius:12px;padding:12px 16px}
 .warnbox p{color:var(--warn);font-weight:700;font-size:17px}
 .notes{list-style:none;margin:0;padding:0;width:100%;max-width:720px;display:flex;flex-direction:column;gap:10px}
@@ -254,7 +260,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
   <!-- 2장: 퀴즈 안내 -->
   <section class="screen" id="s-lead" hidden>
     <h2>먼저 퀴즈를 맞혀 컴퓨터 부품을 살 돈을 벌어 보자</h2>
-    <p class="lead">문제마다 <b>70만원</b>씩이야!</p>
+    <p class="lead">문제마다 <b>75만원</b>씩이야!</p>
     <p class="dim">문제마다 정답을 고를 기회는 두 번이에요.</p>
     <button class="btn main big" id="go-q1">퀴즈 시작</button>
   </section>
@@ -274,7 +280,7 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
         <ol class="th-scale" id="th-scale" aria-hidden="true"></ol>
       </div>
       <div class="th-bulb"></div>
-      <small>최대 420만원</small>
+      <small>최대 450만원</small>
     </aside>
   </section>
 
@@ -355,14 +361,37 @@ td.hi{color:#b45309}td.mid{color:var(--blue)}td.low{color:var(--dim)}
     </div>
   </section>
 
+  <!-- 내 컴퓨터 소개 -->
+  <section class="screen" id="s-name" hidden>
+    <h2>내가 만든 컴퓨터를 소개해 볼까?</h2>
+    <p class="dim">가볍게 써도 괜찮아요. 비워 두고 넘어가도 돼요.</p>
+    <div class="namecard">
+      <label class="field" for="n-title">컴퓨터 이름
+        <input id="n-title" maxlength="15" autocomplete="off" placeholder="예: 번개 공부 머신">
+      </label>
+      <label class="field" for="n-feature">특징
+        <input id="n-feature" maxlength="40" autocomplete="off" placeholder="예: CPU는 고급, 나머지는 일반으로 아꼈어요">
+      </label>
+      <label class="field" for="n-use">용도
+        <input id="n-use" maxlength="40" autocomplete="off" placeholder="예: 숙제와 한글 문서 작성">
+      </label>
+    </div>
+    <div class="pnav">
+      <button class="btn big" id="n-prev">◀ 소프트웨어로</button>
+      <button class="btn main big" id="n-done">완성! ▶</button>
+    </div>
+  </section>
+
   <!-- 완성 -->
   <section class="screen" id="s-final" hidden>
     <h2>나만의 컴퓨팅 시스템 완성!</h2>
+    <div class="mycard" id="f-card"></div>
     <p class="lead">컴퓨팅 시스템 = <b>하드웨어</b> + <b>소프트웨어</b>(운영체제 + 응용소프트웨어)</p>
     <div class="map" id="f-map"></div>
     <div class="budgetbar" id="f-bar"></div>
     <ul class="brief" id="f-list"></ul>
     <div class="row">
+      <button class="btn big" id="f-name">소개 고치기</button>
       <button class="btn big" id="f-edit">소프트웨어 다시 고르기</button>
       <button class="btn big" id="f-restart">처음부터 다시</button>
     </div>
@@ -468,7 +497,7 @@ setInterval(function(){if($("gate").hidden)gate()},5000);
 
 
 /* ---------- 퀴즈 ---------- */
-var PRIZE=70,CHANCES=2;
+var PRIZE=75,CHANCES=2;
 var QUIZ=[
   {q:"컴퓨팅 시스템은 무엇과 무엇으로 구성되어 있을까요?",
    o:["하드웨어와 소프트웨어","모니터와 본체","키보드와 마우스","운영체제와 응용프로그램","중앙처리장치와 저장장치"],a:0,
@@ -499,9 +528,9 @@ var S={i:0,money:0,right:0,solved:false,earned:[],mode:"quiz"};
 
 var NOTE_BACK="s-buy";   // 오답노트를 마치고 돌아갈 화면
 function show(id){
-  ["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw","s-note","s-sw","s-final"].forEach(function(s){$(s).hidden=s!==id});
+  ["s-intro","s-lead","s-quiz","s-done","s-price","s-buy","s-hw","s-note","s-sw","s-name","s-final"].forEach(function(s){$(s).hidden=s!==id});
   var late=id==="s-note"||S.mode==="note";
-  setStep(id==="s-sw"||id==="s-final"||(late&&NOTE_BACK==="s-sw")?3:id==="s-buy"||id==="s-hw"||late?2:1);
+  setStep(id==="s-sw"||id==="s-name"||id==="s-final"||(late&&NOTE_BACK==="s-sw")?3:id==="s-buy"||id==="s-hw"||late?2:1);
   window.scrollTo(0,0);
 }
 function backFromNote(){B.blocked=false;W.blocked=false;if(NOTE_BACK==="s-sw"){drawSw();show("s-sw")}else{drawBuy();show("s-buy")}}
@@ -717,7 +746,16 @@ function drawSw(){
   $("w-done").disabled=!W.os;
   $("w-done").textContent=W.os?"조립 완료 ▶":"조립 완료 (운영체제를 골라 주세요)";
 }
+function drawCard(){
+  var c=$("f-card");c.innerHTML="";
+  var t=$("n-title").value.trim()||"이름 없는 컴퓨터";
+  var b=document.createElement("b");b.textContent="💻 "+t;c.appendChild(b);
+  [["특징",$("n-feature").value.trim()],["용도",$("n-use").value.trim()]].forEach(function(r){
+    if(!r[1])return;var p=document.createElement("p"),sm=document.createElement("small");sm.textContent=r[0];p.appendChild(sm);p.appendChild(document.createTextNode(r[1]));c.appendChild(p);
+  });
+}
 function drawFinal(){
+  drawCard();
   drawMap("f-map",{active:null,picks:B.picks},W);
   $("f-bar").innerHTML=barHtml();
   var ul=$("f-list");ul.innerHTML="";
@@ -819,7 +857,10 @@ $("b-note").onclick=function(){NOTE_BACK="s-buy";drawNote();show("s-note")};
 $("w-note").onclick=function(){NOTE_BACK="s-sw";drawNote();show("s-note")};
 $("h-next").onclick=function(){W.blocked=false;drawSw();show("s-sw")};
 $("w-prev").onclick=function(){drawHw();show("s-hw")};
-$("w-done").onclick=function(){if(!W.os){$("w-os-head").scrollIntoView({behavior:"smooth",block:"center"});return}drawFinal();show("s-final")};
+$("w-done").onclick=function(){if(!W.os){$("w-os-head").scrollIntoView({behavior:"smooth",block:"center"});return}show("s-name");$("n-title").focus()};
+$("n-prev").onclick=function(){drawSw();show("s-sw")};
+$("n-done").onclick=function(){drawFinal();show("s-final")};
+$("f-name").onclick=function(){show("s-name")};
 $("w-map").onclick=function(e){
   var t=e.target.closest?e.target.closest("[data-os],[data-app]"):null;if(!t)return;
   $(t.hasAttribute("data-os")?"w-os-head":"w-app-head").scrollIntoView({behavior:"smooth",block:"start"});
