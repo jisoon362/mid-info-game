@@ -106,9 +106,10 @@ p{margin:0}
 .overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:grid;place-items:center;padding:16px;z-index:10;overflow:auto}
 .result{width:min(100%,520px);background:var(--bg);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.3)}
 .result h2{font-size:26px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .result h2.exact{color:var(--ok)}
 .result h2.early{color:var(--warn)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .stats div{background:var(--cell);border-radius:10px;padding:8px}
 .stats dt{font-size:13px;color:var(--dim)}
 .stats dd{margin:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -179,7 +180,7 @@ p{margin:0}
 <!-- 마지막 결과 창 -->
 <div class="overlay" id="overlay" hidden>
   <div class="result" role="dialog" aria-modal="true" aria-labelledby="r-title">
-    <h2 id="r-title">통과!</h2>
+    <h2 id="r-title" class="sr">결과</h2>
     <dl class="stats" id="r-stats"></dl>
     <div class="concept" id="concept">
       시간이 <b id="c-kind">디지털</b>로 표현될 때
@@ -334,12 +335,11 @@ var CH={ps1:null,ps2:null};
 function openResult(diff){
   var dig=S.kind==="digital",exact=dig&&diff===0;
   var early=diff<0;
-  $("r-title").textContent=early?"아직이에요! "+fmtD(-diff)+"초 일렀어요":exact?"딱 맞췄어요! 🎯":"통과!";
-  $("r-title").className=early?"early":exact?"exact":"";
+  $("r-title").textContent="결과";
   $("c-kind").textContent=dig?"디지털":"아날로그";
   var best=load()[S.target];
   $("r-stats").innerHTML="";
-  [["목표",f2(S.target)+"초"],["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":(early?"-"+fmtD(-diff):"+"+fmtD(diff))+"초"]].forEach(function(r){
+  [["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":(early?"-"+fmtD(-diff):"+"+fmtD(diff))+"초"]].forEach(function(r){
     var d=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);$("r-stats").appendChild(d);
   });
   CH.ps1=null;CH.ps2=null;
@@ -364,7 +364,7 @@ $("r-check").onclick=function(){
     v.className="verdict good";v.textContent=dig?"정답! 시간이 디지털로 표현될 때 불연속적이라 딱 떨어진다!":"정답! 시간이 아날로그로 표현될 때 연속적이라 딱 안 떨어진다!";
     $("r-explain").innerHTML=dig
       ?"디지털 시계는 0.01초처럼 정해진 칸 단위로 <b>끊어서</b> 세요(불연속적). 그래서 2.00초, 5.00초처럼 <b>딱 떨어지는 값</b>이 나올 수 있어요."
-      :"아날로그 초시계의 바늘은 끊김 없이 이어서 "+fmtT(S.t)+"초처럼 끝없이 이어지는 값이 되고, 목표에 딱 떨어지게 멈추기는 아주 어려워요. ㅠㅠ";
+      :"아날로그 초시계의 바늘은 "+fmtT(S.t)+"초처럼 끝없이 이어지는 값이 되고, 목표에 딱 떨어지게 멈추기는 아주 어려워요.";
     $("r-explain").hidden=false;$("r-check").hidden=true;$("r-lock").hidden=true;$("r-again").hidden=false;$("r-pick").hidden=false;$("r-again").focus();
   }else{
     v.className="verdict bad";v.textContent=dig?"다시 골라 보자! 숫자가 0.01초씩 뚝뚝 끊어져 나오는 시계를 떠올려 봐.":"다시 골라 보자! 바늘이 멈추지 않고 미끄러지듯 도는 모습을 떠올려 봐.";
