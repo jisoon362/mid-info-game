@@ -109,6 +109,7 @@ p{margin:0}
 .stats div{background:var(--cell);border-radius:10px;padding:8px}
 .stats dt{font-size:13px;color:var(--dim)}
 .stats dd{margin:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.concept b{color:var(--blue);font-weight:700}
 .concept{border:2px solid var(--blue);border-radius:14px;padding:14px;font-size:clamp(18px,3vw,21px);font-weight:600;line-height:2.2}
 .pickset{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden;vertical-align:middle;margin:0 2px}
 .pickset button{border:0;background:var(--bg);padding:2px 12px;font-size:.92em;font-weight:600;color:var(--dim)}
@@ -178,18 +179,19 @@ p{margin:0}
     <h2 id="r-title">통과!</h2>
     <dl class="stats" id="r-stats"></dl>
     <div class="concept" id="concept">
-      이것은 시간이
-      <span class="pickset" id="ps1" role="group" aria-label="디지털 또는 아날로그"><button data-v="d">디지털</button><button data-v="a">아날로그</button></span>
-      시간이라서
-      <span class="pickset" id="ps2" role="group" aria-label="연속적 또는 불연속적"><button data-v="c">연속적</button><button data-v="n">불연속적</button></span>
-      <span id="c-end">이라 딱 떨어진다는 뜻!</span>
+      시간이 <b id="c-kind">디지털</b>로 표현될 때
+      <span class="pickset" id="ps1" role="group" aria-label="연속적 또는 불연속적"><button data-v="c">연속적</button><button data-v="n">불연속적</button></span>
+      이라 딱
+      <span class="pickset" id="ps2" role="group" aria-label="떨어진다 또는 안 떨어진다"><button data-v="y">떨어진다</button><button data-v="n">안 떨어진다</button></span>
+      !
     </div>
     <button class="btn main big" id="r-check">확인</button>
+    <p class="dim" id="r-lock">정답을 맞혀야 게임을 처음부터 다시 할 수 있어요.</p>
     <p class="verdict" id="r-verdict" aria-live="polite"></p>
     <p class="explain" id="r-explain" hidden></p>
     <div class="row">
-      <button class="btn main big" id="r-again">다시 도전</button>
-      <button class="btn big" id="r-pick">다른 시간 고르기</button>
+      <button class="btn main big" id="r-again" hidden>처음부터 다시</button>
+      <button class="btn big" id="r-pick" hidden>다른 시간 고르기</button>
     </div>
   </div>
 </div>
@@ -324,7 +326,7 @@ function openResult(diff){
   var dig=S.kind==="digital",exact=dig&&diff===0;
   $("r-title").textContent=exact?"딱 맞췄어요! 🎯":"통과!";
   $("r-title").className=exact?"exact":"";
-  $("c-end").textContent=dig?"이라 딱 떨어진다는 뜻!":"이라 딱 떨어지지 않는다는 뜻!";
+  $("c-kind").textContent=dig?"디지털":"아날로그";
   var best=load()[S.target];
   $("r-stats").innerHTML="";
   [["목표",f2(S.target)+"초"],["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":"+"+fmtD(diff)+"초"]].forEach(function(r){
@@ -332,7 +334,7 @@ function openResult(diff){
   });
   CH.ps1=null;CH.ps2=null;
   ["ps1","ps2"].forEach(function(id){var g=$(id);g.className="pickset";var bs=g.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed","false")});
-  $("r-verdict").textContent="";$("r-verdict").className="verdict";$("r-explain").hidden=true;$("r-check").hidden=false;
+  $("r-verdict").textContent="";$("r-verdict").className="verdict";$("r-explain").hidden=true;$("r-check").hidden=false;$("r-lock").hidden=false;$("r-again").hidden=true;$("r-pick").hidden=true;
   $("overlay").hidden=false;$("r-check").focus();
 }
 ["ps1","ps2"].forEach(function(id){
@@ -345,14 +347,15 @@ function openResult(diff){
 $("r-check").onclick=function(){
   var v=$("r-verdict");
   if(!CH.ps1||!CH.ps2){v.className="verdict bad";v.textContent="두 칸 모두 골라 주세요.";return}
-  var dig=S.kind==="digital",ok1=CH.ps1===(dig?"d":"a"),ok2=CH.ps2===(dig?"n":"c");
+  // 디지털: 불연속적 · 떨어진다 / 아날로그: 연속적 · 안 떨어진다
+  var dig=S.kind==="digital",ok1=CH.ps1===(dig?"n":"c"),ok2=CH.ps2===(dig?"y":"n");
   $("ps1").className="pickset "+(ok1?"right":"wrong");$("ps2").className="pickset "+(ok2?"right":"wrong");
   if(ok1&&ok2){
-    v.className="verdict good";v.textContent=dig?"정답! 디지털 시간은 불연속적이라 딱 떨어져요.":"정답! 아날로그 시간은 연속적이라 딱 떨어지지 않아요.";
+    v.className="verdict good";v.textContent=dig?"정답! 시간이 디지털로 표현될 때 불연속적이라 딱 떨어진다!":"정답! 시간이 아날로그로 표현될 때 연속적이라 딱 안 떨어진다!";
     $("r-explain").innerHTML=dig
       ?"디지털 시계는 0.01초처럼 정해진 칸 단위로 <b>끊어서</b> 세요(불연속적). 그래서 2.00초, 5.00초처럼 <b>딱 떨어지는 값</b>이 나올 수 있어요."
       :"아날로그 초시계의 바늘은 끊김 없이 <b>이어서</b> 움직여요(연속적). 그래서 "+fmtT(S.t)+"초처럼 끝없이 이어지는 값이 되고, 목표에 <b>딱 떨어지게</b> 멈추기는 아주 어려워요.";
-    $("r-explain").hidden=false;$("r-check").hidden=true;
+    $("r-explain").hidden=false;$("r-check").hidden=true;$("r-lock").hidden=true;$("r-again").hidden=false;$("r-pick").hidden=false;$("r-again").focus();
   }else{
     v.className="verdict bad";v.textContent=dig?"다시 골라 보자! 숫자가 0.01초씩 뚝뚝 끊어져 나오는 시계를 떠올려 봐.":"다시 골라 보자! 바늘이 멈추지 않고 미끄러지듯 도는 모습을 떠올려 봐.";
   }
