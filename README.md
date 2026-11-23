@@ -15,7 +15,7 @@ games/
     index.html
   03-build-computer/    3번 게임: 컴퓨팅 시스템 조립하기
     index.html
-  05-time-click/        5번 게임: 시간 맞히기
+  05-time-click/        5번 게임: 아날로그와 디지털을 이겨라
     index.html
   04-fake-news/         4번 게임: 가짜뉴스·피싱 판별
     index.html

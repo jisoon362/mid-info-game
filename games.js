@@ -17,5 +17,5 @@ window.GAMES = [
   { no: 2, folder: "02-relay-draw", title: "이어 그리기", grade: "2학년", area: 2, unit: 1, desc: "3초씩 이어 그리고 맞히기 · 핵심요소 적기 · 모둠 활동" },
   { no: 3, folder: "03-build-computer", title: "컴퓨팅 시스템 조립하기", grade: "2학년", area: 1, unit: 1, desc: "퀴즈로 돈을 벌어 하드웨어와 소프트웨어를 사서 컴퓨터 완성하기" },
   { no: 4, folder: "04-fake-news", title: "가짜뉴스·피싱 판별", grade: "2학년", area: 5, unit: 2, desc: "카드를 진짜·가짜·위험으로 분류하고 근거 찾기 · 개인전과 모둠전" },
-  { no: 5, folder: "05-time-click", title: "시간 맞히기", grade: "2학년", area: 2, unit: 1, desc: "시계 없이 2초·5초·10초에 딱 맞춰 멈추기 · 디지털과 아날로그, 연속과 불연속" }
+  { no: 5, folder: "05-time-click", title: "아날로그와 디지털을 이겨라", grade: "2학년", area: 2, unit: 1, desc: "아날로그 초시계와 디지털 시계로 2초·5초·10초에 딱 맞춰 멈추기 · 연속과 불연속" }
 ];
