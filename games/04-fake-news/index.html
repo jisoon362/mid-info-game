@@ -62,6 +62,14 @@ p{margin:6px 0}
 .evb{text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:16px}
 .evb.good{border-color:var(--ok);background:var(--real-bg)}
 .evb.bad{border-color:var(--no);background:var(--phish-bg)}
+.evb,.ans{position:relative}
+.mark{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;font-size:13px;font-weight:800;vertical-align:1px;color:#fff}
+.mark.o{background:var(--ok)}
+.mark.x{background:var(--no)}
+.ans .mark{position:absolute;top:-10px;right:-6px;margin:0}
+.ans.good{border-color:var(--ok);background:var(--real-bg)}
+.ans.bad{border-color:var(--no);background:var(--phish-bg);opacity:.75}
+.retry{margin:10px 0 0;min-height:1.4em;font-weight:700;color:var(--no);text-align:center}
 .fb{margin-top:14px;border-radius:14px;padding:14px;font-size:15px}
 .fb.ok{background:var(--real-bg)} .fb.no{background:var(--phish-bg)}
 .fb h3{margin:0 0 4px;font-size:17px}
@@ -120,7 +128,7 @@ p{margin:6px 0}
   <!-- 시작 -->
   <section id="start" class="card">
     <h2>진짜일까, 가짜일까, 위험할까?</h2>
-    <p class="muted">카드를 읽고 분류한 뒤, 그렇게 판단한 근거도 골라 보세요. 분류 +1점, 근거 +1점이에요.</p>
+    <p class="muted">카드를 읽고 분류한 뒤, 그렇게 판단한 근거도 골라 보세요. 분류 +1점, 근거 +1점이에요. 틀려도 한 번 더 고를 기회가 있어요.</p>
     <div class="legend">
       <div class="l-real"><b>진짜</b> · 출처와 근거를 확인할 수 있는 믿을 만한 정보</div>
       <div class="l-fake"><b>가짜</b> · 사실이 아니거나 근거가 없는 허위·과장 정보</div>
@@ -148,11 +156,13 @@ p{margin:6px 0}
           <button class="ans fake" data-v="fake">가짜<small>허위·과장</small></button>
           <button class="ans phish" data-v="phish">위험<small>피싱·스미싱</small></button>
         </div>
+        <p class="retry" id="clsHint" aria-live="polite"></p>
       </div>
 
       <div id="step2" class="hide">
         <div class="q" id="evTitle">그렇게 판단한 가장 알맞은 근거는?</div>
         <div class="ev" id="evList"></div>
+        <p class="retry" id="evHint" aria-live="polite"></p>
       </div>
 
       <div id="teamCtl" class="hide">
@@ -326,7 +336,7 @@ const QUESTIONS=[
 ];
 
 const $=id=>document.getElementById(id);
-let order=[], idx=0, score=0, picked=null, evPicked=false, curList=[];
+let clsTries=0, evTries=0, clsRight=false, order=[], idx=0, score=0, picked=null, evPicked=false, curList=[];
 let cfgTeams=[], teamNames=[], pts=[], timerId=null;
 const teamMode=()=>teamNames.length>0;
 
@@ -414,7 +424,8 @@ function fillEvidence(q,clickable){
 
 function render(){
   const q=QUESTIONS[order[idx]];
-  picked=null; evPicked=false;
+  picked=null; evPicked=false; clsTries=0; evTries=0; clsRight=false;
+  $("clsHint").textContent=""; $("evHint").textContent="";
   resetTimer(); $("timerBtn").textContent="⏱ 30초 시작";
   $("prog").textContent=`${idx+1} / ${QUESTIONS.length}`;
   $("pts").textContent=teamMode()?"":score+"점";
@@ -437,7 +448,7 @@ function render(){
     $("step1").classList.remove("hide");
     $("step2").classList.add("hide");
     $("evTitle").textContent="그렇게 판단한 가장 알맞은 근거는?";
-    document.querySelectorAll(".ans").forEach(b=>{b.classList.remove("sel");b.disabled=false});
+    document.querySelectorAll(".ans").forEach(b=>{b.classList.remove("sel","good","bad");b.disabled=false;const m=b.querySelector(".mark");if(m)m.remove()});
   }
 }
 
@@ -445,7 +456,7 @@ function render(){
 $("revealBtn").onclick=()=>{
   stopTimer();
   const q=QUESTIONS[order[idx]];
-  [...$("evList").children].forEach((c,i)=>{if(curList[i].good)c.classList.add("good")});
+  [...$("evList").children].forEach((c,i)=>{if(curList[i].good){c.classList.add("good");if(!c.querySelector(".mark"))mark(c,true)}});
   const fb=$("fb"); fb.className="fb ok";
   fb.innerHTML=`<h3>정답은 「${LABEL[q.ans]}」 🎯</h3><div><b>${q.why}</b></div><div class="tip">👉 ${q.tip}</div>`;
   fb.classList.remove("hide");
@@ -454,35 +465,54 @@ $("revealBtn").onclick=()=>{
 };
 
 /* 개인전 */
+function mark(el,ok){const m=document.createElement("span");m.className="mark "+(ok?"o":"x");m.textContent=ok?"정답":"오답";el.appendChild(m)}
 document.querySelectorAll(".ans").forEach(b=>{
   b.onclick=()=>{
-    if(picked) return;
-    picked=b.dataset.v;
+    if(picked||b.disabled) return;
     const q=QUESTIONS[order[idx]];
-    document.querySelectorAll(".ans").forEach(x=>{x.disabled=true;x.classList.toggle("sel",x===b)});
-    if(picked===q.ans) score++;
+    clsTries++;
+    if(b.dataset.v===q.ans){
+      picked=b.dataset.v; clsRight=true; score++;
+    }else if(clsTries<2){
+      b.disabled=true; b.classList.add("bad"); mark(b,false);
+      $("clsHint").textContent="아쉬워요! 기회가 한 번 더 있어요.";
+      return;
+    }else{
+      picked=b.dataset.v; b.classList.add("bad"); mark(b,false);
+    }
+    $("clsHint").textContent="";
+    document.querySelectorAll(".ans").forEach(x=>{
+      x.disabled=true;
+      if(x.dataset.v===q.ans){x.classList.add("good");if(!x.querySelector(".mark"))mark(x,true)}
+    });
     fillEvidence(q,true);
     $("step2").classList.remove("hide");
   };
 });
 
 function chooseEv(btn,e,box){
-  if(evPicked) return; evPicked=true;
+  if(evPicked||btn.disabled) return;
   const q=QUESTIONS[order[idx]];
+  evTries++;
+  if(!e.good&&evTries<2){
+    btn.disabled=true; btn.classList.add("bad"); mark(btn,false);
+    $("evHint").textContent="아쉬워요! 기회가 한 번 더 있어요.";
+    return;
+  }
+  evPicked=true; $("evHint").textContent="";
   if(e.good) score++;
   [...box.children].forEach((c,i)=>{
     c.disabled=true;
-    if(curList[i].good) c.classList.add("good");
-    else if(c===btn) c.classList.add("bad");
+    if(curList[i].good){c.classList.add("good");if(!c.querySelector(".mark"))mark(c,true)}
+    else if(c===btn&&!c.querySelector(".mark")){c.classList.add("bad");mark(c,false)}
   });
-  const right=picked===q.ans;
+  const right=clsRight;
   const fb=$("fb");
   fb.className="fb "+(right&&e.good?"ok":"no");
   const pt=(right?1:0)+(e.good?1:0);
   fb.innerHTML=`<h3>${right?"정답! 🎯":"앗, 아니에요! ❌ 정답은 「"+LABEL[q.ans]+"」"}</h3>`+
     `<div><b>${q.why}</b></div><div class="tip">👉 ${q.tip}</div>`+
-    `<div class="gain${pt===0?" zero":""}"><b>+${pt}점</b>${pt===2?" 완벽!":""}</div>`+
-    (e.good?"":`<div class="tip">근거는 초록색이 정답이에요</div>`);
+    `<div class="gain${pt===0?" zero":""}"><b>+${pt}점</b>${pt===2?" 완벽!":""}</div>`;
   fb.classList.remove("hide");
   $("pts").textContent=score+"점";
   showNext();
