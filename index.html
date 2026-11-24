@@ -71,6 +71,38 @@ h1{font-size:24px;font-weight:600;margin:0}
 .qr .short{margin:0;font-size:17px}
 .qr .short strong{font-size:22px;color:var(--blue);letter-spacing:.5px}
 .qr span{font-size:13px;color:var(--dim);word-break:break-all}
+.maphint{margin:0;font-size:15px;color:var(--dim);text-align:center}
+.landmap{width:100%;max-width:920px;margin:0 auto}
+.landmap svg{display:block;width:100%;height:auto;overflow:visible}
+.landmap text{font-family:var(--font-body)}
+.landmap .tagbg{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.landmap .t1{font-size:16px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.landmap .t2{font-size:12px;fill:var(--dim);text-anchor:middle}
+.landmap .soon .t1{fill:var(--dim)}
+.landmap .start{font-size:15px;font-weight:800;fill:#dc2626;text-anchor:middle}
+.landmap .lm{cursor:pointer;outline:none;transition:transform .2s ease-out}
+.landmap .lm:hover,.landmap .lm:focus-visible{transform:translateY(-6px)}
+.landmap .lm:focus-visible .tagbg,.landmap .lm.picked .tagbg{stroke:var(--blue);stroke-width:3}
+.landmap .lm.soon{opacity:.82}
+.landmap .bob{animation:bob 4s ease-in-out infinite}
+.landmap .bob2{animation:bob 3s ease-in-out infinite}
+.landmap .spin{animation:spin 6s linear infinite}
+.landmap .hand{animation:spin 8s linear infinite}
+.landmap .flag{animation:flag 1.6s ease-in-out infinite}
+.landmap .wave{animation:fade 1.6s ease-in-out infinite}
+.landmap .plane{animation:plane 7s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes flag{50%{transform:skewY(-6deg)}}
+@keyframes fade{50%{opacity:.25}}
+@keyframes plane{50%{transform:translate(14px,-10px)}}
+:root[data-theme="dark"] .landmap svg{filter:brightness(.82) saturate(.92)}
+.mappanel{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:10px;scroll-margin-top:12px}
+.mappanel .pt{margin:0;font-size:21px;font-weight:700;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mappanel .pt small{font-size:14px;font-weight:500;color:var(--dim)}
+.mappanel .pu{margin:6px 0 0;font-size:16px;font-weight:600}
+.mappanel .none{padding:2px 0;font-size:14px}
+@media (prefers-reduced-motion:reduce){.landmap .bob,.landmap .bob2,.landmap .spin,.landmap .hand,.landmap .flag,.landmap .wave,.landmap .plane{animation:none}.landmap .lm{transition:none}}
 @media (max-width:820px){.cols{grid-template-columns:1fr}}
 </style>
 </head>
@@ -82,7 +114,8 @@ h1{font-size:24px;font-weight:600;margin:0}
   </div>
   <div class="bar">
     <div class="tabs" role="tablist" aria-label="보기 방식">
-      <button role="tab" id="t-unit" aria-selected="true">단원별 보기</button>
+      <button role="tab" id="t-map" aria-selected="true">지도 보기</button>
+      <button role="tab" id="t-unit" aria-selected="false">단원별 보기</button>
       <button role="tab" id="t-game" aria-selected="false">게임별 보기</button>
     </div>
     <input class="search" id="search" type="search" placeholder="제목·설명으로 검색" aria-label="게임 검색" hidden>
@@ -98,12 +131,13 @@ h1{font-size:24px;font-weight:600;margin:0}
   </div>
 </div>
 <script src="games.js"></script>
+<script src="map.js"></script>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id)};
   var games=(window.GAMES||[]).slice().sort(function(a,b){return a.no-b.no});
-  var view="unit";
-  try{if(sessionStorage.getItem("mig|view")==="game")view="game"}catch(e){}
+  var view="map",pickedArea=0;
+  try{var sv=sessionStorage.getItem("mig|view");if(sv==="game"||sv==="unit")view=sv;pickedArea=+(sessionStorage.getItem("mig|area")||0)}catch(e){}
   function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
   function where(g){
     var out=g.grade||"";
@@ -119,9 +153,11 @@ h1{font-size:24px;font-weight:600;margin:0}
   }
   function draw(){
     var left=$("left");left.innerHTML="";
+    $("t-map").setAttribute("aria-selected",String(view==="map"));
     $("t-unit").setAttribute("aria-selected",String(view==="unit"));
     $("t-game").setAttribute("aria-selected",String(view==="game"));
     $("search").hidden=view!=="game";
+    if(view==="map"){drawMap(left);return}
     if(view==="unit"){
       var open=loadOpen();
       (window.CURRICULUM||[]).forEach(function(G){
@@ -159,10 +195,33 @@ h1{font-size:24px;font-weight:600;margin:0}
       var ul=el("ul","list");shown.forEach(function(g){ul.appendChild(card(g,true))});left.appendChild(ul);
     }
   }
+  // 지도 보기: 랜드마크를 누르면 아래에 그 대단원의 게임이 나온다
+  function drawMap(left){
+    var G=(window.CURRICULUM||[])[0];if(!G||!window.drawLandMap)return;
+    var counts={};games.forEach(function(g){if(g.grade===G.grade)counts[g.area]=(counts[g.area]||0)+1});
+    left.appendChild(el("p","maphint","랜드마크를 눌러 보세요! 그 단원의 게임이 아래에 나와요."));
+    var box=el("div","landmap");left.appendChild(box);
+    var panel=el("section","mappanel");panel.id="mappanel";left.appendChild(panel);
+    function pick(no){
+      pickedArea=no;try{sessionStorage.setItem("mig|area",String(no))}catch(e){}
+      var marks=box.querySelectorAll(".lm");for(var i=0;i<marks.length;i++)marks[i].classList.toggle("picked",+marks[i].getAttribute("data-area")===no);
+      var A=G.areas[no-1];panel.innerHTML="";
+      var h=el("h2","pt");h.appendChild(el("span","",no+". "+A.title));h.appendChild(el("small","",(window.LAND_NAMES||{})[no]||""));panel.appendChild(h);
+      A.units.forEach(function(u,k){
+        var mine=games.filter(function(g){return g.grade===G.grade&&g.area===no&&g.unit===k+1});
+        panel.appendChild(el("h3","pu","("+(k+1)+") "+u));
+        if(mine.length){var ul=el("ul","list");mine.forEach(function(g){ul.appendChild(card(g,false))});panel.appendChild(ul)}
+        else panel.appendChild(el("p","none","아직 게임이 없어요. 곧 열려요!"));
+      });
+    }
+    window.drawLandMap(box,G.areas,counts,function(no){pick(no);panel.scrollIntoView({behavior:"smooth",block:"start"})});
+    if(pickedArea)pick(pickedArea);else panel.appendChild(el("p","none","지도에서 가고 싶은 곳을 골라 보세요."));
+  }
   // 펼친 단원은 이 기기에 기억해 두었다가 다시 들어오면 그대로 펼친다
   function loadOpen(){try{return JSON.parse(localStorage.getItem("mig|open"))||{}}catch(e){return {}}}
   function saveOpen(k,v){var o=loadOpen();if(v)o[k]=1;else delete o[k];try{localStorage.setItem("mig|open",JSON.stringify(o))}catch(e){}}
   function setView(v){view=v;try{sessionStorage.setItem("mig|view",v)}catch(e){}draw()}
+  $("t-map").onclick=function(){setView("map")};
   $("t-unit").onclick=function(){setView("unit")};
   $("t-game").onclick=function(){setView("game")};
   $("search").oninput=draw;
