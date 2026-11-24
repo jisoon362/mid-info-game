@@ -126,8 +126,6 @@ p{margin:6px 0}
     <div class="q">모둠전으로 하려면 모둠을 추가하세요 <span class="muted">(없으면 혼자 하기)</span></div>
     <div id="teamList"></div>
     <button class="ghost" id="addTeam">+ 모둠 추가</button>
-    <div class="q">문제 순서</div>
-    <div class="row" id="orderPick"></div>
     <div style="height:16px"></div>
     <button class="primary" id="startBtn">게임 시작</button>
   </section>
@@ -325,7 +323,7 @@ const QUESTIONS=[
 ];
 
 const $=id=>document.getElementById(id);
-let shuffle=false, order=[], idx=0, score=0, picked=null, evPicked=false, curList=[];
+let order=[], idx=0, score=0, picked=null, evPicked=false, curList=[];
 let cfgTeams=[], teamNames=[], pts=[], timerId=null;
 const teamMode=()=>teamNames.length>0;
 
@@ -341,7 +339,6 @@ function makeChips(el,opts,get,set){
     el.appendChild(b);
   });
 }
-makeChips($("orderPick"),[[false,"순서대로"],[true,"섞어서"]],()=>shuffle,v=>shuffle=v);
 
 function renderTeamList(){
   const box=$("teamList"); box.innerHTML="";
@@ -364,7 +361,8 @@ $("startBtn").onclick=()=>{
   teamNames=cfgTeams.map((n,i)=>n.trim()||(i+1)+"모둠");
   pts=teamNames.map(()=>0);
   order=QUESTIONS.map((_,i)=>i);
-  if(shuffle){for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}}
+  // 문제 순서는 매번 섞는다
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
   idx=0; score=0;
   show("play"); render();
 };
