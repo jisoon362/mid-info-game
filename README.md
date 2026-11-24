@@ -9,7 +9,7 @@ index.html              게임 목록 화면 (학생에게 나눠 줄 첫 화면
 games.js                목록에 보일 게임 정보 (번호, 이름, 영역, 단원, 설명)
 theme.js                밝은 모드 / 어두운 모드 전환 (모든 화면 공용)
 games/
-  01-card-move/         1번 게임: 카드 옮기기
+  01-card-move/         1번 게임: 문제해결 레이싱
     index.html
   02-relay-draw/        2번 게임: 릴레이 피카소 (추상화)
     index.html
