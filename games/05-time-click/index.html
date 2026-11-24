@@ -72,6 +72,8 @@ p{margin:0}
 .lcd.exact b{color:#7dfc9a}
 
 /* 플레이 화면 */
+.playhead{width:100%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.playhead .btn{justify-self:start;font-size:16px;padding:9px 16px}
 .goal{font-size:clamp(20px,3vw,24px);font-weight:700}
 .goal em{font-style:normal;color:var(--red)}
 .watch{position:relative;width:min(100%,52vh,400px);aspect-ratio:360/400}
@@ -159,7 +161,11 @@ p{margin:0}
 
   <!-- 도전 -->
   <section class="screen" id="s-play" hidden>
-    <p class="goal">목표: <em id="p-goal">5.00초</em></p>
+    <div class="playhead">
+      <button class="btn" id="p-back">◀ 뒤로</button>
+      <p class="goal">목표: <em id="p-goal">5.00초</em></p>
+      <span class="ph-space" aria-hidden="true"></span>
+    </div>
     <div class="watch" id="watch">
       <svg id="dial" viewBox="0 0 360 400" role="img" aria-label="아날로그 초시계"></svg>
     </div>
@@ -376,6 +382,7 @@ $("go").addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){
 $("retry").onclick=start;
 $("r-again").onclick=start;
 $("to-pick").onclick=function(){drawPick();show("s-pick")};
+$("p-back").onclick=function(){S.state="ready";cancelAnimationFrame(S.anim);drawPick();show("s-pick")};
 $("r-pick").onclick=function(){$("overlay").hidden=true;drawPick();show("s-pick")};
 
 drawPick();
