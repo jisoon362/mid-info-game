@@ -45,7 +45,8 @@ p{margin:6px 0}
 .legend{display:grid;gap:8px;margin:14px 0}
 .legend div{border-radius:12px;padding:10px 12px;font-size:14px}
 .l-real{background:var(--real-bg)} .l-fake{background:var(--fake-bg)} .l-phish{background:var(--phish-bg)}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;color:var(--sub);gap:8px}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:10px;font-size:14px;color:var(--sub);gap:8px}
+#pts{justify-self:center;font-size:clamp(20px,3.4vw,26px);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:12px}
 .bar i{display:block;height:100%;background:var(--brand);transition:width .3s}
 .turn{display:inline-block;background:var(--brand);color:var(--brand-ink);border-radius:999px;padding:3px 12px;font-weight:700;font-size:14px}
@@ -143,7 +144,7 @@ p{margin:6px 0}
 
   <!-- 게임 -->
   <section id="play" class="hide">
-    <div class="top"><span id="prog"></span><span id="pts"></span></div>
+    <div class="top"><span id="prog"></span><span id="pts"></span><span aria-hidden="true"></span></div>
     <div class="bar"><i id="barFill" style="width:0"></i></div>
     <div class="card">
       <div class="src" id="src"></div>
