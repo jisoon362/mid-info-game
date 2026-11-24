@@ -66,6 +66,9 @@ p{margin:6px 0}
 .fb.ok{background:var(--real-bg)} .fb.no{background:var(--phish-bg)}
 .fb h3{margin:0 0 4px;font-size:17px}
 .tip{margin-top:8px;font-size:14px;color:var(--sub)}
+.gain{margin-top:12px;display:flex;align-items:baseline;justify-content:center;gap:6px;padding:10px;border-radius:12px;background:var(--card);border:3px solid var(--ok);color:var(--ok);font-size:20px;font-weight:800}
+.gain b{font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.gain.zero{border-color:var(--line);color:var(--sub)}
 .score{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:14px 0}
 .score div{background:var(--cell);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
 .score b{display:block;font-size:26px}
@@ -476,9 +479,10 @@ function chooseEv(btn,e,box){
   const fb=$("fb");
   fb.className="fb "+(right&&e.good?"ok":"no");
   const pt=(right?1:0)+(e.good?1:0);
-  fb.innerHTML=`<h3>${right?"정답! 🎯":"앗, 아니에요! ❌"} 「${LABEL[q.ans]}」</h3>`+
+  fb.innerHTML=`<h3>${right?"정답! 🎯":"앗, 아니에요! ❌ 정답은 「"+LABEL[q.ans]+"」"}</h3>`+
     `<div><b>${q.why}</b></div><div class="tip">👉 ${q.tip}</div>`+
-    `<div class="tip">${pt===2?"+2점 완벽!":"+"+pt+"점"+(e.good?"":" · 근거는 초록색이 정답")}</div>`;
+    `<div class="gain${pt===0?" zero":""}"><b>+${pt}점</b>${pt===2?" 완벽!":""}</div>`+
+    (e.good?"":`<div class="tip">근거는 초록색이 정답이에요</div>`);
   fb.classList.remove("hide");
   $("pts").textContent=score+"점";
   showNext();
