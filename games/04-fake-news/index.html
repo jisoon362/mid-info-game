@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../../theme.js"></script>
-<title>가짜뉴스·피싱 판별</title>
+<title>사이버 탐정 키우기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -114,14 +114,45 @@ p{margin:6px 0}
 .tm .btns button{width:48px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:22px;font-weight:700}
 .rank{display:grid;gap:6px;margin:14px 0}
 .rank div{display:flex;justify-content:space-between;background:var(--cell);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:700}
-@media (max-width:420px){.msg{font-size:16px}}
+.maker{display:flex;gap:16px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:6px}
+.mkprev{flex:none;width:110px}
+.mkprev svg,.evo-pic svg,.final svg{display:block;width:100%;height:auto}
+.mkf{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mkf input{font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+.mkf .row{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{width:40px;height:40px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--line)}
+.swatch.on{box-shadow:0 0 0 3px var(--ink)}
+.ranks{font-size:12.5px;margin:2px 0 0}
+#pts .hud{display:inline-flex;align-items:center;gap:8px;text-align:left}
+#pts .hud svg{width:46px;height:auto;flex:none}
+#pts .hud b{display:block;font-size:16px;line-height:1.2;color:var(--ink)}
+#pts .hud small{display:block;font-size:12px;font-weight:600;color:var(--sub)}
+.xp{display:block;width:120px;height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:3px}
+.xp i{display:block;height:100%;background:var(--brand);transition:width .5s}
+.tm .mini{width:54px;margin:2px auto 0}
+.tm .mini svg{display:block;width:100%;height:auto}
+.tm .rk{display:block;font-size:12px;font-weight:700;color:var(--sub)}
+.evo{position:fixed;inset:0;z-index:30;background:rgba(15,23,42,.55);display:grid;place-items:center;padding:16px}
+.evo-card{width:min(100%,360px);background:var(--card);border-radius:20px;padding:20px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.evo-up{margin:0;font-size:30px;font-weight:900;color:var(--brand)}
+.evo-pic{width:180px;animation:pop .6s ease-out}
+.evo-msg{margin:0;font-size:18px;font-weight:700}
+@keyframes pop{0%{transform:scale(.6) rotate(-8deg);opacity:0}60%{transform:scale(1.1) rotate(3deg);opacity:1}100%{transform:scale(1)}}
+.final{width:200px;margin:6px auto 0}
+.final-rank{text-align:center;font-size:22px;font-weight:900;margin:4px 0 0}
+.rank div{align-items:center}
+.rank .mini{width:40px;flex:none}
+.rank .mini svg{display:block;width:100%;height:auto}
+.rank .who{display:flex;align-items:center;gap:8px}
+@media (prefers-reduced-motion:reduce){.evo-pic{animation:none}.xp i{transition:none}}
+@media (max-width:420px){.msg{font-size:16px}.maker{flex-direction:column;align-items:stretch}.mkprev{align-self:center}}
 </style>
 </head>
 <body>
 <main class="wrap">
   <header>
     <a class="btn back" href="../../">← 홈으로</a>
-    <h1>가짜뉴스·피싱 판별<small>5. 디지털 문화 · 디지털 윤리</small></h1>
+    <h1>사이버 탐정 키우기<small>5. 디지털 문화 · 디지털 윤리</small></h1>
     <button class="ghost" data-theme-toggle></button>
     <span class="left" hidden><b id="left"></b></span>
   </header>
@@ -129,11 +160,24 @@ p{margin:6px 0}
   <!-- 시작 -->
   <section id="start" class="card">
     <h2>진짜일까, 가짜일까, 위험할까?</h2>
-    <p class="muted">카드를 읽고 분류한 뒤, 그렇게 판단한 근거도 골라 보세요. 분류 +1점, 근거 +1점이에요. 틀려도 한 번 더 고를 기회가 있어요.</p>
+    <p class="muted">카드를 읽고 분류한 뒤, 그렇게 판단한 근거도 골라 보세요. 분류와 근거를 맞힐 때마다 내 탐정이 경험치를 얻어 승급해요. 틀려도 한 번 더 고를 기회가 있어요.</p>
     <div class="legend">
       <div class="l-real"><b>진짜</b> · 출처와 근거를 확인할 수 있는 믿을 만한 정보</div>
       <div class="l-fake"><b>가짜</b> · 사실이 아니거나 근거가 없는 허위·과장 정보</div>
       <div class="l-phish"><b>위험</b> · 개인정보·돈을 노리는 피싱, 스미싱</div>
+    </div>
+    <div id="maker">
+      <div class="q">내 탐정 만들기</div>
+      <div class="maker">
+        <div class="mkprev" id="mkPrev"></div>
+        <div class="mkf">
+          <label for="mkName" class="muted">탐정 이름 (6자까지)</label>
+          <input id="mkName" maxlength="6" autocomplete="off" placeholder="예: 번개">
+          <span class="muted">코트 색</span>
+          <div class="row" id="mkColor"></div>
+          <p class="muted ranks">견습 탐정 → 초보 탐정 → 숙련 탐정 → 명탐정 → 팩트체크 마스터</p>
+        </div>
+      </div>
     </div>
     <div class="q">모둠전으로 하려면 모둠을 추가하세요 <span class="muted">(없으면 혼자 하기)</span></div>
     <div id="teamList"></div>
@@ -180,10 +224,21 @@ p{margin:6px 0}
     <div id="board" class="board hide"></div>
   </section>
 
+  <!-- 승급 연출 -->
+  <div class="evo" id="evo" hidden role="dialog" aria-modal="true" aria-labelledby="evoTitle">
+    <div class="evo-card">
+      <p class="evo-up" id="evoTitle">승급!</p>
+      <div class="evo-pic" id="evoPic"></div>
+      <p class="evo-msg" id="evoMsg"></p>
+      <button class="primary" id="evoOk">계속하기</button>
+    </div>
+  </div>
+
   <!-- 결과 -->
   <section id="end" class="card hide">
     <h2>게임 끝!</h2>
     <p class="muted" id="endMsg"></p>
+    <div class="final" id="finalDet"></div>
     <div class="score" id="scoreBoard"></div>
     <div class="tip" style="margin-bottom:14px"><b>마지막 생각해 보기</b><br>
       진짜처럼 보여도 속는 이유는 뭘까요? 의심 신호(출처 없음, 급박함, 링크·비밀번호 요구)와 확인 방법(공식 채널, 다른 출처, 사실 확인 사이트)을 한 가지씩 적어 보세요.</div>
@@ -342,6 +397,77 @@ let cfgTeams=[], teamNames=[], pts=[], timerId=null;
 const teamMode=()=>teamNames.length>0;
 
 
+/* ---------- 탐정 캐릭터 ---------- */
+const RANKS=["견습 탐정","초보 탐정","숙련 탐정","명탐정","팩트체크 마스터"];
+const RATIO=[0,.2,.45,.7,.9];            // 최대 경험치에 대한 승급 기준
+const COATS=[["#2563eb","파랑"],["#16a34a","초록"],["#7c3aed","보라"],["#ea580c","주황"],["#db2777","분홍"],["#0891b2","청록"],["#ca8a04","노랑"],["#475569","회색"]];
+let me={name:"",color:COATS[0][0]}, xp=0, stage=0, teamStage=[];
+function needs(max){return RATIO.map(r=>Math.ceil(r*max))}
+function stageOf(v,max){const n=needs(max);let k=0;n.forEach((t,i)=>{if(v>=t)k=i});return k}
+function starPts(cx,cy,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;p.push((cx+rr*Math.cos(a)).toFixed(1)+","+(cy+rr*Math.sin(a)).toFixed(1))}return p.join(" ")}
+function detective(k,color){
+  const skin="#f6d3b3",ink="#1f2937",gold="#f5b301",silver="#cbd5e1",tan="#b08350",hat="#5b4636";
+  let h='<svg viewBox="0 0 130 140" role="img" aria-label="'+RANKS[k]+'">';
+  if(k>=4) h+='<path d="M26 82 Q65 68 104 82 L114 138 L16 138 Z" fill="#b91c1c"/>';
+  // 몸
+  h+='<path d="M28 138 Q28 94 65 92 Q102 94 102 138 Z" fill="'+(k>=3?tan:color)+'"/>';
+  if(k>=3) h+='<path d="M52 93 L65 118 L78 93 Z" fill="'+color+'"/><path d="M50 93 L62 120 L44 108 Z M80 93 L68 120 L86 108 Z" fill="#8a6239"/><circle cx="65" cy="126" r="2.4" fill="#6b4a2a"/><circle cx="65" cy="134" r="2.4" fill="#6b4a2a"/>';
+  h+='<rect x="58" y="80" width="14" height="14" rx="5" fill="'+skin+'"/>';
+  // 얼굴
+  h+='<circle cx="65" cy="58" r="27" fill="'+skin+'"/>';
+  h+='<circle cx="51" cy="66" r="4" fill="#f9a8a8" opacity=".7"/><circle cx="79" cy="66" r="4" fill="#f9a8a8" opacity=".7"/>';
+  h+='<circle cx="56" cy="58" r="3.4" fill="'+ink+'"/><circle cx="74" cy="58" r="3.4" fill="'+ink+'"/>';
+  if(k>=2) h+='<path d="M50 50 L61 52 M80 50 L69 52" stroke="'+ink+'" stroke-width="2.6" stroke-linecap="round"/>';
+  h+='<path d="M57 69 Q65 '+(k>=4?78:75)+' 73 69" fill="none" stroke="'+ink+'" stroke-width="2.6" stroke-linecap="round"/>';
+  // 머리 또는 모자
+  if(k<2) h+='<path d="M38 54 Q39 30 65 30 Q91 30 92 54 Q84 41 65 41 Q46 41 38 54Z" fill="'+ink+'"/>';
+  else h+='<ellipse cx="65" cy="40" rx="37" ry="7.5" fill="'+hat+'"/><path d="M39 40 Q41 16 65 14 Q89 16 91 40 Z" fill="'+hat+'"/><rect x="40" y="32" width="50" height="6" fill="'+(k>=4?gold:color)+'"/>';
+  if(k===0) h+='<rect x="38" y="104" width="22" height="12" rx="3" fill="#fff" stroke="'+ink+'" stroke-width="1.5"/><text x="49" y="113" font-size="7" text-anchor="middle" fill="'+ink+'" font-family="sans-serif" font-weight="700">견습</text>';
+  // 돋보기
+  if(k>=1){
+    h+='<line x1="95" y1="124" x2="106" y2="106" stroke="'+(k>=4?gold:"#6b4f2a")+'" stroke-width="7" stroke-linecap="round"/>';
+    h+='<circle cx="112" cy="94" r="14" fill="#dbeafe" fill-opacity=".85" stroke="'+(k>=4?gold:"#374151")+'" stroke-width="4.5"/>';
+    h+='<path d="M105 89 Q108 84 114 84" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+    h+='<circle cx="94" cy="124" r="7" fill="'+skin+'"/>';
+  }
+  // 배지
+  if(k>=3) h+='<polygon points="'+starPts(42,116,8)+'" fill="'+(k>=4?gold:silver)+'" stroke="#64748b" stroke-width="1"/>';
+  if(k>=4) h+='<polygon points="'+starPts(16,30,6)+'" fill="'+gold+'"/><polygon points="'+starPts(114,26,5)+'" fill="'+gold+'"/><polygon points="'+starPts(20,70,4)+'" fill="'+gold+'"/>';
+  return h+"</svg>";
+}
+function josa(w,a,b){const c=w.charCodeAt(w.length-1);return w+((c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28)?a:b)}
+function myName(){return (me.name||"내")+" 탐정"}
+function soloMax(){return QUESTIONS.length*2}
+function teamMax(){return QUESTIONS.length}
+function hud(){
+  if(teamMode()){$("pts").textContent="";return}
+  const max=soloMax(),n=needs(max),k=stageOf(xp,max);
+  const next=k<4?n[k+1]:max,prev=n[k],pct=k<4?Math.round((xp-prev)/(next-prev)*100):100;
+  $("pts").innerHTML='<span class="hud">'+detective(k,me.color)+'<span><b>'+RANKS[k]+'</b><small>경험치 '+xp+(k<4?' · 다음 승급까지 '+(next-xp):' · 최고 단계!')+'</small><i class="xp"><i style="width:'+pct+'%"></i></i></span></span>';
+}
+function evolve(k,color,who){
+  $("evoPic").innerHTML=detective(k,color);
+  $("evoTitle").textContent=k>=4?"최고 단계 달성!":"승급!";
+  $("evoMsg").textContent=josa(who,"이","가")+" 「"+RANKS[k]+"」"+(k>=4?"에 올랐어요!":"으로 승급했어요!");
+  $("evo").hidden=false;$("evoOk").focus();
+}
+$("evoOk").onclick=()=>{$("evo").hidden=true};
+function gain(n){
+  xp+=n;const k=stageOf(xp,soloMax());
+  hud();
+  if(k>stage){stage=k;setTimeout(()=>evolve(k,me.color,myName()),500)}
+}
+function drawMaker(){
+  $("mkPrev").innerHTML=detective(0,me.color);
+  const box=$("mkColor");box.innerHTML="";
+  COATS.slice(0,5).forEach(([c,label])=>{
+    const b=document.createElement("button");b.className="swatch"+(me.color===c?" on":"");b.style.background=c;b.setAttribute("aria-label",label+" 코트");
+    b.onclick=()=>{me.color=c;drawMaker()};box.appendChild(b);
+  });
+}
+$("mkName").oninput=()=>{me.name=$("mkName").value.trim()};
+drawMaker();
+
 /* 설정 */
 function makeChips(el,opts,get,set){
   el.innerHTML="";
@@ -366,6 +492,7 @@ function renderTeamList(){
     r.append(inp,x); box.appendChild(r);
   });
   $("addTeam").classList.toggle("hide",cfgTeams.length>=8);
+  $("maker").classList.toggle("hide",cfgTeams.length>0);
 }
 $("addTeam").onclick=()=>{cfgTeams.push((cfgTeams.length+1)+"모둠");renderTeamList()};
 
@@ -377,7 +504,7 @@ $("startBtn").onclick=()=>{
   order=QUESTIONS.map((_,i)=>i);
   // 문제 순서는 매번 섞는다
   for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
-  idx=0; score=0;
+  idx=0; score=0; xp=0; stage=0; teamStage=teamNames.map(()=>0);
   show("play"); render();
 };
 $("againBtn").onclick=()=>show("start");
@@ -402,11 +529,16 @@ function renderBoard(){
   const b=$("board"); b.innerHTML="";
   teamNames.forEach((n,i)=>{
     const d=document.createElement("div"); d.className="tm";
-    d.innerHTML=`<span class="n"></span><div class="pt">${pts[i]}</div><div class="btns"><button aria-label="감점">−</button><button aria-label="득점">+</button></div>`;
+    const col=COATS[i%COATS.length][0],k=stageOf(Math.max(0,pts[i]),teamMax());
+    d.innerHTML=`<span class="n"></span><div class="mini">${detective(k,col)}</div><span class="rk">${RANKS[k]}</span><div class="pt">${pts[i]}</div><div class="btns"><button aria-label="감점">−</button><button aria-label="득점">+</button></div>`;
     d.querySelector(".n").textContent=n;
     const [m,p]=d.querySelectorAll("button");
     m.onclick=()=>{pts[i]--;renderBoard()};
-    p.onclick=()=>{pts[i]++;renderBoard()};
+    p.onclick=()=>{
+      pts[i]++;const nk=stageOf(pts[i],teamMax());
+      renderBoard();
+      if(nk>(teamStage[i]||0)){teamStage[i]=nk;evolve(nk,col,n+" 탐정")}
+    };
     b.appendChild(d);
   });
 }
@@ -429,7 +561,7 @@ function render(){
   $("clsHint").textContent=""; $("evHint").textContent="";
   resetTimer(); $("timerBtn").textContent="⏱ 30초 시작";
   $("prog").textContent=`${idx+1} / ${QUESTIONS.length}`;
-  $("pts").textContent=teamMode()?"":score+"점";
+  hud();
   $("barFill").style.width=(idx/QUESTIONS.length*100)+"%";
   $("src").textContent=q.src;
   $("msg").innerHTML=q.msg;
@@ -473,7 +605,7 @@ document.querySelectorAll(".ans").forEach(b=>{
     const q=QUESTIONS[order[idx]];
     clsTries++;
     if(b.dataset.v===q.ans){
-      picked=b.dataset.v; clsRight=true; score++;
+      picked=b.dataset.v; clsRight=true; score++; gain(1);
     }else if(clsTries<2){
       b.disabled=true; b.classList.add("bad"); mark(b,false);
       $("clsHint").textContent="아쉬워요! 기회가 한 번 더 있어요.";
@@ -501,7 +633,7 @@ function chooseEv(btn,e,box){
     return;
   }
   evPicked=true; $("evHint").textContent="";
-  if(e.good) score++;
+  if(e.good){score++; gain(1);}
   [...box.children].forEach((c,i)=>{
     c.disabled=true;
     if(curList[i].good){c.classList.add("good");if(!c.querySelector(".mark"))mark(c,true)}
@@ -513,9 +645,8 @@ function chooseEv(btn,e,box){
   const pt=(right?1:0)+(e.good?1:0);
   fb.innerHTML=`<h3>${right?"정답! 🎯":"앗, 아니에요! ❌ 정답은 「"+LABEL[q.ans]+"」"}</h3>`+
     `<div><b>${q.why}</b></div><div class="tip">👉 ${q.tip}</div>`+
-    `<div class="gain${pt===0?" zero":""}"><b>+${pt}점</b>${pt===2?" 완벽!":""}</div>`;
+    `<div class="gain${pt===0?" zero":""}">경험치 <b>+${pt}</b>${pt===2?" 완벽!":""}</div>`;
   fb.classList.remove("hide");
-  $("pts").textContent=score+"점";
   showNext();
 }
 
@@ -538,12 +669,14 @@ function finish(){
     const winners=r.filter(x=>x.p===top).map(x=>x.n).join(", ");
     $("endMsg").textContent=`우승: ${winners} 🏆`;
     $("scoreBoard").className="rank";
-    $("scoreBoard").innerHTML=r.map((x,i)=>`<div><span>${x.p===top?"🏆 ":(i+1)+"위 "}${x.n.replace(/</g,"&lt;")}</span><span>${x.p}점</span></div>`).join("");
+    $("finalDet").innerHTML="";
+    $("scoreBoard").innerHTML=r.map((x,i)=>{const ti=teamNames.indexOf(x.n),k=stageOf(Math.max(0,x.p),teamMax());return `<div><span class="who"><span class="mini">${detective(k,COATS[ti%COATS.length][0])}</span><span>${x.p===top?"🏆 ":(i+1)+"위 "}${x.n.replace(/</g,"&lt;")} · ${RANKS[k]}</span></span><span>${x.p}점</span></div>`}).join("");
   }else{
-    const max=QUESTIONS.length*2;
-    $("endMsg").textContent=`${max}점 만점에 ${score}점!`;
+    const max=soloMax(),k=stageOf(xp,max);
+    $("endMsg").textContent=`${josa(myName(),"은","는")} 「${RANKS[k]}」${k>=4?"에 올랐어요! 🏆":josa("","","")+"까지 승급했어요!"}`;
+    $("finalDet").innerHTML=detective(k,me.color)+`<p class="final-rank">${RANKS[k]}</p>`;
     $("scoreBoard").className="score";
-    $("scoreBoard").innerHTML=`<div><b>${score}점</b><span class="muted">/ ${max}점</span></div>`;
+    $("scoreBoard").innerHTML=`<div><b>경험치 ${xp}</b><span class="muted"> / ${max}</span></div>`;
   }
 }
 </script>

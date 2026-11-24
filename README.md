@@ -11,11 +11,11 @@ theme.js                밝은 모드 / 어두운 모드 전환 (모든 화면 �
 games/
   01-card-move/         1번 게임: 카드 옮기기
     index.html
-  02-relay-draw/        2번 게임: 이어 그리기 (추상화)
+  02-relay-draw/        2번 게임: 릴레이 피카소 (추상화)
     index.html
-  03-build-computer/    3번 게임: 컴퓨팅 시스템 조립하기
+  03-build-computer/    3번 게임: 나만의 컴퓨터 만들기
     index.html
-  05-time-click/        5번 게임: 아날로그와 디지털을 이겨라
+  05-time-click/        5번 게임: 순발력 디.아.블로
     index.html
   04-fake-news/         4번 게임: 가짜뉴스·피싱 판별
     index.html
