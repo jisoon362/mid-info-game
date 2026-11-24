@@ -123,12 +123,15 @@ p{margin:6px 0}
 .swatch{width:40px;height:40px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--line)}
 .swatch.on{box-shadow:0 0 0 3px var(--ink)}
 .ranks{font-size:12.5px;margin:2px 0 0}
-#pts .hud{display:inline-flex;align-items:center;gap:8px;text-align:left}
-#pts .hud svg{width:46px;height:auto;flex:none}
-#pts .hud b{display:block;font-size:16px;line-height:1.2;color:var(--ink)}
-#pts .hud small{display:block;font-size:12px;font-weight:600;color:var(--sub)}
-.xp{display:block;width:120px;height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:3px}
-.xp i{display:block;height:100%;background:var(--brand);transition:width .5s}
+#pts .hud{display:inline-flex;align-items:center;gap:12px;text-align:left}
+#pts .hud svg{width:64px;height:auto;flex:none}
+#pts .hudtxt{display:flex;flex-direction:column;gap:4px}
+#pts .hud b{display:block;font-size:18px;line-height:1.2;color:var(--ink)}
+#pts .hud small{display:block;font-size:14px;font-weight:600;color:var(--sub)}
+#pts .hud small strong{color:var(--brand);font-size:17px}
+.xp{position:relative;display:block;width:min(230px,46vw);height:22px;border-radius:99px;background:var(--line);overflow:hidden}
+.xp i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#22c55e);transition:width .5s}
+.xp em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;text-shadow:0 0 3px var(--card)}
 .tm .mini{width:54px;margin:2px auto 0}
 .tm .mini svg{display:block;width:100%;height:auto}
 .tm .rk{display:block;font-size:12px;font-weight:700;color:var(--sub)}
@@ -175,7 +178,7 @@ p{margin:6px 0}
           <input id="mkName" maxlength="6" autocomplete="off" placeholder="예: 번개">
           <span class="muted">코트 색</span>
           <div class="row" id="mkColor"></div>
-          <p class="muted ranks">견습 탐정 → 초보 탐정 → 숙련 탐정 → 명탐정 → 팩트체크 마스터</p>
+          <p class="muted ranks">견습 탐정 → 숙련 탐정 → 명탐정 → 팩트체크 마스터</p>
         </div>
       </div>
     </div>
@@ -398,16 +401,16 @@ const teamMode=()=>teamNames.length>0;
 
 
 /* ---------- 탐정 캐릭터 ---------- */
-const RANKS=["견습 탐정","초보 탐정","숙련 탐정","명탐정","팩트체크 마스터"];
-const RATIO=[0,.2,.45,.7,.9];            // 최대 경험치에 대한 승급 기준
+const RANKS=["견습 탐정","숙련 탐정","명탐정","팩트체크 마스터"];
+const RATIO=[0,.3,.6,.9];            // 최대 경험치에 대한 승급 기준
 const COATS=[["#2563eb","파랑"],["#16a34a","초록"],["#7c3aed","보라"],["#ea580c","주황"],["#db2777","분홍"],["#0891b2","청록"],["#ca8a04","노랑"],["#475569","회색"]];
 let me={name:"",color:COATS[0][0]}, xp=0, stage=0, teamStage=[];
 function needs(max){return RATIO.map(r=>Math.ceil(r*max))}
 function stageOf(v,max){const n=needs(max);let k=0;n.forEach((t,i)=>{if(v>=t)k=i});return k}
 function starPts(cx,cy,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;p.push((cx+rr*Math.cos(a)).toFixed(1)+","+(cy+rr*Math.sin(a)).toFixed(1))}return p.join(" ")}
-function detective(k,color){
+function detBase(k,color){
   const skin="#f6d3b3",ink="#1f2937",gold="#f5b301",silver="#cbd5e1",tan="#b08350",hat="#5b4636";
-  let h='<svg viewBox="0 0 130 140" role="img" aria-label="'+RANKS[k]+'">';
+  let h='<svg viewBox="0 0 130 140" role="img" aria-label="'+RANKS[k-1]+'">';
   if(k>=4) h+='<path d="M26 82 Q65 68 104 82 L114 138 L16 138 Z" fill="#b91c1c"/>';
   // 몸
   h+='<path d="M28 138 Q28 94 65 92 Q102 94 102 138 Z" fill="'+(k>=3?tan:color)+'"/>';
@@ -435,6 +438,31 @@ function detective(k,color){
   if(k>=4) h+='<polygon points="'+starPts(16,30,6)+'" fill="'+gold+'"/><polygon points="'+starPts(114,26,5)+'" fill="'+gold+'"/><polygon points="'+starPts(20,70,4)+'" fill="'+gold+'"/>';
   return h+"</svg>";
 }
+// 견습 탐정: 낡고 해진 옷, 덧댄 천, 부스스한 머리, 얼굴에 붙인 반창고
+function shabby(color){
+  const skin="#f1cba6",ink="#1f2937",rag="#8b8072";
+  let h='<svg viewBox="0 0 130 140" role="img" aria-label="견습 탐정">';
+  // 해진 옷 (밑단이 뜯긴 모양)
+  h+='<path d="M28 138 Q28 94 65 92 Q102 94 102 138 L96 132 L90 138 L84 131 L78 138 L72 132 L66 138 L60 131 L54 138 L48 132 L42 138 L36 131 Z" fill="'+rag+'"/>';
+  h+='<path d="M28 138 Q28 94 65 92 Q102 94 102 138" fill="'+color+'" opacity=".28"/>';
+  // 덧댄 천과 바느질
+  h+='<rect x="38" y="106" width="16" height="14" fill="#c9a56b" transform="rotate(-8 46 113)"/><path d="M39 107 l14 -2 M40 119 l14 -2 M39 107 l1 12 M53 105 l1 12" stroke="#5c4a32" stroke-width="1.3" stroke-dasharray="2 2" transform="rotate(-8 46 113)"/>';
+  h+='<rect x="78" y="114" width="13" height="12" fill="#7a9cc6" transform="rotate(10 84 120)"/><path d="M79 115 h11 M79 125 h11" stroke="#2f4a6b" stroke-width="1.3" stroke-dasharray="2 2" transform="rotate(10 84 120)"/>';
+  h+='<path d="M62 100 l4 8 l-3 6" stroke="#5c5346" stroke-width="1.6" fill="none"/>';
+  h+='<rect x="58" y="80" width="14" height="14" rx="5" fill="'+skin+'"/>';
+  // 얼굴
+  h+='<circle cx="65" cy="58" r="27" fill="'+skin+'"/>';
+  h+='<ellipse cx="80" cy="68" rx="5" ry="3" fill="#a08a72" opacity=".45"/><ellipse cx="50" cy="48" rx="3" ry="2" fill="#a08a72" opacity=".35"/>';
+  h+='<circle cx="56" cy="59" r="3.2" fill="'+ink+'"/><circle cx="74" cy="59" r="3.2" fill="'+ink+'"/>';
+  h+='<path d="M50 52 Q55 54 60 53 M70 53 Q75 54 80 52" stroke="'+ink+'" stroke-width="2" fill="none" stroke-linecap="round"/>';
+  h+='<path d="M58 71 Q65 68 72 72" fill="none" stroke="'+ink+'" stroke-width="2.4" stroke-linecap="round"/>';
+  // 반창고
+  h+='<g transform="rotate(-25 46 66)"><rect x="38" y="63" width="16" height="6" rx="3" fill="#f3d6a8" stroke="#c49a5a" stroke-width="1"/><circle cx="44" cy="66" r=".8" fill="#c49a5a"/><circle cx="48" cy="66" r=".8" fill="#c49a5a"/></g>';
+  // 부스스한 머리
+  h+='<path d="M36 56 L33 40 L42 46 L41 30 L50 40 L55 25 L60 38 L67 24 L71 38 L80 27 L80 42 L90 33 L87 47 L95 45 L92 56 Q84 42 65 42 Q46 42 36 56 Z" fill="#3a2f28"/>';
+  return h+"</svg>";
+}
+function detective(k,color){return k===0?shabby(color):detBase(k+1,color)}
 function josa(w,a,b){const c=w.charCodeAt(w.length-1);return w+((c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28)?a:b)}
 function myName(){return (me.name||"내")+" 탐정"}
 function soloMax(){return QUESTIONS.length*2}
@@ -442,13 +470,16 @@ function teamMax(){return QUESTIONS.length}
 function hud(){
   if(teamMode()){$("pts").textContent="";return}
   const max=soloMax(),n=needs(max),k=stageOf(xp,max);
-  const next=k<4?n[k+1]:max,prev=n[k],pct=k<4?Math.round((xp-prev)/(next-prev)*100):100;
-  $("pts").innerHTML='<span class="hud">'+detective(k,me.color)+'<span><b>'+RANKS[k]+'</b><small>경험치 '+xp+(k<4?' · 다음 승급까지 '+(next-xp):' · 최고 단계!')+'</small><i class="xp"><i style="width:'+pct+'%"></i></i></span></span>';
+  const top=RANKS.length-1,next=k<top?n[k+1]:max,prev=n[k],pct=k<top?Math.round((xp-prev)/(next-prev)*100):100;
+  $("pts").innerHTML='<span class="hud">'+detective(k,me.color)+'<span class="hudtxt"><b>'+RANKS[k]+'</b>'+
+    '<span class="xp" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'" aria-label="다음 승급까지"><i style="width:'+pct+'%"></i><em>'+(k<top?(xp-prev)+" / "+(next-prev):"MAX")+'</em></span>'+
+    '<small>'+(k<top?"다음 승급까지 <strong>"+(next-xp)+"</strong> 남았어요":"최고 단계 달성!")+'</small></span></span>';
 }
 function evolve(k,color,who){
   $("evoPic").innerHTML=detective(k,color);
-  $("evoTitle").textContent=k>=4?"최고 단계 달성!":"승급!";
-  $("evoMsg").textContent=josa(who,"이","가")+" 「"+RANKS[k]+"」"+(k>=4?"에 올랐어요!":"으로 승급했어요!");
+  const top=RANKS.length-1;
+  $("evoTitle").textContent=k>=top?"최고 단계 달성!":"승급!";
+  $("evoMsg").textContent=josa(who,"이","가")+" 「"+RANKS[k]+"」"+(k>=top?"에 올랐어요!":"으로 승급했어요!");
   $("evo").hidden=false;$("evoOk").focus();
 }
 $("evoOk").onclick=()=>{$("evo").hidden=true};
@@ -673,7 +704,7 @@ function finish(){
     $("scoreBoard").innerHTML=r.map((x,i)=>{const ti=teamNames.indexOf(x.n),k=stageOf(Math.max(0,x.p),teamMax());return `<div><span class="who"><span class="mini">${detective(k,COATS[ti%COATS.length][0])}</span><span>${x.p===top?"🏆 ":(i+1)+"위 "}${x.n.replace(/</g,"&lt;")} · ${RANKS[k]}</span></span><span>${x.p}점</span></div>`}).join("");
   }else{
     const max=soloMax(),k=stageOf(xp,max);
-    $("endMsg").textContent=`${josa(myName(),"은","는")} 「${RANKS[k]}」${k>=4?"에 올랐어요! 🏆":josa("","","")+"까지 승급했어요!"}`;
+    $("endMsg").textContent=`${josa(myName(),"은","는")} 「${RANKS[k]}」${k>=RANKS.length-1?"에 올랐어요! 🏆":k===0?"에 머물렀어요. 다시 도전해 봐요!":"까지 승급했어요!"}`;
     $("finalDet").innerHTML=detective(k,me.color)+`<p class="final-rank">${RANKS[k]}</p>`;
     $("scoreBoard").className="score";
     $("scoreBoard").innerHTML=`<div><b>경험치 ${xp}</b><span class="muted"> / ${max}</span></div>`;
