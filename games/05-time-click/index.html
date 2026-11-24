@@ -116,6 +116,12 @@ p{margin:0}
 .stats div{background:var(--cell);border-radius:10px;padding:8px}
 .stats dt{font-size:13px;color:var(--dim)}
 .stats dd{margin:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stats .diff{border:3px solid currentColor;background:var(--bg)}
+.stats .diff dt{color:inherit;font-weight:700}
+.stats .diff dd{font-size:clamp(28px,6vw,36px);line-height:1.15}
+.stats .diff.early{color:var(--warn)}
+.stats .diff.late{color:var(--blue)}
+.stats .diff.exact{color:var(--ok)}
 .concept b{color:var(--blue);font-weight:700}
 .concept{border:2px solid var(--blue);border-radius:14px;padding:14px;font-size:clamp(18px,3vw,21px);font-weight:600;line-height:2.2}
 .pickset{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden;vertical-align:middle;margin:0 2px}
@@ -345,7 +351,7 @@ function openResult(diff){
   var best=load()[S.target];
   $("r-stats").innerHTML="";
   [["내 기록",fmtT(S.t)+"초"],["차이",exact?"0.00초":(early?"-"+fmtD(-diff):"+"+fmtD(diff))+"초"]].forEach(function(r){
-    var d=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);$("r-stats").appendChild(d);
+    var d=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");if(r[0]==="차이")d.className="diff "+(early?"early":exact?"exact":"late");dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);$("r-stats").appendChild(d);
   });
   CH.ps1=null;CH.ps2=null;
   ["ps1","ps2"].forEach(function(id){var g=$(id);g.className="pickset";var bs=g.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed","false")});
