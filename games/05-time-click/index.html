@@ -137,6 +137,7 @@ p{margin:0}
 .verdict.good{color:var(--ok)}
 .verdict.bad{color:var(--warn)}
 .explain b{font-weight:800;color:var(--warn);font-size:1.12em}
+.explain.dig b{color:var(--blue)}
 .explain{font-size:15px;background:var(--okbg);border-radius:10px;padding:10px 12px;text-align:left}
 
 @media (max-width:520px){.targets{gap:6px}.target{padding:14px 4px}.target b{font-size:30px}}
@@ -374,8 +375,9 @@ $("r-check").onclick=function(){
   $("ps1").className="pickset "+(ok1?"right":"wrong");$("ps2").className="pickset "+(ok2?"right":"wrong");
   if(ok1&&ok2){
     v.className="verdict good";v.textContent="정답!";
+    $("r-explain").className="explain"+(dig?" dig":"");
     $("r-explain").innerHTML=dig
-      ?"0.01초처럼 정해진 칸 단위로 끊어서 세요, 그래서 2.00초, 5.00초처럼 딱 떨어지는 값이 나올 수 있어요."
+      ?"0.01초처럼 정해진 칸 단위로 <b>끊어서</b> 세요, 그래서 2.00초, 5.00초처럼 <b>딱 떨어지는</b> 값이 나올 수 있어요."
       :fmtT(S.t)+"초처럼 <b>끝없이</b> 이어져서, 목표에 딱 떨어지게 멈추기는 아주 <b>어려워요</b>.";
     $("r-explain").hidden=false;$("r-check").hidden=true;$("r-lock").hidden=true;$("r-again").hidden=false;$("r-pick").hidden=false;$("r-again").focus();
   }else{
