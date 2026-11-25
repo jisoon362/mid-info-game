@@ -18,6 +18,8 @@ games/
     index.html
   05-time-click/        5번 게임: 순발력 디.아.블로
     index.html
+  06-rps-ai/            6번 게임: 가위바위보 마음 읽기 AI
+    index.html
   04-fake-news/         4번 게임: 가짜뉴스·피싱 판별
     index.html
 ```
