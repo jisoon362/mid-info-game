@@ -238,7 +238,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
   <section class="screen wide" id="s-gallery" hidden>
-    <h2>최근 3분 동안의 모둠 결과</h2>
+    <h2>최근 5분 동안의 모둠 결과</h2>
     <p class="dim" id="gal-status"></p>
     <ul class="gal" id="gal"></ul>
     <div class="row"><button class="btn big" id="gal-back">돌아가기</button></div>
@@ -527,8 +527,8 @@ $("send").onclick=function(){
 /* ---------- 모둠 결과 보기 ---------- */
 var GAL={rows:[],since:1,from:"s-setup",timer:null,busy:false};
 function mk(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
-// 제출한 지 3분이 지나지 않은 결과만 보여 준다 (r.time은 "시:분:초")
-var KEEP_MS=3*60*1000;
+// 제출한 지 5분이 지나지 않은 결과만 보여 준다 (r.time은 "시:분:초")
+var KEEP_MS=5*60*1000;
 function ageMs(r){
   var t=(r.time||"").split(":"),d=new Date();
   if(t.length<2)return Infinity;
@@ -538,7 +538,7 @@ function ageMs(r){
 function recentRows(){return GAL.rows.filter(function(r){var a=ageMs(r);return a>=-60000&&a<=KEEP_MS})}
 function galStatus(){
   var n=recentRows().length;
-  $("gal-status").textContent=n?"최근 3분 동안 제출된 결과 "+n+"건 · 3분이 지나면 사라져요":"최근 3분 동안 제출된 결과가 없어요. 모둠이 「선생님께 제출」을 누르면 여기에 나타나요.";
+  $("gal-status").textContent=n?"최근 5분 동안 제출된 결과 "+n+"건 · 5분이 지나면 사라져요":"최근 5분 동안 제출된 결과가 없어요. 모둠이 「선생님께 제출」을 누르면 여기에 나타나요.";
 }
 function drawGallery(){
   var ul=$("gal");ul.innerHTML="";
