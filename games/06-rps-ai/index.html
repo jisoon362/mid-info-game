@@ -68,6 +68,7 @@ p{margin:0}
 .hand span{font-size:15px;font-weight:700}
 .hand.me span{color:var(--me)}
 .hand.ai span{color:var(--ai)}
+.hand .say{font-style:normal;font-size:15px;font-weight:700;color:var(--ai);background:var(--aibg);border-radius:999px;padding:3px 12px}
 .vs{font-size:22px;font-weight:800;color:var(--dim)}
 .shake .face{animation:shake .5s ease-in-out}
 @keyframes shake{0%,100%{transform:translateY(0)}25%,75%{transform:translateY(-14px)}50%{transform:translateY(6px)}}
@@ -152,9 +153,9 @@ p{margin:0}
     <div class="arena" id="arena">
       <div class="hand me" id="h-me"><div class="face" id="f-me">❔</div><span>나</span></div>
       <div class="vs">VS</div>
-      <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span></div>
+      <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span><em class="say">"난 이미 정했어"</em></div>
     </div>
-    <p class="verdict" id="verdict" aria-live="polite">무엇을 낼까요?</p>
+    <p class="verdict" id="verdict" aria-live="polite">내가 낼 것은?</p>
 
     <div class="picks" id="picks">
       <button class="pick" data-m="0"><i>✊</i><b>바위</b></button>
@@ -344,7 +345,7 @@ function reset(){
   S={me:0,ai:0,draw:0,busy:false,randUsed:0,aiWins:[]};
   $("f-me").textContent="❔";$("f-ai").textContent="🤖";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake")});
-  $("verdict").className="verdict";$("verdict").textContent="무엇을 낼까요?";
+  $("verdict").className="verdict";$("verdict").textContent="내가 낼 것은?";
   $("think").hidden=true;$("tip").hidden=true;
   drawBoard();drawChart();drawMem();
 }
