@@ -74,6 +74,21 @@ p{margin:0}
 .mecol .pick i{font-size:clamp(36px,7vw,48px)}
 .mecol .pick b{font-size:20px}
 .mecol .rand{align-self:center}
+/* 고르기를 기다리는 동안: 버튼이 차례로 들썩이고 테두리가 빛난다 */
+.pickme{margin:-4px 0 -4px;text-align:center;font-size:17px;font-weight:800;color:var(--me);animation:hint 1.2s ease-in-out infinite}
+.pickme.off{visibility:hidden;animation:none}
+@keyframes hint{50%{transform:translateY(5px)}}
+.picks.wait .pick{animation:nudge 1.8s ease-in-out infinite}
+.picks.wait .pick:nth-child(2){animation-delay:.25s}
+.picks.wait .pick:nth-child(3){animation-delay:.5s}
+.picks.wait .pick i{display:inline-block;animation:wiggle 1.8s ease-in-out infinite}
+.picks.wait .pick:nth-child(2) i{animation-delay:.25s}
+.picks.wait .pick:nth-child(3) i{animation-delay:.5s}
+@keyframes nudge{0%,60%,100%{transform:none;border-color:color-mix(in srgb,var(--me) 35%,var(--line))}20%{transform:scale(1.04);border-color:var(--me);box-shadow:0 0 0 4px var(--mebg)}}
+@keyframes wiggle{0%,60%,100%{transform:none}10%{transform:rotate(-14deg)}20%{transform:rotate(12deg)}30%{transform:rotate(-6deg)}}
+.hand.me.ready .face{animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.pickme,.picks.wait .pick,.picks.wait .pick i,.hand.me.ready .face{animation:none}}
 .aicol .think{flex:1}
 @media (max-width:600px){.duel{grid-template-columns:1fr}.duel .vs{margin:0;justify-self:center}.mecol{order:1}.duel .vs{order:2}.aicol{order:3}}
 .arena{width:100%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
@@ -170,8 +185,9 @@ p{margin:0}
     <div class="duel">
       <!-- 나 -->
       <div class="col mecol">
-        <div class="hand me" id="h-me"><div class="face" id="f-me">❔</div><span>나</span></div>
-        <div class="picks" id="picks">
+        <div class="hand me ready" id="h-me"><div class="face" id="f-me">❔</div><span>나</span></div>
+        <p class="pickme" id="pickme">👇 하나를 골라 줘!</p>
+        <div class="picks wait" id="picks">
           <button class="pick" data-m="1"><i>✌️</i><b>가위</b></button>
           <button class="pick" data-m="0"><i>✊</i><b>바위</b></button>
           <button class="pick" data-m="2"><i>🖐️</i><b>보</b></button>
@@ -261,6 +277,7 @@ function play(me,byRandom){
   if(S.busy)return;S.busy=true;
   var plan=choose();      // AI는 내가 고르기 전에 이미 정했다
   var btns=document.querySelectorAll(".pick,#rand");for(var i=0;i<btns.length;i++)btns[i].disabled=true;
+  waiting(false);
   $("f-me").textContent="✊";$("f-ai").textContent="✊";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake");void $(id).offsetWidth;$(id).classList.add("shake")});
   $("verdict").className="verdict";$("verdict").textContent="가위, 바위, 보!";
@@ -282,8 +299,12 @@ function play(me,byRandom){
     drawBoard();drawThink(plan,me);drawChart();drawMem();drawTip();
     for(var i=0;i<btns.length;i++)btns[i].disabled=false;
     S.busy=false;
+    clearTimeout(S.waitT);S.waitT=setTimeout(function(){if(!S.busy)waiting(true)},1200);   // 결과를 잠깐 보여 준 뒤 다시 고르라고 알린다
 
   },wait);
+}
+function waiting(on){
+  $("picks").classList.toggle("wait",on);$("pickme").classList.toggle("off",!on);$("h-me").classList.toggle("ready",on);
 }
 function drawBoard(){
   $("sc-me").textContent=S.me;$("sc-ai").textContent=S.ai;$("sc-draw").textContent=S.draw;
@@ -367,6 +388,7 @@ function reset(){
   $("f-me").textContent="❔";$("f-ai").textContent="🤖";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake")});
   $("verdict").className="verdict";$("verdict").textContent="내가 낼 것은?";
+  clearTimeout(S.waitT);waiting(true);
 
   $("tip").hidden=true;
   $("pred").innerHTML="";$("pred").appendChild(el("span","","네가 내면 AI의 생각을 보여 줄게요."));
