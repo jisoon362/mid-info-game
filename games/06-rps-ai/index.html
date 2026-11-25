@@ -84,8 +84,6 @@ p{margin:0}
 .hand span{font-size:15px;font-weight:700}
 .hand.me span{color:var(--me)}
 .hand.ai span{color:var(--ai)}
-.hand .say.off{visibility:hidden}
-.hand .say{font-style:normal;font-size:15px;font-weight:700;color:var(--ai);background:var(--aibg);border-radius:999px;padding:3px 12px}
 .vs{font-size:22px;font-weight:800;color:var(--dim)}
 .shake .face{animation:shake .5s ease-in-out}
 @keyframes shake{0%,100%{transform:translateY(0)}25%,75%{transform:translateY(-14px)}50%{transform:translateY(6px)}}
@@ -183,7 +181,7 @@ p{margin:0}
       <div class="vs">VS</div>
       <!-- AI -->
       <div class="col aicol">
-        <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span><em class="say" id="say">"난 이미 정했어"</em></div>
+        <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span></div>
         <div class="think" id="think">
           <h3>🤖 AI의 생각</h3>
           <div class="pred" id="pred"></div>
@@ -266,7 +264,7 @@ function play(me,byRandom){
   $("f-me").textContent="✊";$("f-ai").textContent="✊";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake");void $(id).offsetWidth;$(id).classList.add("shake")});
   $("verdict").className="verdict";$("verdict").textContent="가위, 바위, 보!";
-  clearTimeout(S.sayT);$("say").classList.add("off");
+
   var wait=matchMedia("(prefers-reduced-motion: reduce)").matches?50:520;
   setTimeout(function(){
     var r=judge(me,plan.ai);
@@ -284,7 +282,7 @@ function play(me,byRandom){
     drawBoard();drawThink(plan,me);drawChart();drawMem();drawTip();
     for(var i=0;i<btns.length;i++)btns[i].disabled=false;
     S.busy=false;
-    S.sayT=setTimeout(function(){$("say").classList.remove("off")},1500);   // 결과를 잠깐 보여 준 뒤 다음 판을 기다린다
+
   },wait);
 }
 function drawBoard(){
@@ -304,8 +302,8 @@ function drawThink(plan,me){
   }
   var pct=Math.round(plan.p[plan.guess]*100);
   var r=judge(me,plan.ai);   // AI 입장에서 결과를 말한다
-  pred.appendChild(el("span","","너는 "+EMO[plan.guess]+" "+pct+"%일 것 같아서 AI는 "+EMO[plan.ai]+" 냈어"));
-  pred.appendChild(el("span",r===-1?"ok":"","→ 그래서 "+(r===-1?"이겼어":r===1?"졌어":"비겼어")));
+  pred.appendChild(el("span","","너는 "+EMO[plan.guess]+" "+pct+"%라서 나는 "+EMO[plan.ai]+" 냈어"));
+  pred.appendChild(el("span",r===-1?"ok":"","→ "+(r===-1?"역시 내가 이겼어":r===1?"하지만 내가 졌네":"이번엔 비겼네")));
   var bars=$("bars");bars.innerHTML="";
   ORDER.forEach(function(i){
     bars.appendChild(el("span","",EMO[i]+" "+NAME[i]));
@@ -369,7 +367,7 @@ function reset(){
   $("f-me").textContent="❔";$("f-ai").textContent="🤖";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake")});
   $("verdict").className="verdict";$("verdict").textContent="내가 낼 것은?";
-  clearTimeout(S.sayT);$("say").classList.remove("off");
+
   $("tip").hidden=true;
   $("pred").innerHTML="";$("pred").appendChild(el("span","","네가 내면 AI의 생각을 보여 줄게요."));
   $("bars").innerHTML="";$("why").textContent="AI는 네가 고르기 전에 이미 손을 정해 두었어요.";
