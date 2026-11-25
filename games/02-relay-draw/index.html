@@ -281,6 +281,25 @@ var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=3498242298754679;
 var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
 var K={pass:"cardrelay|pass|g2",lock:"cardrelay|lock",code:"cardrelay|code|g2"};
 function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
+// 수업 코드는 없앴지만, 구글 서버가 예전 버전이면 아직 코드를 확인한다.
+// 그래서 지금 교시의 코드를 직접 계산해 함께 보낸다 (예전 방식과 게임별 방식 둘 다 시도).
+function codeVariants(){
+  var d=new Date(),p=period(d);
+  if(p<0)return [""];
+  var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+  return [codeFor(d,p),("00"+cyrb(SECRET+"|"+day+"|"+p)%1000).slice(-3)];
+}
+// 코드 후보를 차례로 넣어 보며 요청한다. make(code)는 fetch 약속을 돌려준다
+function tryCodes(make){
+  var list=codeVariants(),i=0;
+  function next(){
+    return make(list[i]).then(function(r){return r.json()}).then(function(j){
+      if(!j.ok&&j.error==="code"&&++i<list.length)return next();
+      return j;
+    });
+  }
+  return next();
+}
 function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g2")%1000).slice(-3)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
@@ -487,13 +506,12 @@ $("send").onclick=function(){
   var msg=$("send-msg"),btn=$("send");
   if(S.sent)return;
   var keys=[];for(var i=0;i<S.snaps.length;i++)keys.push($("key"+i).value.trim());
-  var body=JSON.stringify({code:(sget(K.code,{})||{}).code||"",group:S.group,genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()});
+  var payload={code:"",group:S.group,genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()};
   btn.disabled=true;msg.className="verdict";msg.textContent="보내는 중…";
-  fetch(window.SHEET_URL,{method:"POST",body:body,redirect:"follow"})
-    .then(function(r){return r.json()})
+  tryCodes(function(code){payload.code=code;return fetch(window.SHEET_URL,{method:"POST",body:JSON.stringify(payload),redirect:"follow"})})
     .then(function(j){
       if(j.ok){S.sent=true;msg.className="verdict good";msg.textContent=S.group+"모둠 결과를 제출했어요."}
-      else{btn.disabled=false;msg.className="verdict bad";msg.textContent=j.error==="code"?"수업 코드가 지났어요. 새 코드를 넣은 뒤 다시 제출하세요.":"제출하지 못했어요. 다시 눌러 보세요."}
+      else{btn.disabled=false;msg.className="verdict bad";msg.textContent=j.error==="code"?"지금은 제출할 수 없어요. 선생님 구글 서버를 최신 버전으로 배포해야 해요.":"제출하지 못했어요("+(j.error||"알 수 없음")+"). 다시 눌러 보세요."}
     })
     .catch(function(){btn.disabled=false;msg.className="verdict bad";msg.textContent="연결하지 못했어요. 와이파이를 확인하고 다시 눌러 보세요."});
 };
@@ -517,9 +535,7 @@ function loadGallery(){
   if(GAL.busy||$("s-gallery").hidden)return;
   if(!window.SHEET_URL){$("gal-status").textContent="결과 보기 기능을 불러오지 못했어요. 화면을 새로고침해 보세요.";return}
   GAL.busy=true;
-  var code=(sget(K.code,{})||{}).code||"";
-  fetch(window.SHEET_URL+"?code="+encodeURIComponent(code)+"&since="+GAL.since+"&_="+Date.now(),{redirect:"follow"})
-    .then(function(r){return r.json()})
+  tryCodes(function(code){return fetch(window.SHEET_URL+"?code="+encodeURIComponent(code)+"&since="+GAL.since+"&_="+Date.now(),{redirect:"follow"})})
     .then(function(j){
       GAL.busy=false;
       if(!j.ok){$("gal-status").textContent=j.error==="code"?"수업 코드가 지났어요. 새 코드를 넣은 뒤 다시 열어 보세요.":j.error==="pin"&&code?"아직 준비 중이에요. 선생님이 구글 Apps Script를 새 버전으로 배포해야 볼 수 있어요.":"수업 코드를 확인하지 못했어요. 홈으로 나갔다가 다시 들어와 코드를 넣어 주세요.";return}
