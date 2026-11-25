@@ -15,7 +15,7 @@ var PERIODS = [[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,
 var SHEET_NAME = "이어그리기";
 var TZ = "Asia/Seoul";
 var GENRES = ["동물", "음식", "직업", "중학교 과목"];
-var HEAD = ["받은 시각", "날짜", "교시", "모둠", "장르", "제시어", "맞힘", "도전 횟수", "그린 시간(초)", "그린 인원", "핵심요소", "그림"];
+var HEAD = ["받은 시각", "날짜", "교시", "모둠", "장르", "제시어", "맞힘", "도전 횟수", "그린 시간(초)", "그린 인원", "핵심요소", "그림", "모둠 이름"];
 
 function cyrb(str) {
   var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
@@ -57,6 +57,8 @@ function getSheet() {
     sh = ss.insertSheet(SHEET_NAME);
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
     sh.setFrozenRows(1);
+  } else if (sh.getLastColumn() < HEAD.length) {
+    sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);   // 예전 시트에 새 칸 제목을 더한다
   }
   return sh;
 }
@@ -87,7 +89,7 @@ function doPost(e) {
     q.solved ? "O" : "X", Math.min(99, Math.max(0, Math.round(Number(q.tries)) || 0)),
     Math.min(60, Math.max(1, Math.round(Number(q.secs)) || 0)),
     Math.min(5, Math.max(1, Math.round(Number(q.n)) || 0)),
-    keys.join(" | "), img
+    keys.join(" | "), img, clean(q.gname, 10)
   ];
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -121,7 +123,7 @@ function doGet(e) {
       rows.push({
         row: since + 1 + i, time: r[0], period: Number(r[2]), group: Number(r[3]), genre: r[4], word: r[5],
         solved: r[6] === "O", tries: Number(r[7]), secs: Number(r[8]), n: Number(r[9]),
-        keys: r[10] ? r[10].split(" | ") : [], img: r[11]
+        keys: r[10] ? r[10].split(" | ") : [], img: r[11], gname: r[12] || ""
       });
     }
   }

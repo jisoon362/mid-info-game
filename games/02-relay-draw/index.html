@@ -51,6 +51,7 @@ p{margin:0}
 .seg button{background:var(--bg);border:0;padding:8px 13px;color:var(--dim)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:600}
 select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+.gname{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:9em}
 .rules{margin:0;padding-left:20px;font-size:14.5px;color:var(--dim);max-width:560px}
 .rules b{color:var(--ink);font-weight:600}
 
@@ -163,6 +164,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <div class="genres" id="genres"></div>
     <div class="opts">
       <div class="opt"><label for="o-group">모둠 번호</label><select id="o-group"></select></div>
+      <div class="opt"><label for="o-gname">모둠 이름</label><input id="o-gname" class="gname" maxlength="10" autocomplete="off" placeholder="예: 번개팀"></div>
       <div class="opt"><span>그리는 시간</span><div class="seg" id="o-secs"></div></div>
       <div class="opt"><span>단어를 보는 사람</span><div class="seg" id="o-see"></div></div>
     </div>
@@ -208,7 +210,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <p class="dim">사람마다 펜 색이 달라요. 자기 색으로 그린 부분이 제시어의 어떤 특징(핵심요소)인지 적어 보세요.</p>
     <ol class="steps" id="steps"></ol>
     <div class="row">
-      <button class="btn main big" id="sum-btn">추상화 정리하기</button>
+      <button class="btn main big" id="sum-btn">추상화 정리 완료</button>
     </div>
     <div class="talk" id="summary" hidden>
       <b>우리 모둠의 추상화</b>
@@ -228,8 +230,8 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     </div>
     <p class="verdict" id="send-msg" aria-live="polite" hidden></p>
     <div class="row" id="end-row" hidden>
-      <button class="btn big" id="home">이어 그리기 처음으로 돌아가기</button>
-      <button class="btn big" id="again">같은 장르로 다음 문제</button>
+      <button class="btn big" id="home">처음으로 돌아가기</button>
+      <button class="btn big" id="again">다음 문제</button>
     </div>
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
@@ -365,6 +367,11 @@ $("o-drawers").onclick=function(e){var b=e.target.closest("button");if(!b)return
 $("genres").onclick=function(e){var b=e.target.closest(".genre");if(!b)return;S.genre=b.dataset.g;drawSetup()};
 (function(){var h="";for(var i=1;i<=12;i++)h+='<option value="'+i+'">'+i+"모둠</option>";$("o-group").innerHTML=h})();
 $("o-group").onchange=function(){S.group=+this.value};
+// 모둠 이름은 이 태블릿에 기억해 둔다
+try{S.gname=localStorage.getItem("mig|g2|gname")||""}catch(e){S.gname=""}
+$("o-gname").value=S.gname;
+$("o-gname").oninput=function(){S.gname=this.value.trim();try{localStorage.setItem("mig|g2|gname",S.gname)}catch(e){}};
+function teamLabel(num,name){return name?name+" ("+num+"모둠)":num+"모둠"}
 function show(id){["s-setup","s-play","s-review","s-gallery"].forEach(function(s){$(s).hidden=s!==id})}
 
 /* ---------- 도화지 ---------- */
@@ -506,11 +513,11 @@ $("send").onclick=function(){
   var msg=$("send-msg"),btn=$("send");
   if(S.sent)return;
   var keys=[];for(var i=0;i<S.snaps.length;i++)keys.push($("key"+i).value.trim());
-  var payload={code:"",group:S.group,genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()};
+  var payload={code:"",group:S.group,gname:S.gname||"",genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()};
   btn.disabled=true;msg.className="verdict";msg.textContent="보내는 중…";
   tryCodes(function(code){payload.code=code;return fetch(window.SHEET_URL,{method:"POST",body:JSON.stringify(payload),redirect:"follow"})})
     .then(function(j){
-      if(j.ok){S.sent=true;msg.className="verdict good";msg.textContent=S.group+"모둠 결과를 제출했어요."}
+      if(j.ok){S.sent=true;msg.className="verdict good";msg.textContent=teamLabel(S.group,S.gname)+" 결과를 제출했어요."}
       else{btn.disabled=false;msg.className="verdict bad";msg.textContent=j.error==="code"?"지금은 제출할 수 없어요. 선생님 구글 서버를 최신 버전으로 배포해야 해요.":"제출하지 못했어요("+(j.error||"알 수 없음")+"). 다시 눌러 보세요."}
     })
     .catch(function(){btn.disabled=false;msg.className="verdict bad";msg.textContent="연결하지 못했어요. 와이파이를 확인하고 다시 눌러 보세요."});
@@ -522,8 +529,8 @@ function drawGallery(){
   var ul=$("gal");ul.innerHTML="";
   GAL.rows.slice().reverse().forEach(function(r){
     var li=mk("li");
-    var top=mk("div","top");top.appendChild(mk("span","g",r.group+"모둠"));top.appendChild(mk("span","meta",r.time.slice(0,5)));li.appendChild(top);
-    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=mk("img");im.alt=r.group+"모둠이 그린 그림";im.src=r.img;li.appendChild(im)}
+    var top=mk("div","top");top.appendChild(mk("span","g",teamLabel(r.group,r.gname)));top.appendChild(mk("span","meta",r.time.slice(0,5)));li.appendChild(top);
+    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=mk("img");im.alt=teamLabel(r.group,r.gname)+"이 그린 그림";im.src=r.img;li.appendChild(im)}
     else li.appendChild(mk("div","noimg","그림 없음"));
     var w=mk("div","top");w.appendChild(mk("span","w",r.word));w.appendChild(mk("span","meta",r.solved?r.tries+"번 만에 맞힘":"못 맞힘"));li.appendChild(w);
     var ks=mk("ul");
