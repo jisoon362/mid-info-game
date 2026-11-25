@@ -84,6 +84,7 @@ p{margin:0}
 .hand span{font-size:15px;font-weight:700}
 .hand.me span{color:var(--me)}
 .hand.ai span{color:var(--ai)}
+.hand .say.off{visibility:hidden}
 .hand .say{font-style:normal;font-size:15px;font-weight:700;color:var(--ai);background:var(--aibg);border-radius:999px;padding:3px 12px}
 .vs{font-size:22px;font-weight:800;color:var(--dim)}
 .shake .face{animation:shake .5s ease-in-out}
@@ -173,8 +174,8 @@ p{margin:0}
       <div class="col mecol">
         <div class="hand me" id="h-me"><div class="face" id="f-me">❔</div><span>나</span></div>
         <div class="picks" id="picks">
-          <button class="pick" data-m="0"><i>✊</i><b>바위</b></button>
           <button class="pick" data-m="1"><i>✌️</i><b>가위</b></button>
+          <button class="pick" data-m="0"><i>✊</i><b>바위</b></button>
           <button class="pick" data-m="2"><i>🖐️</i><b>보</b></button>
         </div>
         <button class="btn rand" id="rand">🎲 무작위로 내기</button>
@@ -182,7 +183,7 @@ p{margin:0}
       <div class="vs">VS</div>
       <!-- AI -->
       <div class="col aicol">
-        <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span><em class="say">"난 이미 정했어"</em></div>
+        <div class="hand ai" id="h-ai"><div class="face" id="f-ai">🤖</div><span>AI</span><em class="say" id="say">"난 이미 정했어"</em></div>
         <div class="think" id="think">
           <h3>🤖 AI의 생각</h3>
           <div class="pred" id="pred"></div>
@@ -215,6 +216,7 @@ p{margin:0}
 "use strict";
 var $=function(id){return document.getElementById(id)};
 var NAME=["바위","가위","보"],EMO=["✊","✌️","🖐️"];
+var ORDER=[1,0,2];   // 화면에 보여 줄 순서: 가위, 바위, 보
 function beat(m){return (m+2)%3}            // m을 이기는 손 (바위←보, 가위←바위, 보←가위)
 function judge(me,ai){return me===ai?0:beat(ai)===me?1:-1}   // 1: 내가 이김, -1: AI가 이김
 
@@ -264,6 +266,7 @@ function play(me,byRandom){
   $("f-me").textContent="✊";$("f-ai").textContent="✊";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake");void $(id).offsetWidth;$(id).classList.add("shake")});
   $("verdict").className="verdict";$("verdict").textContent="가위, 바위, 보!";
+  clearTimeout(S.sayT);$("say").classList.add("off");
   var wait=matchMedia("(prefers-reduced-motion: reduce)").matches?50:520;
   setTimeout(function(){
     var r=judge(me,plan.ai);
@@ -281,6 +284,7 @@ function play(me,byRandom){
     drawBoard();drawThink(plan,me);drawChart();drawMem();drawTip();
     for(var i=0;i<btns.length;i++)btns[i].disabled=false;
     S.busy=false;
+    S.sayT=setTimeout(function(){$("say").classList.remove("off")},1500);   // 결과를 잠깐 보여 준 뒤 다음 판을 기다린다
   },wait);
 }
 function drawBoard(){
@@ -293,31 +297,29 @@ function drawThink(plan,me){
   var box=$("think");box.hidden=false;
   var pred=$("pred");pred.innerHTML="";
   if(plan.guess===null){
-    pred.appendChild(el("span","","아직 기억이 부족해서 아무렇게나 냈어요."));
+    pred.appendChild(el("span","","아직 너를 잘 몰라서 아무렇게나 냈어."));
     $("bars").innerHTML="";
-    $("why").textContent="몇 판 더 하면 AI가 너의 버릇을 찾기 시작해요.";
+    $("why").textContent="📒 AI의 관찰 노트: 몇 판만 더 하면 너의 버릇을 찾아낼 거야!";
     return;
   }
   var pct=Math.round(plan.p[plan.guess]*100);
-  var c1=el("span","chip");c1.textContent="예측 "+EMO[plan.guess]+" "+pct+"%";
-  var c2=el("span","chip");c2.textContent="AI "+EMO[plan.ai];
-  pred.appendChild(c1);pred.appendChild(el("span","","→"));pred.appendChild(c2);
+  pred.appendChild(el("span","","예측: 너는 "+EMO[plan.guess]+" "+pct+"%일 것 같아서 AI는 "+EMO[plan.ai]+" 냈어"));
   pred.appendChild(el("span",plan.guess===me?"ok":"",plan.guess===me?"✔ 성공":"✘ 실패"));
   var bars=$("bars");bars.innerHTML="";
-  for(var i=0;i<3;i++){
+  ORDER.forEach(function(i){
     bars.appendChild(el("span","",EMO[i]+" "+NAME[i]));
     var b=el("span","bar"),f=el("i");f.style.width=Math.round(plan.p[i]*100)+"%";b.appendChild(f);bars.appendChild(b);
     bars.appendChild(el("b","",Math.round(plan.p[i]*100)+"%"));
-  }
+  });
   $("why").innerHTML=reason(plan);
 }
 function reason(plan){
   var g="<b>"+NAME[plan.guess]+"</b>";
-  if(plan.model==="freq")return "📒 AI의 관찰 노트: 너는 지금까지 "+g+"를 가장 많이 냈어요.";
-  if(plan.model==="after1")return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 냈어요.";
-  if(plan.model==="after2"){var k=plan.key.split(",");return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 냈어요."}
+  if(plan.model==="freq")return "📒 AI의 관찰 노트: 너는 "+g+"를 가장 많이 내는구나?";
+  if(plan.model==="after1")return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 내는구나?";
+  if(plan.model==="after2"){var k=plan.key.split(",");return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 내는구나?"}
   var q=plan.key.split("|"),res=+q[1]===1?"이긴":+q[1]===-1?"진":"비긴";
-  return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에 "+g+"를 자주 냈어요.";
+  return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에는 "+g+"를 자주 내는구나?";
 }
 function rolling(){
   var out=[];for(var i=0;i<S.aiWins.length;i++){var a=Math.max(0,i-9),s=0;for(var j=a;j<=i;j++)s+=S.aiWins[j];out.push(s/(i-a+1))}
@@ -342,13 +344,13 @@ function drawChart(){
 function drawMem(){
   var t=$("mem"),c=TABLE.after1||{},max=1;
   for(var a=0;a<3;a++){var r=c[String(a)]||[0,0,0];for(var b=0;b<3;b++)max=Math.max(max,r[b])}
-  var h="<tr><th></th>"+EMO.map(function(e,i){return "<th>"+e+"<br>"+NAME[i]+"</th>"}).join("")+"</tr>";
-  for(var a2=0;a2<3;a2++){
+  var h="<tr><th></th>"+ORDER.map(function(i){return "<th>"+EMO[i]+"<br>"+NAME[i]+"</th>"}).join("")+"</tr>";
+  ORDER.forEach(function(a2){
     var row=c[String(a2)]||[0,0,0];
     h+="<tr><th>"+EMO[a2]+" "+NAME[a2]+" 다음</th>";
-    for(var b2=0;b2<3;b2++){var k=row[b2]/max;h+='<td style="background:color-mix(in srgb,var(--ai) '+Math.round(k*70)+'%,var(--cell));color:'+(k>.55?"#fff":"var(--ink)")+'">'+row[b2]+"</td>"}
+    ORDER.forEach(function(b2){var k=row[b2]/max;h+='<td style="background:color-mix(in srgb,var(--ai) '+Math.round(k*70)+'%,var(--cell));color:'+(k>.55?"#fff":"var(--ink)")+'">'+row[b2]+"</td>"});
     h+="</tr>";
-  }
+  });
   t.innerHTML=h;
 }
 function drawTip(){
@@ -366,6 +368,7 @@ function reset(){
   $("f-me").textContent="❔";$("f-ai").textContent="🤖";
   ["h-me","h-ai"].forEach(function(id){$(id).classList.remove("win","shake")});
   $("verdict").className="verdict";$("verdict").textContent="내가 낼 것은?";
+  clearTimeout(S.sayT);$("say").classList.remove("off");
   $("tip").hidden=true;
   $("pred").innerHTML="";$("pred").appendChild(el("span","","네가 내면 AI의 생각을 보여 줄게요."));
   $("bars").innerHTML="";$("why").textContent="AI는 네가 고르기 전에 이미 손을 정해 두었어요.";
@@ -378,7 +381,7 @@ $("reset").onclick=reset;
 $("go").onclick=function(){reset();show("s-play")};
 document.addEventListener("keydown",function(e){
   if($("s-play").hidden||e.repeat)return;
-  var k={"1":0,"2":1,"3":2}[e.key];if(k!=null)play(k,false);
+  var k={"1":1,"2":0,"3":2}[e.key];if(k!=null)play(k,false);
 });
 reset();
 })();
