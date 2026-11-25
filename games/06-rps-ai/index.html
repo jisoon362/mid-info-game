@@ -279,10 +279,10 @@ function drawThink(plan,me){
     return;
   }
   var pct=Math.round(plan.p[plan.guess]*100);
-  var c1=el("span","chip");c1.textContent="예측: 너는 "+EMO[plan.guess]+" "+NAME[plan.guess]+" "+pct+"%";
-  var c2=el("span","chip");c2.textContent="그래서 AI는 "+EMO[plan.ai]+" "+NAME[plan.ai];
+  var c1=el("span","chip");c1.textContent="예측 "+EMO[plan.guess]+" "+pct+"%";
+  var c2=el("span","chip");c2.textContent="AI "+EMO[plan.ai];
   pred.appendChild(c1);pred.appendChild(el("span","","→"));pred.appendChild(c2);
-  pred.appendChild(el("span",plan.guess===me?"ok":"",plan.guess===me?"✔ 예측 성공":"✘ 예측 실패"));
+  pred.appendChild(el("span",plan.guess===me?"ok":"",plan.guess===me?"✔ 성공":"✘ 실패"));
   var bars=$("bars");bars.innerHTML="";
   for(var i=0;i<3;i++){
     bars.appendChild(el("span","",EMO[i]+" "+NAME[i]));
@@ -293,11 +293,11 @@ function drawThink(plan,me){
 }
 function reason(plan){
   var g="<b>"+NAME[plan.guess]+"</b>";
-  if(plan.model==="freq")return "AI의 근거: 너는 지금까지 "+g+"를 가장 많이 냈어요.";
-  if(plan.model==="after1")return "AI의 근거: 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 냈어요.";
-  if(plan.model==="after2"){var k=plan.key.split(",");return "AI의 근거: 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 냈어요."}
+  if(plan.model==="freq")return "📒 AI의 관찰 노트: 너는 지금까지 "+g+"를 가장 많이 냈어요.";
+  if(plan.model==="after1")return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 냈어요.";
+  if(plan.model==="after2"){var k=plan.key.split(",");return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 냈어요."}
   var q=plan.key.split("|"),res=+q[1]===1?"이긴":+q[1]===-1?"진":"비긴";
-  return "AI의 근거: 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에 "+g+"를 자주 냈어요.";
+  return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에 "+g+"를 자주 냈어요.";
 }
 function rolling(){
   var out=[];for(var i=0;i<S.aiWins.length;i++){var a=Math.max(0,i-9),s=0;for(var j=a;j<=i;j++)s+=S.aiWins[j];out.push(s/(i-a+1))}
