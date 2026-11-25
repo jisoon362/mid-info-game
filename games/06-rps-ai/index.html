@@ -187,8 +187,8 @@ p{margin:0}
         <div class="think" id="think">
           <h3>🤖 AI의 생각</h3>
           <div class="pred" id="pred"></div>
-          <div class="bars" id="bars"></div>
           <p class="why" id="why"></p>
+          <div class="bars" id="bars"></div>
         </div>
       </div>
     </div>
@@ -303,8 +303,9 @@ function drawThink(plan,me){
     return;
   }
   var pct=Math.round(plan.p[plan.guess]*100);
-  pred.appendChild(el("span","","예측: 너는 "+EMO[plan.guess]+" "+pct+"%일 것 같아서 AI는 "+EMO[plan.ai]+" 냈어"));
-  pred.appendChild(el("span",plan.guess===me?"ok":"",plan.guess===me?"✔ 성공":"✘ 실패"));
+  var r=judge(me,plan.ai);   // AI 입장에서 결과를 말한다
+  pred.appendChild(el("span","","너는 "+EMO[plan.guess]+" "+pct+"%일 것 같아서 AI는 "+EMO[plan.ai]+" 냈어"));
+  pred.appendChild(el("span",r===-1?"ok":"","→ 그래서 "+(r===-1?"이겼어":r===1?"졌어":"비겼어")));
   var bars=$("bars");bars.innerHTML="";
   ORDER.forEach(function(i){
     bars.appendChild(el("span","",EMO[i]+" "+NAME[i]));
