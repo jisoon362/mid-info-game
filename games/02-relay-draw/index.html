@@ -236,7 +236,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
   </section>
   <!-- 이번 교시에 제출된 모둠 결과 -->
   <section class="screen wide" id="s-gallery" hidden>
-    <h2>지금 시간대의 모둠 결과</h2>
+    <h2>최근 3분 동안의 모둠 결과</h2>
     <p class="dim" id="gal-status"></p>
     <ul class="gal" id="gal"></ul>
     <div class="row"><button class="btn big" id="gal-back">돌아가기</button></div>
@@ -525,9 +525,22 @@ $("send").onclick=function(){
 /* ---------- 모둠 결과 보기 ---------- */
 var GAL={rows:[],since:1,from:"s-setup",timer:null,busy:false};
 function mk(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
+// 제출한 지 3분이 지나지 않은 결과만 보여 준다 (r.time은 "시:분:초")
+var KEEP_MS=3*60*1000;
+function ageMs(r){
+  var t=(r.time||"").split(":"),d=new Date();
+  if(t.length<2)return Infinity;
+  var at=new Date(d.getFullYear(),d.getMonth(),d.getDate(),+t[0],+t[1],+(t[2]||0));
+  return d-at;
+}
+function recentRows(){return GAL.rows.filter(function(r){var a=ageMs(r);return a>=-60000&&a<=KEEP_MS})}
+function galStatus(){
+  var n=recentRows().length;
+  $("gal-status").textContent=n?"최근 3분 동안 제출된 결과 "+n+"건 · 3분이 지나면 사라져요":"최근 3분 동안 제출된 결과가 없어요. 모둠이 「선생님께 제출」을 누르면 여기에 나타나요.";
+}
 function drawGallery(){
   var ul=$("gal");ul.innerHTML="";
-  GAL.rows.slice().reverse().forEach(function(r){
+  recentRows().reverse().forEach(function(r){
     var li=mk("li");
     var top=mk("div","top");top.appendChild(mk("span","g",teamLabel(r.group,r.gname)));top.appendChild(mk("span","meta",r.time.slice(0,5)));li.appendChild(top);
     if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=mk("img");im.alt=teamLabel(r.group,r.gname)+"이 그린 그림";im.src=r.img;li.appendChild(im)}
@@ -545,10 +558,9 @@ function loadGallery(){
   tryCodes(function(code){return fetch(window.SHEET_URL+"?code="+encodeURIComponent(code)+"&since="+GAL.since+"&_="+Date.now(),{redirect:"follow"})})
     .then(function(j){
       GAL.busy=false;
-      if(!j.ok){$("gal-status").textContent=j.error==="code"?"수업 코드가 지났어요. 새 코드를 넣은 뒤 다시 열어 보세요.":j.error==="pin"&&code?"아직 준비 중이에요. 선생님이 구글 Apps Script를 새 버전으로 배포해야 볼 수 있어요.":"수업 코드를 확인하지 못했어요. 홈으로 나갔다가 다시 들어와 코드를 넣어 주세요.";return}
+      if(!j.ok){$("gal-status").textContent=j.error==="code"?"지금은 결과를 볼 수 없어요. 선생님 구글 서버를 최신 버전으로 배포해야 해요.":"결과를 불러오지 못했어요("+(j.error||"알 수 없음")+").";return}
       GAL.rows=GAL.rows.concat(j.rows);GAL.since=Math.max(GAL.since,j.last);
-      $("gal-status").textContent=GAL.rows.length?"제출된 결과 "+GAL.rows.length+"건 · 15초마다 새로 고쳐요":"아직 제출된 결과가 없어요. 모둠이 「선생님께 제출」을 누르면 여기에 나타나요.";
-      if(j.rows.length)drawGallery();
+      galStatus();drawGallery();
     })
     .catch(function(){GAL.busy=false;$("gal-status").textContent="연결하지 못했어요. 와이파이를 확인해 주세요."});
 }
@@ -557,6 +569,7 @@ document.addEventListener("click",function(e){
   GAL.from=$("s-review").hidden?"s-setup":"s-review";
   show("s-gallery");$("gal-status").textContent="불러오는 중…";loadGallery();
   if(!GAL.timer)GAL.timer=setInterval(function(){if(!document.hidden)loadGallery()},15000);
+  if(!GAL.tick)GAL.tick=setInterval(function(){if(!$("s-gallery").hidden){galStatus();drawGallery()}},10000);
 });
 $("gal-back").onclick=function(){show(GAL.from)};
 $("start").onclick=startGame;
