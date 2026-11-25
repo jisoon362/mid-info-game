@@ -57,7 +57,12 @@ p{margin:0}
 .side.me{background:var(--mebg);color:var(--me)}
 .side.ai{background:var(--aibg);color:var(--ai)}
 .mid{text-align:center;font-size:14px;color:var(--dim);font-variant-numeric:tabular-nums}
-.mid b{display:block;font-size:20px;color:var(--ink)}
+.mid{min-width:6.5em}
+.mid b{display:block;font-size:clamp(34px,6.4vw,48px);font-weight:800;line-height:1.05;color:var(--ink)}
+.mid b small{font-size:.5em;font-weight:700;margin-left:2px}
+.mid b.pop{animation:pop .45s ease-out}
+@keyframes pop{40%{transform:scale(1.35);color:var(--ai)}}
+@media (prefers-reduced-motion:reduce){.mid b.pop{animation:none}}
 
 /* 대결: 왼쪽은 나(손과 고르기), 오른쪽은 AI(손과 생각) */
 .duel{width:100%;display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
@@ -280,7 +285,8 @@ function play(me,byRandom){
 }
 function drawBoard(){
   $("sc-me").textContent=S.me;$("sc-ai").textContent=S.ai;$("sc-draw").textContent=S.draw;
-  $("sc-round").textContent=H.length+"판";
+  var r=$("sc-round");r.innerHTML=H.length+"<small>판</small>";
+  if(H.length){r.classList.remove("pop");void r.offsetWidth;r.classList.add("pop")}
 }
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 function drawThink(plan,me){
