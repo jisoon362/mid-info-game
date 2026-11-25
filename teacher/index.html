@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../theme.js"></script>
-<title>이어 그리기 결과 보기</title>
+<title>선생님 갤러리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
@@ -69,15 +69,15 @@ tr.now td{color:var(--blue)}
 <body>
 <header>
   <a class="btn back" href="../">← 홈으로</a>
-  <h1>이어 그리기 결과 보기</h1>
+  <h1>선생님 갤러리</h1>
   <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px"></button>
   <span class="status" id="status"></span>
 </header>
 <main>
   <form class="login" id="login">
-    <h2>선생님 확인</h2>
-    <p>학생들이 제출한 결과를 보려면 선생님 비밀번호를 넣으세요.</p>
-    <input id="pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="선생님 비밀번호">
+    <h2>선생님 코드</h2>
+    <p>학생들이 「선생님께 제출」로 보낸 결과를 모아 봐요. 선생님 코드를 넣으세요.</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="선생님 코드">
     <p class="err" id="err" aria-live="polite"></p>
     <button class="btn main" type="submit">열기</button>
   </form>
@@ -163,7 +163,7 @@ function load(first){
     .then(function(j){
       busy=false;
       if(!j.ok){
-        if(first){$("err").textContent=j.error==="pin"?"비밀번호가 달라요.":"불러오지 못했어요.";return}
+        if(first){$("err").textContent=j.error==="pin"?"선생님 코드가 달라요.":"불러오지 못했어요.";return}
         status("불러오지 못했어요",true);return;
       }
       if(first){$("login").hidden=true;$("board").hidden=false;timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
@@ -177,7 +177,8 @@ function load(first){
 $("login").onsubmit=function(e){
   e.preventDefault();
   if(!URL_){$("err").textContent="아직 구글 시트 주소가 설정되지 않았어요 (config.js).";return}
-  pin=$("pin").value;$("err").textContent="";load(true);
+  // 선생님 코드 127 (예전 비밀번호 1207도 그대로 쓸 수 있다)
+  var v=$("pin").value.trim();pin=v==="127"?"1207":v;$("err").textContent="";load(true);
 };
 if(!URL_)$("err").textContent="아직 구글 시트 주소가 설정되지 않았어요 (config.js).";
 })();
