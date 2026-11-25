@@ -129,6 +129,7 @@ p{margin:0}
 .bars b{font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
 .why{font-size:15.5px}
 .why b{color:var(--ai)}
+.why b.aha{color:var(--ink);font-weight:800;margin-right:4px}
 
 /* 그래프와 기억 */
 .panels{width:100%;display:grid;grid-template-columns:3fr 2fr;gap:14px}
@@ -318,7 +319,7 @@ function drawThink(plan,me){
   if(plan.guess===null){
     pred.appendChild(el("span","","아직 너를 잘 몰라서 아무렇게나 냈어."));
     $("bars").innerHTML="";
-    $("why").textContent="📒 AI의 관찰 노트: 몇 판만 더 하면 너의 버릇을 찾아낼 거야!";
+    $("why").textContent="📒 몇 판만 더 하면 너의 버릇을 찾아낼 거야!";
     return;
   }
   var pct=Math.round(plan.p[plan.guess]*100);
@@ -335,11 +336,11 @@ function drawThink(plan,me){
 }
 function reason(plan){
   var g="<b>"+NAME[plan.guess]+"</b>";
-  if(plan.model==="freq")return "📒 AI의 관찰 노트: 너는 "+g+"를 가장 많이 내는구나?";
-  if(plan.model==="after1")return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 내는구나?";
-  if(plan.model==="after2"){var k=plan.key.split(",");return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 내는구나?"}
+  if(plan.model==="freq")return "📒 <b class=\"aha\">&quot;이제 알겠다...&quot;</b> 너는 "+g+"를 가장 많이 내는구나?";
+  if(plan.model==="after1")return "📒 <b class=\"aha\">&quot;이제 알겠다...&quot;</b> 너는 <b>"+NAME[+plan.key]+"</b>를 낸 다음에 "+g+"를 자주 내는구나?";
+  if(plan.model==="after2"){var k=plan.key.split(",");return "📒 <b class=\"aha\">&quot;이제 알겠다...&quot;</b> 너는 <b>"+NAME[+k[0]]+" → "+NAME[+k[1]]+"</b> 다음에 "+g+"를 자주 내는구나?"}
   var q=plan.key.split("|"),res=+q[1]===1?"이긴":+q[1]===-1?"진":"비긴";
-  return "📒 AI의 관찰 노트: 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에는 "+g+"를 자주 내는구나?";
+  return "📒 <b class=\"aha\">&quot;이제 알겠다...&quot;</b> 너는 <b>"+NAME[+q[0]]+"</b>로 "+res+" 다음 판에는 "+g+"를 자주 내는구나?";
 }
 function rolling(){
   var out=[];for(var i=0;i<S.aiWins.length;i++){var a=Math.max(0,i-9),s=0;for(var j=a;j<=i;j++)s+=S.aiWins[j];out.push(s/(i-a+1))}
