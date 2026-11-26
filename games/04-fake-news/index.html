@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../../theme.js"></script>
+<script src="../../classcode.js"></script>
 <title>사이버 탐정 키우기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -252,9 +253,9 @@ p{margin:6px 0}
 <div class="gate" id="gate" hidden>
   <form class="gate-card" id="g-code" hidden>
     <h2>수업 코드를 넣어요</h2>
-    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다, 게임마다 달라요.</p>
+    <p>선생님이 이번 교시에 알려 준 숫자 2자리를 넣으면 시작할 수 있어요. 코드는 시간마다, 게임마다 달라요.</p>
     <label class="field" for="g-class">수업 코드
-      <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
+      <input id="g-class" class="digits" inputmode="numeric" maxlength="2" autocomplete="off">
     </label>
     <p class="gate-err" id="g-code-err" aria-live="polite"></p>
     <div class="gate-btns"><button class="btn main" type="submit">시작하기</button></div>
@@ -283,14 +284,14 @@ var mem={};
 function sget(k,def){try{var v=localStorage.getItem(k);if(v!==null)return JSON.parse(v)}catch(e){}return k in mem?mem[k]:def}
 function sset(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
-var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=3498242298754679;
-var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
+var SECRET="bfc536cdefd2262ab9bb49bb",TPIN=window.CLASSCODE.TPIN;   /* 선생님 비밀번호 1218 */
+var PERIODS=window.CLASSCODE.SLOTS;   /* 시간대는 classcode.js에서 정한다 */
 var K={pass:"fakenews|pass|g4",lock:"fakenews|lock",code:"fakenews|code|g4"};
-function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
-function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g4")%1000).slice(-3)}
+function period(d){return window.CLASSCODE.slot(d)}
+function codeFor(d,p){return window.CLASSCODE.code(d,p,4)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
-  var pass=sget(K.pass,0),free=true;   // 수업 코드 없이 언제나 열린다
+  var pass=sget(K.pass,0),free=!window.CLASSCODE.needed();   // 수업 시간대가 아니면 코드 없이 열린다
   if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
   gshow(null);
   $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
@@ -304,10 +305,10 @@ function fail(lock){lock.n++;if(lock.n%3===0)lock.until=Date.now()+20000*Math.po
 $("g-code").onsubmit=function(e){
   e.preventDefault();
   var err=$("g-code-err"),lock=locked(err);if(!lock)return;
-  var d=new Date(),p=period(d),code=$("g-class").value.replace(/\D/g,"");
-  if(p<0){err.textContent="지금은 수업 시간이 아니에요. 수업이 시작되면 코드를 넣을 수 있어요.";return}
-  if(code!==codeFor(d,p)){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
-  var end=new Date(d);end.setHours(0,PERIODS[p][1],0,0);
+  var d=new Date(),code=$("g-class").value.replace(/\D/g,""),until=window.CLASSCODE.check(code,4);
+  if(until<0){gate();return}
+  if(!until){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
+  var end=new Date(until);
   var saved=sget(K.code,{})||{};saved.code=code;saved.day=d.toDateString();sset(K.code,saved);
   sset(K.lock,{n:0,until:0});sset(K.pass,end.getTime());err.textContent="";gate();
 };
@@ -319,7 +320,7 @@ $("g-tpin").onsubmit=function(e){
   if(cyrb("T|"+SECRET+"|"+$("g-pin").value)!==TPIN){fail(lock);err.textContent="비밀번호가 달라요.";return}
   sset(K.lock,{n:0,until:0});$("g-pin").value="";err.textContent="";
   var d=new Date(),p=period(d);
-  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":(p+1)+"교시 수업 코드";
+  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":window.CLASSCODE.label(p)+" 수업 코드";
   $("g-now-code").textContent=p<0?"---":codeFor(d,p);
   $("g-issued").hidden=false;
 };

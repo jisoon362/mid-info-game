@@ -84,7 +84,7 @@ tr.now td{color:var(--blue)}
 
   <section id="codes" hidden>
     <h2 class="t">오늘의 수업 코드</h2>
-    <p class="count">코드는 교시마다, 게임마다 달라요. 지금 교시는 파란색으로 표시돼요.</p>
+    <p class="count">코드는 시간마다, 게임마다 다른 두 자리 숫자예요. 지금 시간은 파란색으로 표시돼요. 표에 없는 시간에는 코드 없이 열려요.</p>
     <div style="overflow-x:auto"><table id="codetable"></table></div>
   </section>
 
@@ -98,6 +98,7 @@ tr.now td{color:var(--blue)}
 
 <script>document.write('<script src="../config.js?t='+Date.now()+'"><\/script>')</script>
 <script src="../games.js"></script>
+<script src="../classcode.js"></script>
 <script>
 (function(){
 "use strict";
@@ -144,15 +145,15 @@ function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++)
 var SECRET="bfc536cdefd2262ab9bb49bb",PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
 function hm(m){var x=m%60;return Math.floor(m/60)+":"+(x<10?"0":"")+x}
 function drawCodes(){
-  var d=new Date(),day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(),min=d.getHours()*60+d.getMinutes();
+  var C=window.CLASSCODE,d=new Date(),now=C.slot(d);
   var games=(window.GAMES||[]).slice().sort(function(a,b){return a.no-b.no});
   var t=$("codetable");t.innerHTML="";
-  var h=el("tr");h.appendChild(el("th","","교시"));h.appendChild(el("th","","시간"));
+  var h=el("tr");h.appendChild(el("th","","시간"));
   games.forEach(function(g){h.appendChild(el("th","",g.no+"번 "+g.title))});t.appendChild(h);
-  PERIODS.forEach(function(p,i){
-    var tr=el("tr",min>=p[0]&&min<p[1]?"now":"");
-    tr.appendChild(el("td","",(i+1)+"교시"));tr.appendChild(el("td","",hm(p[0])+" ~ "+hm(p[1])));
-    games.forEach(function(g){tr.appendChild(el("td","code",("00"+cyrb(SECRET+"|"+day+"|"+i+"|g"+g.no)%1000).slice(-3)))});
+  C.SLOTS.forEach(function(sl,i){
+    var tr=el("tr",i===now?"now":"");
+    tr.appendChild(el("td","",C.label(i)));
+    games.forEach(function(g){tr.appendChild(el("td","code",C.code(d,i,g.no)))});
     t.appendChild(tr);
   });
 }
@@ -166,7 +167,7 @@ function load(first){
         if(first){$("err").textContent=j.error==="pin"?"선생님 코드가 달라요.":"불러오지 못했어요.";return}
         status("불러오지 못했어요",true);return;
       }
-      if(first){$("login").hidden=true;$("board").hidden=false;timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
+      if(first){$("login").hidden=true;$("board").hidden=false;$("codes").hidden=false;drawCodes();setInterval(drawCodes,30000);timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
       j.rows.forEach(function(r){if(!r.period)r.period=99});rows=rows.concat(j.rows);since=Math.max(since,j.last);
       var d=new Date();status("연결됨 · "+d.getHours()+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2)+" 갱신 · 10초마다 새로 고쳐요");
       if(first||j.rows.length)draw();
@@ -177,8 +178,10 @@ function load(first){
 $("login").onsubmit=function(e){
   e.preventDefault();
   if(!URL_){$("err").textContent="아직 구글 시트 주소가 설정되지 않았어요 (config.js).";return}
-  // 선생님 코드 127 (예전 비밀번호 1207도 그대로 쓸 수 있다)
-  var v=$("pin").value.trim();pin=v==="127"?"1207":v;$("err").textContent="";load(true);
+    // 선생님 갤러리 비밀번호 1218 (구글 서버에는 예전 비밀번호로 보내 서버를 다시 배포하지 않아도 되게 한다)
+  var v=$("pin").value.trim();
+  if(!window.CLASSCODE.teacherOk(v)){$("err").textContent="선생님 코드가 달라요.";return}
+  pin="1207";$("err").textContent="";load(true);
 };
 if(!URL_)$("err").textContent="아직 구글 시트 주소가 설정되지 않았어요 (config.js).";
 })();

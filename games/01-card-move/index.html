@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../../theme.js"></script>
+<script src="../../classcode.js"></script>
 <title>문제해결 레이싱</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -268,9 +269,9 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 
   <form class="gate-card" id="g-code" hidden>
     <h2><span id="g-hello"></span>님, 수업 코드를 넣어요</h2>
-    <p>선생님이 이번 교시에 알려 준 숫자 3자리를 넣으면 시작할 수 있어요. 코드는 교시마다, 게임마다 달라요.</p>
+    <p>선생님이 이번 교시에 알려 준 숫자 2자리를 넣으면 시작할 수 있어요. 코드는 시간마다, 게임마다 달라요.</p>
     <label class="field" for="g-class">수업 코드
-      <input id="g-class" class="digits" inputmode="numeric" maxlength="3" autocomplete="off">
+      <input id="g-class" class="digits" inputmode="numeric" maxlength="2" autocomplete="off">
     </label>
     <p class="gate-err" id="g-code-err" aria-live="polite"></p>
     <div class="gate-btns">
@@ -323,18 +324,13 @@ function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++)
 
 /* ---------- 입장: 아이디와 수업 코드 ---------- */
 var SECRET="bfc536cdefd2262ab9bb49bb";
-var TPIN=3498242298754679;
-var PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]]; /* 분 단위: 9:15~10:10 ... 15:35~16:30 */
+var TPIN=window.CLASSCODE.TPIN;   /* 선생님 비밀번호 1218 */
+var PERIODS=window.CLASSCODE.SLOTS;   /* 시간대는 classcode.js에서 정한다 */
 var K={acc:"cardrelay|accounts",ses:"cardrelay|session",pass:"cardrelay|pass|g1",lock:"cardrelay|lock",code:"cardrelay|code|g1"};
 var G={started:false};
-function period(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<PERIODS.length;i++)if(m>=PERIODS[i][0]&&m<PERIODS[i][1])return i;return -1}
-function codeFor(d,p){var day=d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();return("00"+cyrb(SECRET+"|"+day+"|"+p+"|g1")%1000).slice(-3)}
-function verifyCode(code){
-  var d=new Date(),p=period(d);
-  if(p<0)return -1;
-  if(codeFor(d,p)!==code)return 0;
-  var e=new Date(d);e.setHours(0,PERIODS[p][1],0,0);return e.getTime();
-}
+function period(d){return window.CLASSCODE.slot(d)}
+function codeFor(d,p){return window.CLASSCODE.code(d,p,1)}
+function verifyCode(code){return window.CLASSCODE.check(code,1)}
 function clock(ms){var d=new Date(ms),h=d.getHours(),m=d.getMinutes();return h+"시 "+(m<10?"0":"")+m+"분"}
 function gshow(id){
   ["g-auth","g-code","g-tpin","g-teacher"].forEach(function(v){$(v).hidden=v!==id});
@@ -344,7 +340,7 @@ function gshow(id){
 function gate(){
   var ses=sget(K.ses,null),pass=sget(K.pass,0),accs=sget(K.acc,{});
   if(!ses||!accs[ses]){G.back="auth";gshow("g-auth");return}
-  var free=true;   // 수업 코드 없이 언제나 열린다
+  var free=!window.CLASSCODE.needed();   // 수업 시간대가 아니면 코드 없이 열린다
   if(!free&&pass<=Date.now()){
     G.back="code";$("g-hello").textContent=ses;$("g-class").value="";
     if(G.started)$("g-code-err").textContent="수업 코드 시간이 끝났어요. 새 코드를 받아야 계속할 수 있어요.";
@@ -369,7 +365,7 @@ function enterCode(){
   var lock=sget(K.lock,{n:0,until:0}),t=Date.now(),err=$("g-code-err");
   if(t<lock.until){err.textContent="여러 번 틀렸어요. "+Math.ceil((lock.until-t)/1000)+"초 뒤에 다시 넣을 수 있어요.";return}
   var code=$("g-class").value.replace(/\D/g,"");
-  var until=code.length===3?verifyCode(code):0;
+  var until=code.length===2?verifyCode(code):0;
   if(until<0){err.textContent="지금은 수업 시간이 아니에요. 수업이 시작되면 코드를 넣을 수 있어요.";return}
   if(!until){
     failLock(lock,t);
@@ -381,7 +377,7 @@ function enterCode(){
 function failLock(lock,t){lock.n++;if(lock.n%3===0)lock.until=t+20000*Math.pow(2,Math.min(6,lock.n/3-1));sset(K.lock,lock)}
 function drawTeacher(){
   var d=new Date(),p=period(d);
-  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":(p+1)+"교시 수업 코드";
+  $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":window.CLASSCODE.label(p)+" 수업 코드";
   $("g-now-code").textContent=p<0?"---":codeFor(d,p);
   var accs=sget(K.acc,{}),ids=Object.keys(accs);
   $("g-accts").innerHTML=ids.length?ids.map(function(id){return "<li><span>"+id+'</span><button class="btn" type="button" data-del="'+id+'">지우기</button></li>'}).join(""):"<li>아직 없어요.</li>";
@@ -427,7 +423,7 @@ function drawHud(){
 }
 
 /* ---------- 기록 ---------- */
-function recKey(){var p=period(new Date()),c={day:new Date().toDateString(),code:p<0?"수업 외":(p+1)+"교시"};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
+function recKey(){var p=period(new Date()),c={day:new Date().toDateString(),code:p<0?"수업 외":"시간대"+(p+1)};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
 function drawRecords(){
   var list=load(recKey()),c={code:""};
   $("rec-key").textContent="(수업 코드 "+c.code+" · "+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
