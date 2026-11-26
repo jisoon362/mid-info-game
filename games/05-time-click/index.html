@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../../theme.js"></script>
 <script src="../../classcode.js"></script>
+<script>document.write('<script src="../../config.js?t='+Date.now()+'"><\/script>')</script>
+<script src="../../records.js"></script>
 <title>순발력 디.아.블로</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,6 +46,9 @@ p{margin:0}
 .row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 
 /* 고르기 화면 */
+.nick{font:inherit;font-size:18px;padding:10px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:min(100%,260px);align-self:flex-start}
+.sub2{font-size:13px;font-weight:500;color:var(--dim)}
+.rkline{margin:0;font-size:18px;font-weight:800;color:var(--blue)}
 .lbl{align-self:flex-start;font-size:17px;font-weight:700;margin:6px 0 -6px}
 .targets{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%}
 .target{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 10px;border-radius:16px;border:2px solid var(--line);background:var(--bg)}
@@ -161,6 +166,8 @@ p{margin:0}
     </div>
     <p class="lbl">목표 시간</p>
     <div class="targets" id="targets"></div>
+    <p class="lbl">닉네임 <small class="sub2">(신기록판에 나와요)</small></p>
+    <input id="nick" class="nick" maxlength="6" autocomplete="off" aria-label="닉네임">
     <p class="lbl">주의사항</p>
     <ol class="howto">
       <li>시계 종류와 목표 시간을 골라요.</li>
@@ -184,6 +191,8 @@ p{margin:0}
     <div class="readout" id="readout"></div>
     <p class="msg" id="msg" aria-live="polite"></p>
     <button class="go" id="go">시작</button>
+    <div class="rkbox" id="rkbox"></div>
+    <p class="rkstat" id="rkstat"></p>
     <div class="row" id="after" hidden>
       <button class="btn main big" id="retry">다시 도전</button>
       <button class="btn big" id="to-pick">다른 시간 고르기</button>
@@ -196,6 +205,7 @@ p{margin:0}
   <div class="result" role="dialog" aria-modal="true" aria-labelledby="r-title">
     <h2 id="r-title" class="sr">결과</h2>
     <dl class="stats" id="r-stats"></dl>
+    <p class="rkline" id="r-rank" hidden></p>
     <div class="concept" id="concept">
       시간이 <b id="c-kind">디지털</b>로 표현될 때
       <span class="pickset" id="ps1" role="group" aria-label="연속적 또는 불연속적"><button data-v="c">연속적</button><button data-v="n">불연속적</button></span>
@@ -223,6 +233,19 @@ var TARGETS=[1,3,5,8,10];
 var SCALE={1:{max:1.5,major:.25,minor:.05,label:.5},3:{max:4,major:.5,minor:.1,label:1},5:{max:8,major:1,minor:.2,label:1},8:{max:12,major:1,minor:.2,label:2},10:{max:15,major:1,minor:.5,label:5}};
 var S={kind:"analog",target:5,state:"ready",t0:0,t:0,anim:0};
 var KEY="mig|g5|best";
+/* ---------- 닉네임과 신기록판 ---------- */
+var NICK_OK=/^[가-힣a-zA-Z0-9]{1,6}$/;
+function getNick(){var v=$("nick").value.trim();if(!NICK_OK.test(v)){v=defaultNick();$("nick").value=v}try{localStorage.setItem("mig|g5|nick",v)}catch(e){}return v}
+function defaultNick(){var a=["시계토끼","번개","초침","타이머","뻐꾸기","째깍이"];return a[Math.floor(Math.random()*a.length)]+(10+Math.floor(Math.random()*90))}
+function recEv(){return S.kind+"-"+S.target}
+function recFmt(t){return t===0?"딱 맞춤!":(t/1000).toFixed(S.kind==="digital"?2:3)+"초 차이"}
+var REC={busy:false};
+function loadBoard(){
+  if(!window.RECORDS||REC.busy)return;
+  var ev=recEv();REC.busy=true;
+  window.RECORDS.load(5,ev).then(function(d){REC.busy=false;if(ev!==recEv())return;window.RECORDS.render($("rkbox"),d,getNick(),recFmt);$("rkstat").textContent="목표에 가장 가깝게 멈춘 기록 순서예요"})
+    .catch(function(e){REC.busy=false;$("rkbox").innerHTML="";$("rkstat").textContent=window.RECORDS.message(e)});
+}
 
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
 function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
@@ -297,6 +320,7 @@ function start(){
   var go=$("go");go.hidden=false;go.disabled=false;go.textContent="시작";go.className="go";
   $("after").hidden=true;$("overlay").hidden=true;
   show("s-play");go.focus();
+  loadBoard();
 }
 var LCD_CELLS=null;
 function lcdSet(txt){
@@ -341,11 +365,23 @@ function finish(){
   $("msg").className="msg";
   $("msg").textContent=exact?"숫자가 목표에 딱 맞았어요!":"목표보다 "+fmtD(diff)+"초 늦었어요.";
   var best=load(),k=bestKey(S.target),rd=Math.round(diff*100)/100;if(best[k]==null||rd<best[k]){best[k]=rd;save(best)}
+  // 신기록판에 보내기 (목표와의 차이를 1000분의 1초 단위로)
+  S.rank=null;
+  if(window.RECORDS&&window.SHEET_URL){
+    var ev=recEv(),t=Math.round(diff*1000),me=getNick();
+    window.RECORDS.submit(5,ev,me,t,0).then(function(d){
+      if(ev!==recEv())return;
+      window.RECORDS.render($("rkbox"),d,me,recFmt);
+      S.rank=d.worldRank===1?"🌏 세계 신기록!!":d.roomRank===1?"🏫 우리 교실 신기록!!":"우리 교실 "+d.roomRank+"위 · 세계 "+d.worldRank+"위";
+      showRank();
+    }).catch(function(e){$("rkstat").textContent=window.RECORDS.message(e)});
+  }
   setTimeout(function(){openResult(diff)},700);
 }
 
 /* ---------- 마지막 결과 창 ---------- */
 var CH={ps1:null,ps2:null};
+function showRank(){var el=$("r-rank");if(!el)return;el.hidden=!S.rank;el.textContent=S.rank||""}
 function openResult(diff){
   var dig=S.kind==="digital",exact=dig&&diff===0;
   var early=diff<0;
@@ -360,6 +396,7 @@ function openResult(diff){
   ["ps1","ps2"].forEach(function(id){var g=$(id);g.className="pickset";var bs=g.querySelectorAll("button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed","false")});
   $("r-verdict").textContent="";$("r-verdict").className="verdict";$("r-explain").hidden=true;$("r-check").hidden=false;$("r-lock").hidden=false;$("r-again").hidden=true;$("r-pick").hidden=true;
   $("overlay").hidden=false;$("r-check").focus();
+  if(diff<0)S.rank=null;showRank();
 }
 ["ps1","ps2"].forEach(function(id){
   $(id).onclick=function(e){
@@ -395,6 +432,9 @@ $("to-pick").onclick=function(){drawPick();show("s-pick")};
 $("p-back").onclick=function(){S.state="ready";cancelAnimationFrame(S.anim);drawPick();show("s-pick")};
 $("r-pick").onclick=function(){$("overlay").hidden=true;drawPick();show("s-pick")};
 
+try{$("nick").value=localStorage.getItem("mig|g5|nick")||""}catch(e){}
+if(!$("nick").value)$("nick").value=defaultNick();
+$("nick").onchange=getNick;
 drawPick();
 })();
 </script>

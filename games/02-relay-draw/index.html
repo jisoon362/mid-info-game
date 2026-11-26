@@ -312,7 +312,9 @@ function codeFor(d,p){return window.CLASSCODE.code(d,p,2)}
 function gshow(id){["g-code","g-tpin"].forEach(function(v){$(v).hidden=v!==id});$("gate").hidden=!id;document.querySelector("main").inert=!!id}
 function gate(){
   var pass=sget(K.pass,0),free=!window.CLASSCODE.needed();   // 수업 시간대가 아니면 코드 없이 열린다
-  if(!free&&pass<=Date.now()){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
+  // 활동 중(그리기, 제출, 결과 보기 등)에는 코드 시간이 지나도 막지 않고, 첫 화면에 있을 때만 새 코드를 묻는다
+  var atStart=!$("s-setup")||!$("s-setup").hidden;
+  if(!free&&pass<=Date.now()&&($("gate").hidden?atStart:true)){if($("gate").hidden||$("g-tpin").hidden){$("g-class").value="";gshow("g-code")}return}
   gshow(null);
   $("left").textContent=free?"제한 없음":Math.max(1,Math.ceil((pass-Date.now())/60000))+"분";
 }

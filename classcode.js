@@ -24,7 +24,7 @@
   function check(input,g){
     var d=new Date(),c=near(d);
     if(!c.length)return -1;
-    for(var k=0;k<c.length;k++)if(code(d,c[k],g)===input)return Math.max(at(d,SLOTS[c[k]][1]),d.getTime()+GRACE);
+    for(var k=0;k<c.length;k++)if(code(d,c[k],g)===input)return Math.max(at(d,SLOTS[c[k]][1])+2*GRACE,d.getTime()+GRACE);
     return 0;
   }
   function teacherOk(pin){return cyrb("T|"+SECRET+"|"+String(pin))===TPIN}

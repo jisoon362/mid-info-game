@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../../theme.js"></script>
 <script src="../../classcode.js"></script>
+<script>document.write('<script src="../../config.js?t='+Date.now()+'"><\/script>')</script>
+<script src="../../records.js"></script>
 <title>문제해결 레이싱</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -173,6 +175,8 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
   .tile.no>span,.card.swap{animation:none}
 }
 :root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--red:#f26a5f;--blue:#6ea0ff;--ok:#4ade80;--warn:#f87171;--soft:#1c2b45;--okbg:#173a26;--note:#2b2817;--cover:rgba(18,24,21,.97);color-scheme:dark}
+.panel .rkbox{grid-template-columns:1fr}
+.panel .rkcol{padding:8px 10px}
 </style>
 </head>
 <body>
@@ -210,8 +214,9 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr minmax(240px,270
 
   <aside class="panel">
     <div class="box">
-      <h2>이번 교시 랭킹 <span id="rec-key"></span></h2>
-      <ol class="records" id="records"></ol>
+      <h2>신기록 <span id="rec-key"></span></h2>
+      <div class="rkbox" id="rkbox"></div>
+      <p class="rkstat" id="rkstat"></p>
     </div>
     <div class="box" id="hud-b-box" hidden><small id="hud-b-label">교환 횟수</small><b class="num" id="hud-b">0</b></div>
     <div class="box turn" id="turn">
@@ -424,12 +429,23 @@ function drawHud(){
 
 /* ---------- 기록 ---------- */
 function recKey(){var p=period(new Date()),c={day:new Date().toDateString(),code:p<0?"수업 외":"시간대"+(p+1)};return "cardrelay|rank|"+S.mode+"|"+S.size[S.mode]+"|"+c.day+"|"+c.code}
-function drawRecords(){
-  var list=load(recKey()),c={code:""};
-  $("rec-key").textContent="(수업 코드 "+c.code+" · "+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
-  if(!list.length){$("records").innerHTML='<li class="none">아직 성공한 사람이 없어요. 첫 기록의 주인공이 되어 보세요.</li>';return}
+function recEv(){return S.mode+"-"+S.size[S.mode]}
+var REC={data:null,busy:false};
+function recFmt(t,m){return fmt(t)+(m?" · "+m+"회":"")}
+function paintBoard(){
   var me=sget(K.ses,"");
-  $("records").innerHTML=list.slice(0,10).map(function(r,i){return "<li"+(r.id===me?' style="color:var(--goal)"':"")+"><span>"+(i+1)+"위 · "+r.id+"</span><span>"+fmt(r.t)+"</span></li>"}).join("");
+  $("rec-key").textContent="("+(S.mode==="slide"?S.size.slide+"×"+S.size.slide:S.size.sort+"장")+")";
+  if(REC.data&&REC.data.ev===recEv()){window.RECORDS.render($("rkbox"),REC.data,me,recFmt);return}
+  // 신기록판에 못 붙으면 이 태블릿 기록만 보여 준다
+  var list=load(recKey());
+  $("rkbox").innerHTML='<section class="rkcol"><h3>📱 이 태블릿 기록</h3>'+(list.length?'<ol class="rklist">'+list.slice(0,5).map(function(r,i){return '<li class="'+(r.id===me?"me":"")+'"><span class="rkn">'+(i+1)+'위</span><span class="rkw">'+r.id+'</span><b>'+fmt(r.t)+'</b></li>'}).join("")+'</ol>':'<p class="rknone">아직 기록이 없어요.</p>')+'</section>';
+}
+function drawRecords(){
+  paintBoard();
+  if(!window.RECORDS||REC.busy||document.hidden)return;
+  var ev=recEv();REC.busy=true;
+  window.RECORDS.load(1,ev).then(function(d){REC.busy=false;d.ev=ev;REC.data=d;$("rkstat").textContent="20초마다 새로 고쳐요";if(ev===recEv())paintBoard()})
+    .catch(function(e){REC.busy=false;$("rkstat").textContent=window.RECORDS.message(e);paintBoard()});
 }
 function addRecord(t,m){
   var key=recKey(),list=load(key),id=sget(K.ses,"?"),old=null;
@@ -634,6 +650,21 @@ function showResult(o){
   $("res-stats").innerHTML=o.stats.map(function(s){return "<div><dt>"+s[0]+"</dt><dd>"+s[1]+"</dd></div>"}).join("");
   $("res-note").textContent=o.note;
   $("overlay").hidden=false;
+  // 신기록판에 기록을 보내고 우리 교실·세계 순위를 받아 온다 (수업 코드와 상관없이 동작)
+  if(window.RECORDS&&window.SHEET_URL){
+    var ev=recEv(),t=Math.round(S.elapsed),m=S.a,nick=sget(K.ses,""),local=$("res-title").textContent,localCls=$("res-title").className;
+    $("res-title").textContent="기록 확인 중…"+detail;$("res-title").className="";
+    window.RECORDS.submit(1,ev,nick,t,m).then(function(d){
+      d.ev=ev;REC.data=d;paintBoard();
+      if(Math.round(S.elapsed)!==t)return;
+      var w=d.worldRank===1,r=d.roomRank===1;
+      $("res-title").textContent=(w?"🌏 세계 신기록!!":r?"🏫 우리 교실 신기록!!":"우리 교실 "+d.roomRank+"위 · 세계 "+d.worldRank+"위")+detail;
+      $("res-title").className=w||r?"first":"";
+    }).catch(function(e){
+      if(Math.round(S.elapsed)!==t)return;
+      $("res-title").textContent=local;$("res-title").className=localCls;$("rkstat").textContent=window.RECORDS.message(e);
+    });
+  }
   $("res-again").focus();
 }
 function hideResult(){$("overlay").hidden=true}
@@ -696,6 +727,7 @@ $("gate").addEventListener("click",function(e){
   else if(b.dataset.del){var a=sget(K.acc,{});delete a[b.dataset.del];sset(K.acc,a);drawTeacher()}
 });
 setInterval(function(){if($("gate").hidden)gate()},5000);
+setInterval(function(){if($("gate").hidden)drawRecords()},20000);
 
 gate();
 })();

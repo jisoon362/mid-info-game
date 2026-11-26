@@ -69,10 +69,91 @@ function clean(v, max) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
+/* ---------- 시간 기록 게임의 신기록 (1번 문제해결 레이싱, 5번 순발력 디.아.블로) ----------
+   우리 교실 신기록: 같은 날, 같은 수업 시간대(같은 수업 코드)에 낸 기록 중 1등
+   세계 신기록: 이번 학기(3.1~8.1 / 8.2~다음 해 2.1) 동안 모든 기록 중 1등 */
+var REC_SHEET = "기록";
+var REC_HEAD = ["받은 시각", "날짜", "학기", "시간대", "게임", "종목", "닉네임", "기록(ms)", "횟수"];
+var REC_SLOTS = [[555,610],[610,665],[720,825],[825,880],[935,1440]];   // classcode.js와 같아야 한다
+
+function recInfo() {
+  var d = new Date();
+  var y = Number(Utilities.formatDate(d, TZ, "yyyy")), m = Number(Utilities.formatDate(d, TZ, "M")), dd = Number(Utilities.formatDate(d, TZ, "d"));
+  var min = Number(Utilities.formatDate(d, TZ, "H")) * 60 + Number(Utilities.formatDate(d, TZ, "m"));
+  var slot = -1;
+  for (var i = 0; i < REC_SLOTS.length; i++) if (min >= REC_SLOTS[i][0] && min < REC_SLOTS[i][1]) { slot = i; break; }
+  var sem;
+  if ((m > 3 || (m === 3 && dd >= 1)) && (m < 8 || (m === 8 && dd <= 1))) sem = y + "-1";
+  else if (m >= 8) sem = y + "-2";
+  else sem = (y - 1) + "-2";
+  return { day: "d" + y + "-" + m + "-" + dd, slot: slot, sem: sem, time: Utilities.formatDate(d, TZ, "HH:mm:ss") };
+}
+function recSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(REC_SHEET);
+  if (!sh) { sh = ss.insertSheet(REC_SHEET); sh.getRange(1, 1, 1, REC_HEAD.length).setValues([REC_HEAD]); sh.setFrozenRows(1); }
+  return sh;
+}
+function recRule(g) { return g === 1 ? { min: 300, max: 1800000 } : g === 5 ? { min: 0, max: 60000 } : null; }
+// 닉네임마다 가장 좋은 기록 하나만 남겨 빠른 순으로 줄 세운다
+function bestList(rows) {
+  var best = {};
+  rows.forEach(function (r) { var b = best[r.nick]; if (!b || r.t < b.t || (r.t === b.t && r.m < b.m)) best[r.nick] = r; });
+  var list = Object.keys(best).map(function (k) { return best[k]; });
+  list.sort(function (a, b) { return a.t - b.t || a.m - b.m; });
+  return list;
+}
+function rankOf(list, nick, t, m) { var r = 1; list.forEach(function (x) { if (x.nick !== nick && (x.t < t || (x.t === t && x.m < m))) r++; }); return r; }
+function recLists(info, g, ev) {
+  var sh = recSheet(), last = sh.getLastRow(), room = [], world = [];
+  if (last > 1) {
+    var v = sh.getRange(2, 1, last - 1, REC_HEAD.length).getValues();
+    for (var i = 0; i < v.length; i++) {
+      var r = v[i];
+      if (String(r[2]) !== info.sem || Number(r[4]) !== g || String(r[5]) !== ev) continue;
+      var item = { nick: String(r[6]), t: Number(r[7]), m: Number(r[8]) || 0 };
+      world.push(item);
+      if (String(r[1]) === info.day && Number(r[3]) === info.slot) room.push(item);
+    }
+  }
+  return { room: bestList(room), world: bestList(world) };
+}
+function recOut(info, L, extra) {
+  var o = { ok: true, rec: true, sem: info.sem, slot: info.slot, room: L.room.slice(0, 10), world: L.world.slice(0, 10), roomCount: L.room.length, worldCount: L.world.length };
+  for (var k in extra) o[k] = extra[k];
+  return out(o);
+}
+function saveRec(q) {
+  var g = Math.round(Number(q.g)), rule = recRule(g);
+  if (!rule) return out({ ok: false, error: "game" });
+  var ev = String(q.ev || ""), nick = String(q.nick || "");
+  if (!/^[a-z]+-[0-9]{1,2}$/.test(ev)) return out({ ok: false, error: "event" });
+  if (!/^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]{1,8}$/.test(nick)) return out({ ok: false, error: "nick" });
+  var t = Math.round(Number(q.t)), m = Math.max(0, Math.min(100000, Math.round(Number(q.m)) || 0));
+  if (!(t >= rule.min && t <= rule.max)) return out({ ok: false, error: "value" });
+  var info = recInfo(), lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = recSheet();
+    sh.getRange(sh.getLastRow() + 1, 1, 1, REC_HEAD.length).setValues([[info.time, info.day, info.sem, info.slot, g, ev, nick, t, m]]);
+    var L = recLists(info, g, ev);
+    CacheService.getScriptCache().remove(["rec", g, ev, info.day, info.slot].join("|"));
+    return recOut(info, L, { roomRank: rankOf(L.room, nick, t, m), worldRank: rankOf(L.world, nick, t, m) });
+  } finally { lock.releaseLock(); }
+}
+function getRec(q) {
+  var g = Math.round(Number(q.g)), ev = String(q.ev || "");
+  if (!recRule(g) || !/^[a-z]+-[0-9]{1,2}$/.test(ev)) return out({ ok: false, error: "event" });
+  var info = recInfo(), key = ["rec", g, ev, info.day, info.slot].join("|"), cache = CacheService.getScriptCache(), hit = cache.get(key);
+  var L = hit ? JSON.parse(hit) : recLists(info, g, ev);
+  if (!hit) cache.put(key, JSON.stringify({ room: L.room.slice(0, 50), world: L.world.slice(0, 50) }), 15);
+  return recOut(info, L, {});
+}
+
 // 학생 태블릿이 결과를 보낼 때
 function doPost(e) {
   var q;
   try { q = JSON.parse(e.postData.contents); } catch (err) { return out({ ok: false, error: "format" }); }
+  if (q.game === "rec") return saveRec(q);
   var n = nowInfo();
   // 수업 시간에는 그 교시의 수업 코드가 맞아야 받고, 수업 시간이 아니면 코드 없이 받는다
   // 수업 코드 확인은 하지 않는다
@@ -105,6 +186,7 @@ function doPost(e) {
 // 선생님 결과 보기 화면이 목록을 가져갈 때
 function doGet(e) {
   var q = (e && e.parameter) || {};
+  if (q.view === "rec") return getRec(q);
   var n = nowInfo();
   // 선생님 비밀번호면 오늘 전체, 학생은 지금 시간대(이번 교시 또는 수업 외) 결과만 볼 수 있다
   var teacher = cyrb("T|" + SECRET + "|" + String(q.pin || "")) === TPIN || String(q.pin || "") === "1218";
