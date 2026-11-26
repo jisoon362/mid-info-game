@@ -2,7 +2,8 @@
    - 시간대마다, 게임마다 다른 두 자리 숫자
    - 시간대: 9:15~10:10 / 10:10~11:05 / 12:00~13:45 / 13:45~14:40 / 15:35~
    - 시간대 밖(아침, 11:05~12:00, 14:40~15:35)에는 코드 없이 열린다
-   - 기기 시계가 조금 어긋나도 되도록, 경계 앞뒤 5분은 옆 시간대 코드도 받는다
+   - 한 시간대에 한 번만 통과하면 되고, 시간대가 끝나면 통과가 풀린다 (예: 10:10~11:05에 통과하면 11:05까지)
+   - 기기 시계가 조금 어긋나도 되도록, 바로 붙은 시간대 경계 앞뒤 5분은 옆 시간대 코드도 받는다
    - 선생님 비밀번호: 1218 */
 (function(){
   "use strict";
@@ -17,15 +18,18 @@
   function slot(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<SLOTS.length;i++)if(m>=SLOTS[i][0]&&m<SLOTS[i][1])return i;return -1}
   function code(d,s,g){return ("0"+cyrb(SECRET+"|"+dayKey(d)+"|s"+s+"|g"+g)%100).slice(-2)}
   function label(s){return SLOTS[s][1]>=1440?hm(SLOTS[s][0])+" 이후":hm(SLOTS[s][0])+" ~ "+hm(SLOTS[s][1])}
-  // 지금 코드가 필요한 시간대들 (경계 앞뒤 5분 포함)
-  function near(d){var t=d.getTime(),out=[];for(var i=0;i<SLOTS.length;i++){if(t>=at(d,SLOTS[i][0])-GRACE&&t<at(d,SLOTS[i][1])+GRACE)out.push(i)}return out}
-  function needed(d){return near(d||new Date()).length>0}
-  // 맞으면 쓸 수 있는 마지막 시각(ms), 틀리면 0, 코드가 필요 없는 시간이면 -1
+  // 코드가 필요한 때: 시간대 안에 있을 때만 (시간대 사이 빈 시간에는 코드 없이 열린다)
+  function needed(d){return slot(d||new Date())>=0}
+  // 맞으면 그 시간대가 끝나는 시각(ms), 틀리면 0, 코드가 필요 없는 시간이면 -1
+  // 한 시간대에 한 번만 통과하면 되고, 시간대가 끝나면 통과가 풀린다
+  // 기기 시계가 조금 어긋난 경우를 위해, 경계 앞뒤 5분 안이면 바로 옆 시간대 코드도 받는다
   function check(input,g){
-    var d=new Date(),c=near(d);
-    if(!c.length)return -1;
-    for(var k=0;k<c.length;k++)if(code(d,c[k],g)===input)return Math.max(at(d,SLOTS[c[k]][1])+2*GRACE,d.getTime()+GRACE);
-    return 0;
+    var d=new Date(),s=slot(d),t=d.getTime();
+    if(s<0)return -1;
+    var ok=code(d,s,g)===input;
+    if(!ok&&s>0&&SLOTS[s-1][1]===SLOTS[s][0]&&t<at(d,SLOTS[s][0])+GRACE)ok=code(d,s-1,g)===input;
+    if(!ok&&s<SLOTS.length-1&&SLOTS[s+1][0]===SLOTS[s][1]&&t>=at(d,SLOTS[s][1])-GRACE)ok=code(d,s+1,g)===input;
+    return ok?at(d,SLOTS[s][1]):0;
   }
   function teacherOk(pin){return cyrb("T|"+SECRET+"|"+String(pin))===TPIN}
 
