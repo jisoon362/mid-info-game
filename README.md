@@ -20,7 +20,7 @@ games/
     index.html
   05-time-click/        5번 게임: 순발력 디.아.블로
     index.html
-  06-rps-ai/            6번 게임: 인공지능을 이겨라, 가위바위보!
+  06-rps-ai/            6번 게임: 인간 vs 인공지능, 가위바위보
     index.html
   04-fake-news/         4번 게임: 가짜뉴스·피싱 판별
     index.html
