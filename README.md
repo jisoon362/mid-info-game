@@ -12,7 +12,7 @@ map.js                  첫 화면의 정보랜드 지도 (대단원 다섯 곳�
 classcode.js            수업 코드 (시간대마다, 게임마다 두 자리)
 records.js              신기록판 (우리 교실 신기록 / 이번 학기 세계 신기록)
 games/
-  01-card-move/         1번 게임: 문제해결 레이싱
+  01-card-move/         1번 게임: 문제해결 카드옮기기
     index.html
   02-relay-draw/        2번 게임: 릴레이 피카소 (추상화)
     index.html
