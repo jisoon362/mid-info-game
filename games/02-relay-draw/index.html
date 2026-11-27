@@ -211,6 +211,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
     <div class="row">
       <button class="btn main big" id="sum-btn">추상화 정리 완료</button>
     </div>
+    <p class="verdict bad" id="sum-warn" aria-live="polite" hidden></p>
     <div class="talk" id="summary" hidden>
       <b>우리 모둠의 추상화</b>
       <div class="flow">
@@ -224,8 +225,7 @@ canvas{display:block;width:100%;height:100%;border:2px solid var(--line);border-
       <p id="sum-def">이렇게 ㅎㅅㅇㅅ를 추출해서 복잡한 것을 간결하게 ㄷㅅㅎ하는 과정</p>
     </div>
     <div class="opts" id="team-row" hidden>
-      <div class="opt"><label for="o-group">모둠 번호</label><select id="o-group"></select></div>
-      <div class="opt"><label for="o-gname">모둠 이름</label><input id="o-gname" class="gname" maxlength="10" autocomplete="off" placeholder="예: 번개팀"></div>
+      <div class="opt"><label for="o-gname">모둠 이름 (꼭 써야 제출돼요)</label><input id="o-gname" class="gname" maxlength="10" autocomplete="off" placeholder="예: 번개팀"></div>
     </div>
     <div class="row" id="after-row" hidden>
       <button class="btn main big" id="send">선생님께 제출</button>
@@ -327,7 +327,7 @@ function fail(lock){lock.n++;if(lock.n%3===0)lock.until=Date.now()+20000*Math.po
 $("g-code").onsubmit=function(e){
   e.preventDefault();
   var err=$("g-code-err"),lock=locked(err);if(!lock)return;
-  var d=new Date(),code=$("g-class").value.replace(/\D/g,""),until=window.CLASSCODE.check(code,2);
+  var d=window.CLASSCODE.now(),code=$("g-class").value.replace(/\D/g,""),until=window.CLASSCODE.check(code,2);
   if(until<0){gate();return}
   if(!until){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
   var end=new Date(until);
@@ -341,7 +341,7 @@ $("g-tpin").onsubmit=function(e){
   var err=$("g-pin-err"),lock=locked(err);if(!lock)return;
   if(cyrb("T|"+SECRET+"|"+$("g-pin").value)!==TPIN){fail(lock);err.textContent="비밀번호가 달라요.";return}
   sset(K.lock,{n:0,until:0});$("g-pin").value="";err.textContent="";
-  var d=new Date(),p=period(d);
+  var d=window.CLASSCODE.now(),p=period(d);
   $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":window.CLASSCODE.label(p)+" 수업 코드";
   $("g-now-code").textContent=p<0?"---":codeFor(d,p);
   $("g-issued").hidden=false;
@@ -350,10 +350,11 @@ setInterval(function(){if($("gate").hidden)gate()},5000);
 
 /* ---------- 단어 ---------- */
 var WORDS={
-  "동물":["코끼리","기린","토끼","거북이","고양이","강아지","뱀","물고기","나비","달팽이","펭귄","오리","사자","문어","고래","악어","돼지","원숭이","캥거루","부엉이","상어","꽃게","낙타","다람쥐","개구리","얼룩말"],
-  "음식":["피자","햄버거","김밥","라면","떡볶이","치킨","아이스크림","수박","바나나","핫도그","도넛","케이크","사과","포도","딸기","초밥","붕어빵","샌드위치","감자튀김","짜장면","옥수수","당근","달걀프라이","솜사탕"],
-  "직업":["의사","요리사","경찰","소방관","선생님","화가","가수","축구선수","우주비행사","농부","어부","미용사","사진작가","택배기사","군인","판사","과학자","마술사","조종사","프로그래머","제빵사","기자"],
-  "중학교 과목":["국어","수학","영어","과학","사회","역사","도덕","체육","음악","미술","정보","한문","기술","가정","진로"]
+  "동물":["코끼리","기린","토끼","거북이","고양이","강아지","뱀","물고기","나비","달팽이","펭귄","오리","사자","문어","고래","악어","돼지","원숭이","캥거루","부엉이","상어","꽃게","낙타","다람쥐","개구리","얼룩말","닭","소","말","호랑이","곰","박쥐","고슴도치","하마","공룡","두더지","잠자리","거미"],
+  /* 음식: 동물보다 한 단계 어렵게, 모양이 비슷하거나 그림으로 구별하기 까다로운 것 위주 */
+  "음식":["비빔밥","삼겹살","만두","팥빙수","마카롱","와플","케밥","파스타","카레라이스","컵라면","호떡","탕후루","크루아상","샐러드","김치찌개","순대","오믈렛","파인애플","브로콜리","닭강정","타코","푸딩","프레첼","핫초코","소시지","김치","호두과자","크레페","오징어튀김","멜론","어묵꼬치","미역국","팝콘","보쌈","마늘빵","쌀국수","초콜릿 퐁듀","티라미수"],
+  "직업":["의사","요리사","경찰","소방관","선생님","화가","가수","축구선수","우주비행사","농부","어부","미용사","사진작가","택배기사","군인","판사","과학자","마술사","조종사","프로그래머","제빵사","기자","간호사","건축가","수의사","변호사","디자이너","배우","사서","환경미화원"],
+  "중학교 과목":["국어","영어","수학","사회","과학","도덕","정보","미술","체육","역사","음악","한문","일본어","진로"]
 };
 var COLORS=["#e02424","#16a34a","#f97316","#9333ea","#db2777"],COLOR_NAMES=["빨강","초록","주황","보라","분홍"];
 var S={group:1,sent:false,genre:"동물",n:3,secs:3,seeAll:true,used:{},word:"",drawer:0,phase:"setup",snaps:[],t0:0,raf:0,tries:0,solved:false};
@@ -373,13 +374,11 @@ function drawSetup(){
 }
 $("o-drawers").onclick=function(e){var b=e.target.closest("button");if(!b)return;S.n=+b.dataset.n;drawSetup()};
 $("genres").onclick=function(e){var b=e.target.closest(".genre");if(!b)return;S.genre=b.dataset.g;drawSetup()};
-(function(){var h="";for(var i=1;i<=12;i++)h+='<option value="'+i+'">'+i+"모둠</option>";$("o-group").innerHTML=h})();
-$("o-group").onchange=function(){S.group=+this.value};
 // 모둠 이름은 이 태블릿에 기억해 둔다
 try{S.gname=localStorage.getItem("mig|g2|gname")||""}catch(e){S.gname=""}
 $("o-gname").value=S.gname;
 $("o-gname").oninput=function(){S.gname=this.value.trim();try{localStorage.setItem("mig|g2|gname",S.gname)}catch(e){}};
-function teamLabel(num,name){return name?name+" ("+num+"모둠)":num+"모둠"}
+function teamLabel(num,name){return name?name:"이름 없는 모둠"}
 function show(id){["s-setup","s-play","s-review","s-gallery"].forEach(function(s){$(s).hidden=s!==id})}
 
 /* ---------- 도화지 ---------- */
@@ -406,11 +405,16 @@ cv.onpointerup=cv.onpointercancel=function(){drawing=false};
 /* ---------- 진행 ---------- */
 function drawers(){return S.n}
 function pickWord(){
-  var list=WORDS[S.genre],used=S.used[S.genre]||(S.used[S.genre]=[]);
-  if(used.length>=list.length)used.length=0;
+  var list=WORDS[S.genre],key="mig|g2|used|"+S.genre,used=[];
+  try{used=JSON.parse(localStorage.getItem(key))||[]}catch(e){}
+  used=used.filter(function(w){return list.indexOf(w)>=0});          // 목록에서 빠진 단어는 잊는다
+  var last=used.length?used[used.length-1]:"";
+  if(used.length>=list.length)used=last?[last]:[];                  // 한 바퀴 다 돌면 처음부터, 바로 직전 단어만 피한다
   var rest=list.filter(function(w){return used.indexOf(w)<0});
   var w=rest[Math.floor(Math.random()*rest.length)];
-  used.push(w);return w;
+  used.push(w);S.used[S.genre]=used;
+  try{localStorage.setItem(key,JSON.stringify(used))}catch(e){}
+  return w;
 }
 function cover(html,see){var c=$("cover");c.innerHTML=html;c.className="cover"+(see?" see":"");c.hidden=false}
 function setClock(sec){$("clock").textContent=sec.toFixed(1);$("clock").className="clock"+(sec<=1?" low":"");$("meter").style.transform="scaleX("+Math.max(0,sec/S.secs)+")"}
@@ -492,10 +496,21 @@ function review(){
     return '<li><img alt="'+(i+1)+'번까지 그린 그림" src="'+src+'"><label for="key'+i+'"><i style="background:'+COLORS[i]+'"></i><b>'+(i+1)+"번</b> ("+COLOR_NAMES[i]+")이 그린 핵심요소</label>"+
       '<input id="key'+i+'" style="border-color:'+COLORS[i]+'" maxlength="20" autocomplete="off" placeholder="예: '+(i===0?"전체 모양":"눈에 띄는 특징")+'"></li>';
   }).join("");
-  $("summary").hidden=true;$("after-row").hidden=true;$("team-row").hidden=true;$("send-msg").hidden=true;$("end-row").hidden=true;$("steps").classList.remove("small");S.sent=false;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
+  $("summary").hidden=true;$("after-row").hidden=true;$("team-row").hidden=true;$("send-msg").hidden=true;$("end-row").hidden=true;$("steps").classList.remove("small");S.sent=false;$("sum-warn").hidden=true;$("send").disabled=!window.SHEET_URL;$("send-msg").className="verdict";$("send-msg").textContent=window.SHEET_URL?"핵심요소를 적은 뒤 제출하세요.":"제출 기능을 불러오지 못했어요. 화면을 새로고침한 뒤 다시 해 보세요.";
   show("s-review");
 }
+function missingKeys(){
+  var miss=[];
+  for(var i=0;i<S.snaps.length;i++)if(!$("key"+i).value.trim())miss.push(i);
+  return miss;
+}
 $("sum-btn").onclick=function(){
+  var miss=missingKeys(),sm=$("sum-warn");
+  if(miss.length){
+    sm.hidden=false;sm.textContent=(miss[0]+1)+"번 ("+COLOR_NAMES[miss[0]]+")"+(miss.length>1?" 등 "+miss.length+"칸을":"의 핵심요소를")+" 적어야 정리할 수 있어요.";
+    $("key"+miss[0]).focus();return;
+  }
+  $("sum-warn").hidden=true;
   var box=$("sum-keys"),any=false;box.innerHTML="";
   for(var i=0;i<S.snaps.length;i++){
     var v=$("key"+i).value.trim();if(!v)continue;
@@ -521,7 +536,9 @@ $("send").onclick=function(){
   var msg=$("send-msg"),btn=$("send");
   if(S.sent)return;
   var keys=[];for(var i=0;i<S.snaps.length;i++)keys.push($("key"+i).value.trim());
-  var payload={code:"",group:S.group,gname:S.gname||"",genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()};
+  if(missingKeys().length){msg.className="verdict bad";msg.textContent="핵심요소를 모두 적어야 제출할 수 있어요.";return}
+  if(!S.gname){msg.className="verdict bad";msg.textContent="모둠 이름을 써야 제출할 수 있어요.";$("o-gname").focus();return}
+  var payload={code:"",group:1,gname:S.gname||"",genre:S.genre,word:S.word,solved:S.solved,tries:S.tries,secs:S.secs,n:S.n,keys:keys,img:smallImage()};
   btn.disabled=true;msg.className="verdict";msg.textContent="보내는 중…";
   tryCodes(function(code){payload.code=code;return fetch(window.SHEET_URL,{method:"POST",body:JSON.stringify(payload),redirect:"follow"})})
     .then(function(j){

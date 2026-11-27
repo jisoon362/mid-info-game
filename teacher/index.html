@@ -123,9 +123,9 @@ function draw(){
   var ul=$("cards");ul.innerHTML="";
   shown.forEach(function(r){
     var li=el("li","card");
-    var top=el("div","top");top.appendChild(el("span","group",r.gname?r.gname+" ("+r.group+"모둠)":r.group+"모둠"));top.appendChild(el("span","meta",(r.period===99?"수업 외":r.period+"교시")+" · "+r.time.slice(0,5)));
+    var top=el("div","top");top.appendChild(el("span","group",r.gname||"이름 없는 모둠"));top.appendChild(el("span","meta",(r.period===99?"수업 외":r.period+"교시")+" · "+r.time.slice(0,5)));
     li.appendChild(top);
-    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=el("img");im.alt=(r.gname||r.group+"모둠")+"이 그린 그림";im.src=r.img;li.appendChild(im)}
+    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=el("img");im.alt=(r.gname||"이름 없는 모둠")+"이 그린 그림";im.src=r.img;li.appendChild(im)}
     else li.appendChild(el("div","noimg","그림 없음"));
     var w=el("div","top");w.appendChild(el("span","word",r.word));
     w.appendChild(el("span","pill "+(r.solved?"o":"x"),r.solved?r.tries+"번 만에 맞힘":"못 맞힘"));
@@ -145,7 +145,7 @@ function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++)
 var SECRET="bfc536cdefd2262ab9bb49bb",PERIODS=[[555,610],[610,665],[665,720],[720,765],[825,880],[880,935],[935,990]];
 function hm(m){var x=m%60;return Math.floor(m/60)+":"+(x<10?"0":"")+x}
 function drawCodes(){
-  var C=window.CLASSCODE,d=new Date(),now=C.slot(d);
+  var C=window.CLASSCODE,d=C.now(),now=C.slot(d);
   var games=(window.GAMES||[]).slice().sort(function(a,b){return a.no-b.no});
   var t=$("codetable");t.innerHTML="";
   var h=el("tr");h.appendChild(el("th","","시간"));

@@ -13,19 +13,36 @@
   var GRACE=5*60*1000;
   var ENABLED=false;   // 수업 코드 사용 여부. 다시 쓰려면 true로 바꾼다
   function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
-  function dayKey(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
-  function at(d,min){var x=new Date(d);x.setHours(0,min,0,0);return x.getTime()}
+  /* 기기 시계와 시간대가 달라도 선생님·학생 코드가 같도록
+     1) 시각은 한국 시간(KST)으로 계산하고
+     2) 이 사이트를 내려 준 서버의 시각(Date 헤더)과 기기 시계의 차이를 재서 맞춘다 */
+  var offset=0;
+  function now(){return new Date(Date.now()+offset)}
+  function sync(){
+    try{
+      var t0=Date.now();
+      fetch(location.pathname+"?_="+t0,{method:"HEAD",cache:"no-store"}).then(function(r){
+        var h=r.headers.get("date");if(!h)return;
+        var sv=new Date(h).getTime();if(!isFinite(sv))return;
+        var t1=Date.now();offset=sv+500-(t0+t1)/2;   // Date 헤더는 초 단위라 반올림 보정 0.5초
+      }).catch(function(){});
+    }catch(e){}
+  }
+  sync();setInterval(sync,600000);
+  function kst(d){return new Date(d.getTime()+9*3600000)}
+  function dayKey(d){var k=kst(d);return k.getUTCFullYear()+"-"+(k.getUTCMonth()+1)+"-"+k.getUTCDate()}
+  function at(d,min){var k=kst(d);return Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate(),0,min)-9*3600000}
   function hm(m){if(m>=1440)return "";var x=m%60;return Math.floor(m/60)+":"+(x<10?"0":"")+x}
-  function slot(d){var m=d.getHours()*60+d.getMinutes();for(var i=0;i<SLOTS.length;i++)if(m>=SLOTS[i][0]&&m<SLOTS[i][1])return i;return -1}
+  function slot(d){var k=kst(d),m=k.getUTCHours()*60+k.getUTCMinutes();for(var i=0;i<SLOTS.length;i++)if(m>=SLOTS[i][0]&&m<SLOTS[i][1])return i;return -1}
   function code(d,s,g){return ("0"+cyrb(SECRET+"|"+dayKey(d)+"|s"+s+"|g"+g)%100).slice(-2)}
   function label(s){return SLOTS[s][1]>=1440?hm(SLOTS[s][0])+" 이후":hm(SLOTS[s][0])+" ~ "+hm(SLOTS[s][1])}
   // 코드가 필요한 때: 시간대 안에 있을 때만 (시간대 사이 빈 시간에는 코드 없이 열린다)
-  function needed(d){return ENABLED&&slot(d||new Date())>=0}
+  function needed(d){return ENABLED&&slot(d||now())>=0}
   // 맞으면 그 시간대가 끝나는 시각(ms), 틀리면 0, 코드가 필요 없는 시간이면 -1
   // 한 시간대에 한 번만 통과하면 되고, 시간대가 끝나면 통과가 풀린다
   // 기기 시계가 조금 어긋난 경우를 위해, 경계 앞뒤 5분 안이면 바로 옆 시간대 코드도 받는다
   function check(input,g){
-    var d=new Date(),s=slot(d),t=d.getTime();
+    var d=now(),s=slot(d),t=d.getTime();
     if(!ENABLED||s<0)return -1;
     var ok=code(d,s,g)===input;
     if(!ok&&s>0&&SLOTS[s-1][1]===SLOTS[s][0]&&t<at(d,SLOTS[s][0])+GRACE)ok=code(d,s-1,g)===input;
@@ -80,11 +97,11 @@
       e.preventDefault();var err=$("ccperr"),l=lockMsg(err);if(!l)return;
       if(!teacherOk($("ccpin").value)){fail(l);err.textContent="비밀번호가 달라요.";return}
       put(KL,{n:0,until:0});$("ccpin").value="";err.textContent="";
-      var d=new Date(),s=slot(d),nw=$("ccnow");nw.hidden=false;
+      var d=now(),s=slot(d),nw=$("ccnow");nw.hidden=false;
       nw.innerHTML=s<0?"지금은 코드가 필요 없는 시간이에요":label(s)+" 수업 코드<b>"+code(d,s,g)+"</b>";
     };
     refresh();setInterval(refresh,5000);
   }
 
-  window.CLASSCODE={enabled:ENABLED,SLOTS:SLOTS,slot:slot,code:code,label:label,hm:hm,needed:needed,check:check,teacherOk:teacherOk,TPIN:TPIN,mountGate:mountGate};
+  window.CLASSCODE={now:now,enabled:ENABLED,SLOTS:SLOTS,slot:slot,code:code,label:label,hm:hm,needed:needed,check:check,teacherOk:teacherOk,TPIN:TPIN,mountGate:mountGate};
 })();

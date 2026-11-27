@@ -307,7 +307,7 @@ function fail(lock){lock.n++;if(lock.n%3===0)lock.until=Date.now()+20000*Math.po
 $("g-code").onsubmit=function(e){
   e.preventDefault();
   var err=$("g-code-err"),lock=locked(err);if(!lock)return;
-  var d=new Date(),code=$("g-class").value.replace(/\D/g,""),until=window.CLASSCODE.check(code,4);
+  var d=window.CLASSCODE.now(),code=$("g-class").value.replace(/\D/g,""),until=window.CLASSCODE.check(code,4);
   if(until<0){gate();return}
   if(!until){fail(lock);err.textContent="맞지 않는 코드예요. 선생님이 알려 준 숫자를 다시 확인하세요.";return}
   var end=new Date(until);
@@ -321,7 +321,7 @@ $("g-tpin").onsubmit=function(e){
   var err=$("g-pin-err"),lock=locked(err);if(!lock)return;
   if(cyrb("T|"+SECRET+"|"+$("g-pin").value)!==TPIN){fail(lock);err.textContent="비밀번호가 달라요.";return}
   sset(K.lock,{n:0,until:0});$("g-pin").value="";err.textContent="";
-  var d=new Date(),p=period(d);
+  var d=window.CLASSCODE.now(),p=period(d);
   $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":window.CLASSCODE.label(p)+" 수업 코드";
   $("g-now-code").textContent=p<0?"---":codeFor(d,p);
   $("g-issued").hidden=false;
