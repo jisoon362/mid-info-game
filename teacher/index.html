@@ -123,11 +123,11 @@ function draw(){
   var ul=$("cards");ul.innerHTML="";
   shown.forEach(function(r){
     var li=el("li","card");
-    var top=el("div","top");top.appendChild(el("span","group",r.gname||"이름 없는 모둠"));top.appendChild(el("span","meta",(r.period===99?"수업 외":r.period+"교시")+" · "+r.time.slice(0,5)));
+    var wp=String(r.word).split("｜"),gn=r.gname||wp[1]||"";var top=el("div","top");top.appendChild(el("span","group",gn||"이름 없는 모둠"));top.appendChild(el("span","meta",(r.period===99?"수업 외":r.period+"교시")+" · "+r.time.slice(0,5)));
     li.appendChild(top);
-    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=el("img");im.alt=(r.gname||"이름 없는 모둠")+"이 그린 그림";im.src=r.img;li.appendChild(im)}
+    if(r.img&&r.img.indexOf("data:image/jpeg;base64,")===0){var im=el("img");im.alt=(gn||"이름 없는 모둠")+"이 그린 그림";im.src=r.img;li.appendChild(im)}
     else li.appendChild(el("div","noimg","그림 없음"));
-    var w=el("div","top");w.appendChild(el("span","word",r.word));
+    var w=el("div","top");w.appendChild(el("span","word",wp[0]));
     w.appendChild(el("span","pill "+(r.solved?"o":"x"),r.solved?r.tries+"번 만에 맞힘":"못 맞힘"));
     li.appendChild(w);
     li.appendChild(el("span","meta",r.genre+" · "+r.n+"명이 "+r.secs+"초씩"));
