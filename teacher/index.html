@@ -167,7 +167,7 @@ function load(first){
         if(first){$("err").textContent=j.error==="pin"?"선생님 코드가 달라요.":"불러오지 못했어요.";return}
         status("불러오지 못했어요",true);return;
       }
-      if(first){$("login").hidden=true;$("board").hidden=false;$("codes").hidden=false;drawCodes();setInterval(drawCodes,30000);timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
+      if(first){$("login").hidden=true;$("board").hidden=false;if(window.CLASSCODE.enabled){$("codes").hidden=false;drawCodes();setInterval(drawCodes,30000);}timer=setInterval(function(){if(!document.hidden)load(false)},10000)}
       j.rows.forEach(function(r){if(!r.period)r.period=99});rows=rows.concat(j.rows);since=Math.max(since,j.last);
       var d=new Date();status("연결됨 · "+d.getHours()+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2)+" 갱신 · 10초마다 새로 고쳐요");
       if(first||j.rows.length)draw();

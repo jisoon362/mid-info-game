@@ -11,6 +11,7 @@
   var TPIN=4035313603775800;                  // "1218"
   var SLOTS=[[555,610],[610,665],[720,825],[825,880],[935,1440]];   // 분 단위
   var GRACE=5*60*1000;
+  var ENABLED=false;   // 수업 코드 사용 여부. 다시 쓰려면 true로 바꾼다
   function cyrb(str){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<str.length;i++){var ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
   function dayKey(d){return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
   function at(d,min){var x=new Date(d);x.setHours(0,min,0,0);return x.getTime()}
@@ -19,13 +20,13 @@
   function code(d,s,g){return ("0"+cyrb(SECRET+"|"+dayKey(d)+"|s"+s+"|g"+g)%100).slice(-2)}
   function label(s){return SLOTS[s][1]>=1440?hm(SLOTS[s][0])+" 이후":hm(SLOTS[s][0])+" ~ "+hm(SLOTS[s][1])}
   // 코드가 필요한 때: 시간대 안에 있을 때만 (시간대 사이 빈 시간에는 코드 없이 열린다)
-  function needed(d){return slot(d||new Date())>=0}
+  function needed(d){return ENABLED&&slot(d||new Date())>=0}
   // 맞으면 그 시간대가 끝나는 시각(ms), 틀리면 0, 코드가 필요 없는 시간이면 -1
   // 한 시간대에 한 번만 통과하면 되고, 시간대가 끝나면 통과가 풀린다
   // 기기 시계가 조금 어긋난 경우를 위해, 경계 앞뒤 5분 안이면 바로 옆 시간대 코드도 받는다
   function check(input,g){
     var d=new Date(),s=slot(d),t=d.getTime();
-    if(s<0)return -1;
+    if(!ENABLED||s<0)return -1;
     var ok=code(d,s,g)===input;
     if(!ok&&s>0&&SLOTS[s-1][1]===SLOTS[s][0]&&t<at(d,SLOTS[s][0])+GRACE)ok=code(d,s-1,g)===input;
     if(!ok&&s<SLOTS.length-1&&SLOTS[s+1][0]===SLOTS[s][1]&&t>=at(d,SLOTS[s][1])-GRACE)ok=code(d,s+1,g)===input;
@@ -85,5 +86,5 @@
     refresh();setInterval(refresh,5000);
   }
 
-  window.CLASSCODE={SLOTS:SLOTS,slot:slot,code:code,label:label,hm:hm,needed:needed,check:check,teacherOk:teacherOk,TPIN:TPIN,mountGate:mountGate};
+  window.CLASSCODE={enabled:ENABLED,SLOTS:SLOTS,slot:slot,code:code,label:label,hm:hm,needed:needed,check:check,teacherOk:teacherOk,TPIN:TPIN,mountGate:mountGate};
 })();
