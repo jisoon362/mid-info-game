@@ -18,5 +18,6 @@ window.GAMES = [
   { no: 3, folder: "03-build-computer", title: "나만의 컴퓨터 만들기", grade: "2학년", area: 1, unit: 1, desc: "퀴즈로 돈을 벌어 하드웨어와 소프트웨어를 사서 컴퓨터 완성하기" },
   { no: 4, folder: "04-fake-news", title: "사이버 탐정 키우기", grade: "2학년", area: 5, unit: 2, desc: "가짜뉴스·피싱 카드를 분류하고 근거를 찾아 내 탐정 승급시키기 · 개인전과 모둠전" },
   { no: 5, folder: "05-time-click", title: "순발력 디.아.블로", grade: "2학년", area: 2, unit: 1, desc: "아날로그 초시계와 디지털 시계로 1·3·5·8·10초에 딱 맞춰 멈추기 · 연속과 불연속" },
-  { no: 6, folder: "06-rps-ai", title: "인공지능을 이겨라, 가위바위보!", grade: "2학년", area: 4, unit: 1, desc: "내 버릇을 배워 다음 손을 예측하는 AI와 대결 · 데이터가 쌓일수록 강해지는 AI" }
+  { no: 6, folder: "06-rps-ai", title: "인공지능을 이겨라, 가위바위보!", grade: "2학년", area: 4, unit: 1, desc: "내 버릇을 배워 다음 손을 예측하는 AI와 대결 · 데이터가 쌓일수록 강해지는 AI" },
+  { no: 7, folder: "07-binary", title: "이진법 게임", grade: "2학년", area: 2, unit: 1, desc: "카드를 눌러 십진수를 이진수로 바꾸기 · 4·5·6자리 · 10문제 빨리 풀기 신기록" }
 ];

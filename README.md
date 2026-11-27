@@ -24,6 +24,8 @@ games/
     index.html
   04-fake-news/         4번 게임: 가짜뉴스·피싱 판별
     index.html
+  07-binary/            7번 게임: 이진법 게임 (4·5·6자리, 10문제 빨리 풀기)
+    index.html
 ```
 
 ## 새 게임 추가하는 법

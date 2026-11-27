@@ -69,7 +69,7 @@ function clean(v, max) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
-/* ---------- 시간 기록 게임의 신기록 (1번 문제해결 레이싱, 5번 순발력 디.아.블로) ----------
+/* ---------- 시간 기록 게임의 신기록 (1번 문제해결 레이싱, 5번 순발력 디.아.블로, 7번 이진법 게임) ----------
    우리 교실 신기록: 같은 날, 같은 수업 시간대(같은 수업 코드)에 낸 기록 중 1등
    세계 신기록: 이번 학기(3.1~8.1 / 8.2~다음 해 2.1) 동안 모든 기록 중 1등 */
 var REC_SHEET = "기록";
@@ -93,8 +93,8 @@ function recSheet() {
   if (!sh) { sh = ss.insertSheet(REC_SHEET); sh.getRange(1, 1, 1, REC_HEAD.length).setValues([REC_HEAD]); sh.setFrozenRows(1); }
   return sh;
 }
-// 1번은 1000분의 1초(ms), 5번은 1000만분의 1초 단위로 받는다
-function recRule(g) { return g === 1 ? { min: 300, max: 1800000 } : g === 5 ? { min: 0, max: 600000000 } : null; }
+// 1번은 1000분의 1초(ms), 5번은 1000만분의 1초 단위, 7번은 1000분의 1초(ms)로 받는다
+function recRule(g) { return g === 1 ? { min: 300, max: 1800000 } : g === 5 ? { min: 0, max: 600000000 } : g === 7 ? { min: 1000, max: 600000 } : null; }
 // 닉네임마다 가장 좋은 기록 하나만 남겨 빠른 순으로 줄 세운다
 function bestList(rows) {
   var best = {};
