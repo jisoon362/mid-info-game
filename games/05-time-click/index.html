@@ -237,8 +237,8 @@ var KEY="mig|g5|best";
 var NICK_OK=/^[가-힣a-zA-Z0-9]{1,6}$/;
 function getNick(){var v=$("nick").value.trim();if(!NICK_OK.test(v)){v=defaultNick();$("nick").value=v}try{localStorage.setItem("mig|g5|nick",v)}catch(e){}return v}
 function defaultNick(){var a=["시계토끼","번개","초침","타이머","뻐꾸기","째깍이"];return a[Math.floor(Math.random()*a.length)]+(10+Math.floor(Math.random()*90))}
-function recEv(){return S.kind+"-"+S.target}
-function recFmt(t){return t===0?"딱 맞춤!":(t/1000).toFixed(S.kind==="digital"?2:3)+"초 차이"}
+function recEv(){return (S.kind==="digital"?"dig":"ana")+"-"+S.target}   // 오차를 1000만분의 1초 단위로 겨루는 신기록판
+function recFmt(t){return t===0?"딱 맞춤!":(t/1e7).toFixed(7)+"초 차이"}
 var REC={busy:false};
 function loadBoard(){
   if(!window.RECORDS||REC.busy)return;
@@ -254,8 +254,8 @@ function show(id){["s-pick","s-play"].forEach(function(s){$(s).hidden=s!==id});w
 
 /* ---------- 고르기 ---------- */
 function bestKey(t){return S.kind+"|"+t}
-function fmtT(t){return S.kind==="digital"?f2(t):t.toFixed(4)+"…"}
-function fmtD(d){return S.kind==="digital"?f2(d):"약 "+f2(d)}
+function fmtT(t){return S.kind==="digital"?f2(t):t.toFixed(7)+"…"}
+function fmtD(d){return d.toFixed(7)}   // 오차는 소수점 7자리까지
 function drawPick(){
   var kb=document.querySelectorAll(".kind");for(var i=0;i<kb.length;i++)kb[i].setAttribute("aria-pressed",String(kb[i].getAttribute("data-kind")===S.kind));
   var best=load(),box=$("targets");box.innerHTML="";
@@ -364,11 +364,11 @@ function finish(){
   $("readout").className="readout late";$("lcd").parentNode.className="lcd"+(exact?" exact":"");
   $("msg").className="msg";
   $("msg").textContent=exact?"숫자가 목표에 딱 맞았어요!":"목표보다 "+fmtD(diff)+"초 늦었어요.";
-  var best=load(),k=bestKey(S.target),rd=Math.round(diff*100)/100;if(best[k]==null||rd<best[k]){best[k]=rd;save(best)}
+  var best=load(),k=bestKey(S.target),rd=S.kind==="digital"?Math.round(diff*100)/100:diff;if(best[k]==null||rd<best[k]){best[k]=rd;save(best)}
   // 신기록판에 보내기 (목표와의 차이를 1000분의 1초 단위로)
   S.rank=null;
   if(window.RECORDS&&window.SHEET_URL){
-    var ev=recEv(),t=Math.round(diff*1000),me=getNick();
+    var ev=recEv(),t=Math.round(diff*1e7),me=getNick();
     window.RECORDS.submit(5,ev,me,t,0).then(function(d){
       if(ev!==recEv())return;
       window.RECORDS.render($("rkbox"),d,me,recFmt);

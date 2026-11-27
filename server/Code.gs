@@ -93,7 +93,8 @@ function recSheet() {
   if (!sh) { sh = ss.insertSheet(REC_SHEET); sh.getRange(1, 1, 1, REC_HEAD.length).setValues([REC_HEAD]); sh.setFrozenRows(1); }
   return sh;
 }
-function recRule(g) { return g === 1 ? { min: 300, max: 1800000 } : g === 5 ? { min: 0, max: 60000 } : null; }
+// 1번은 1000분의 1초(ms), 5번은 1000만분의 1초 단위로 받는다
+function recRule(g) { return g === 1 ? { min: 300, max: 1800000 } : g === 5 ? { min: 0, max: 600000000 } : null; }
 // 닉네임마다 가장 좋은 기록 하나만 남겨 빠른 순으로 줄 세운다
 function bestList(rows) {
   var best = {};
