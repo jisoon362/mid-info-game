@@ -372,7 +372,7 @@ function finish(){
     window.RECORDS.submit(5,ev,me,t,0).then(function(d){
       if(ev!==recEv())return;
       window.RECORDS.render($("rkbox"),d,me,recFmt);
-      S.rank=d.worldRank===1?"🌏 세계 신기록!!":d.roomRank===1?"🏫 우리 교실 신기록!!":"우리 교실 "+d.roomRank+"위 · 세계 "+d.worldRank+"위";
+      S.rank=d.worldRank===1?"🌏 세계 신기록!!":"세계 "+d.worldRank+"위";
       showRank();
     }).catch(function(e){$("rkstat").textContent=window.RECORDS.message(e)});
   }

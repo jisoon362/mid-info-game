@@ -381,7 +381,7 @@ function enterCode(){
 }
 function failLock(lock,t){lock.n++;if(lock.n%3===0)lock.until=t+20000*Math.pow(2,Math.min(6,lock.n/3-1));sset(K.lock,lock)}
 function drawTeacher(){
-  var d=new Date(),p=period(d);
+  var d=window.CLASSCODE.now(),p=period(d);
   $("g-now-label").textContent=p<0?"지금은 수업 시간이 아니에요":window.CLASSCODE.label(p)+" 수업 코드";
   $("g-now-code").textContent=p<0?"---":codeFor(d,p);
   var accs=sget(K.acc,{}),ids=Object.keys(accs);
@@ -658,7 +658,7 @@ function showResult(o){
       d.ev=ev;REC.data=d;paintBoard();
       if(Math.round(S.elapsed)!==t)return;
       var w=d.worldRank===1,r=d.roomRank===1;
-      $("res-title").textContent=(w?"🌏 세계 신기록!!":r?"🏫 우리 교실 신기록!!":"우리 교실 "+d.roomRank+"위 · 세계 "+d.worldRank+"위")+detail;
+      $("res-title").textContent=(w?"🌏 세계 신기록!!":"세계 "+d.worldRank+"위")+detail;
       $("res-title").className=w||r?"first":"";
     }).catch(function(e){
       if(Math.round(S.elapsed)!==t)return;

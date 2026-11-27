@@ -238,7 +238,7 @@ function finish(){
       if(ev!==recEv())return;
       window.RECORDS.render($("rkbox2"),d,me,recFmt);
       var el=$("r-rank");el.hidden=false;
-      el.textContent=d.worldRank===1?"🌏 세계 신기록!!":d.roomRank===1?"🏫 우리 교실 신기록!!":"우리 교실 "+d.roomRank+"위 · 세계 "+d.worldRank+"위";
+      el.textContent=d.worldRank===1?"🌏 세계 신기록!!":"세계 "+d.worldRank+"위";
     }).catch(function(e){$("rkbox2").innerHTML='<p class="dim">'+window.RECORDS.message(e)+'</p>'});
   }
 }
