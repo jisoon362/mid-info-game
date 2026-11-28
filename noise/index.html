@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../theme.js"></script>
+<title>조용한 초원 소음 측정기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 초원 그림이 화면 대부분을 채우고, 위 가운데에 소음 게이지가 떠 있다 */
+  --bg:#ffffff;--line:#e2e5ea;--ink:#0f172a;--dim:#64748b;--cell:#f3f5f8;--blue:#2563eb;
+  --ok:#22c55e;--mid:#f59e0b;--loud:#ef4444;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{--bg:#121815;--line:#2b3831;--ink:#eef3ef;--dim:#9aaba1;--cell:#1c2520;--blue:#6ea0ff;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;display:flex;flex-direction:column}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+[hidden]{display:none!important}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 20px;border-bottom:1px solid var(--line)}
+h1{font-size:20px;font-weight:700;margin:0}
+.btn{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-weight:500;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn.main{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.back{border-radius:999px;padding:6px 14px;font-size:14px}
+main{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px 16px 16px}
+
+/* 무대: 초원 + 게이지 */
+.stage{position:relative;flex:1;min-height:360px;border-radius:16px;overflow:hidden;background:#cfe9f2}
+.stage:fullscreen{border-radius:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.meter{position:absolute;left:50%;top:14px;transform:translateX(-50%);width:min(560px,86%);background:rgba(255,255,255,.88);backdrop-filter:blur(4px);border-radius:16px;padding:10px 14px 12px;box-shadow:0 6px 20px rgba(15,23,42,.15);color:#0f172a}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:800;letter-spacing:1px;color:#475569}
+.mhead span{letter-spacing:0;font-weight:700;display:flex;align-items:center;gap:6px}
+.mhead span i{width:10px;height:10px;border-radius:50%;background:var(--ok);display:inline-block}
+.bar{position:relative;height:22px;border-radius:99px;background:#e5e7eb;margin-top:8px;overflow:hidden}
+.bar>i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;background:var(--ok);transition:width .08s linear,background .2s}
+.bar>b{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;border-radius:2px;background:#0f172a}
+.mfoot{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:14px;font-weight:700}
+.mfoot .count{font-variant-numeric:tabular-nums}
+.mfoot .next{color:#475569;font-weight:600}
+.meter.loud{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(calc(-50% - 6px))}75%{transform:translateX(calc(-50% + 6px))}}
+
+/* 시작 안내 */
+.cover{position:absolute;inset:0;display:grid;place-items:center;padding:20px;background:rgba(15,23,42,.25)}
+.card{width:min(100%,440px);background:#fff;color:#0f172a;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:12px;text-align:center;box-shadow:0 20px 50px rgba(15,23,42,.3)}
+.card h2{margin:0;font-size:24px;font-weight:800}
+.card p{margin:0;font-size:15px;color:#475569;text-wrap:balance}
+.card .go{padding:14px;border-radius:12px;border:0;background:#0f172a;color:#fff;font-size:19px;font-weight:800}
+.card .err{color:#dc2626;font-weight:700;min-height:1.2em}
+
+/* 설정 줄 */
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 18px;font-size:15px}
+.controls label{display:flex;align-items:center;gap:8px}
+.controls input[type=range]{width:170px;accent-color:var(--blue)}
+.controls select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+.controls small{color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.meter.loud{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn back" href="../">← 홈으로</a>
+  <h1>🔊 조용한 초원 <small style="font-size:14px;font-weight:500;color:var(--dim)">소음 측정기</small></h1>
+  <button class="btn" data-theme-toggle style="padding:6px 12px;font-size:14px;margin-left:auto"></button>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="동물들이 걸어 다니는 초원"></canvas>
+    <div class="meter" id="meter" role="group" aria-label="소음 측정기">
+      <div class="mhead">NOISE METER <span><i id="dot"></i><em id="state" style="font-style:normal">마이크를 켜 주세요</em></span></div>
+      <div class="bar"><i id="lvl"></i><b id="thr"></b></div>
+      <div class="mfoot"><span class="count" id="count">동물 0마리</span><span class="next" id="next"></span></div>
+    </div>
+    <div class="cover" id="cover">
+      <div class="card">
+        <h2>🦒 조용히 하면 동물이 모여요</h2>
+        <p>교실이 조용하면 초원에 동물이 하나씩 찾아오고, 시끄러워지면 한 마리씩 도망가요.</p>
+        <p>마이크로 <b>소리 크기만</b> 재요. 소리는 녹음하거나 저장하지 않아요.</p>
+        <button class="go" id="start">🎤 마이크 켜고 시작하기</button>
+        <p class="err" id="err" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label for="sens">민감도 <input id="sens" type="range" min="20" max="90" value="60"> <small id="sensv"></small></label>
+    <label for="gap">동물이 오는 간격
+      <select id="gap"><option value="5">5초</option><option value="10" selected>10초</option><option value="20">20초</option><option value="30">30초</option></select>
+    </label>
+    <button class="btn" id="reset">처음부터</button>
+    <button class="btn main" id="full">⛶ 전체 화면</button>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var cv=$("cv"),ctx=cv.getContext("2d"),W=0,H=0,DPR=1,BG=null;
+var MAX=12,TYPES=["elephant","giraffe","zebra","rhino","lion","hippo"];
+var S={level:0,thr:60,gap:10,quiet:0,loud:0,cool:0,animals:[],nextType:0,running:false,t:0,clouds:[]};
+
+/* ---------- 크기와 배경 ---------- */
+function resize(){
+  var r=$("stage").getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=Math.max(320,r.width);H=Math.max(300,r.height);
+  cv.width=W*DPR;cv.height=H*DPR;
+  BG=document.createElement("canvas");BG.width=cv.width;BG.height=cv.height;drawBackground(BG.getContext("2d"));
+  S.animals.forEach(function(a){a.x=Math.min(a.x,W+80)});
+}
+function horizon(){return H*.5}
+function drawBackground(g){
+  g.setTransform(DPR,0,0,DPR,0,0);
+  var hz=horizon();
+  var sky=g.createLinearGradient(0,0,0,hz);sky.addColorStop(0,"#7fb6e2");sky.addColorStop(1,"#cfe6f0");g.fillStyle=sky;g.fillRect(0,0,W,hz+2);
+  // 먼 산
+  g.fillStyle="#a99cc4";g.beginPath();g.moveTo(W*.55,hz);g.lineTo(W*.8,hz-H*.12);g.lineTo(W*.95,hz-H*.06);g.lineTo(W,hz-H*.08);g.lineTo(W,hz);g.fill();
+  g.fillStyle="#b9c9a6";g.beginPath();g.moveTo(0,hz);g.quadraticCurveTo(W*.2,hz-H*.05,W*.42,hz);g.fill();
+  // 땅
+  var gr=g.createLinearGradient(0,hz,0,H);gr.addColorStop(0,"#e9c987");gr.addColorStop(1,"#d6a75c");g.fillStyle=gr;g.fillRect(0,hz,W,H-hz);
+  // 먼 나무 실루엣
+  [[.18,.0],[.33,.004],[.7,.002],[.86,.006]].forEach(function(p){acacia(g,W*p[0],hz+H*p[1],.28,"#8a7a5c")});
+  // 연못
+  g.fillStyle="#9ad6ea";g.beginPath();g.ellipse(W*.78,hz+H*.17,W*.15,H*.045,0,0,Math.PI*2);g.fill();
+  g.fillStyle="#6cc3e0";g.beginPath();g.ellipse(W*.78,hz+H*.175,W*.13,H*.033,0,0,Math.PI*2);g.fill();
+  // 길
+  g.strokeStyle="rgba(255,240,210,.55)";g.lineWidth=H*.035;g.lineCap="round";g.beginPath();g.moveTo(W*.48,hz+4);g.bezierCurveTo(W*.42,hz+H*.15,W*.6,hz+H*.25,W*.52,H+20);g.stroke();
+  // 덤불과 풀
+  [[.62,.12,1],[.08,.3,1.2],[.92,.35,1.1],[.35,.2,.8]].forEach(function(b){bush(g,W*b[0],hz+H*b[1],b[2]*H/600)});
+  for(var i=0;i<26;i++){var x=(i*97%100)/100*W,y=hz+H*(.06+((i*53)%90)/100*.42);tuft(g,x,y,(.6+((i*31)%10)/10)*H/600)}
+  // 큰 아카시아
+  acacia(g,W*.08,hz+H*.22,1.15*H/600*1.6,"#5d4a33");
+}
+function acacia(g,x,y,s,trunk){
+  g.save();g.translate(x,y);g.scale(s*2.2,s*2.2);
+  g.strokeStyle=trunk;g.lineWidth=7;g.lineCap="round";g.beginPath();g.moveTo(0,0);g.lineTo(0,-40);g.lineTo(-14,-62);g.moveTo(0,-40);g.lineTo(16,-64);g.stroke();
+  g.fillStyle=trunk==="#8a7a5c"?"#8f9b6a":"#6ea65a";g.beginPath();g.ellipse(0,-68,46,11,0,0,Math.PI*2);g.fill();
+  g.fillStyle=trunk==="#8a7a5c"?"#7f8b5e":"#5c9449";g.beginPath();g.ellipse(4,-64,38,7,0,0,Math.PI*2);g.fill();
+  g.restore();
+}
+function bush(g,x,y,s){g.fillStyle="#7ab35f";[[0,0,30],[-24,6,22],[24,6,22]].forEach(function(c){g.beginPath();g.ellipse(x+c[0]*s,y+c[1]*s,c[2]*s,c[2]*.7*s,0,0,Math.PI*2);g.fill()})}
+function tuft(g,x,y,s){g.strokeStyle="#b98d3e";g.lineWidth=2*s;g.lineCap="round";for(var k=-2;k<=2;k++){g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+k*3*s,y-10*s,x+k*6*s,y-18*s);g.stroke()}}
+
+/* ---------- 동물 그리기 (모두 오른쪽을 보고 그린 뒤 방향에 따라 뒤집는다) ---------- */
+function leg(g,x,y,w,h,ang,col){g.save();g.translate(x,y);g.rotate(ang);g.fillStyle=col;roundRect(g,-w/2,0,w,h,w*.4);g.fill();g.restore()}
+function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function ell(g,x,y,rx,ry,col,rot){g.fillStyle=col;g.beginPath();g.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);g.fill()}
+function eye(g,x,y){ell(g,x,y,3.4,3.4,"#1f2937");ell(g,x+1,y-1,1.1,1.1,"#fff")}
+function drawAnimal(g,a,sw){
+  var c=Math.sin(sw),d=Math.sin(sw+Math.PI);
+  if(a.type==="elephant"){
+    var b="#6f8fca",dk="#5b78b0";
+    leg(g,-40,-28,20,46,d*.3,dk);leg(g,28,-28,20,46,c*.3,dk);
+    ell(g,0,-60,72,44,b);
+    leg(g,-22,-28,20,46,c*.3,b);leg(g,46,-28,20,46,d*.3,b);
+    g.strokeStyle=b;g.lineWidth=15;g.lineCap="round";g.beginPath();g.moveTo(92,-74);g.quadraticCurveTo(116,-40+c*4,100,-14);g.stroke();
+    ell(g,70,-82,32,30,b);ell(g,54,-80,20,27,"#e39aac");ell(g,82,-90,0,0,b);eye(g,84,-90);
+    g.strokeStyle=dk;g.lineWidth=4;g.beginPath();g.moveTo(-70,-66);g.lineTo(-82,-46+c*4);g.stroke();
+  }else if(a.type==="rhino"){
+    var r="#8292b6",rd="#6d7ca0";
+    leg(g,-30,-22,17,30,d*.35,rd);leg(g,24,-22,17,30,c*.35,rd);
+    ell(g,0,-44,56,30,r);
+    leg(g,-14,-22,17,30,c*.35,r);leg(g,38,-22,17,30,d*.35,r);
+    ell(g,56,-44,30,21,r);
+    g.fillStyle="#f8fafc";g.beginPath();g.moveTo(74,-58);g.lineTo(90,-82);g.lineTo(84,-54);g.fill();
+    g.beginPath();g.moveTo(66,-62);g.lineTo(72,-74);g.lineTo(74,-60);g.fill();
+    ell(g,42,-64,6,9,rd);eye(g,62,-50);
+  }else if(a.type==="giraffe"){
+    var y="#f2c14e",sp="#c47a2c";
+    leg(g,-26,-100,10,100,d*.25,"#dca93f");leg(g,22,-100,10,100,c*.25,"#dca93f");
+    ell(g,0,-112,44,26,y);
+    leg(g,-12,-100,10,100,c*.25,y);leg(g,34,-100,10,100,d*.25,y);
+    g.save();g.translate(28,-122);g.rotate(.5);g.fillStyle=y;roundRect(g,-10,-96,20,100,9);g.fill();g.restore();
+    ell(g,74,-214,22,13,y,.3);
+    g.strokeStyle=sp;g.lineWidth=3;g.beginPath();g.moveTo(66,-226);g.lineTo(64,-238);g.moveTo(74,-226);g.lineTo(74,-238);g.stroke();
+    ell(g,64,-239,3,3,sp);ell(g,74,-239,3,3,sp);eye(g,78,-218);
+    [[-20,-118],[2,-104],[18,-120],[-4,-124],[30,-150],[40,-176],[50,-198]].forEach(function(p){ell(g,p[0],p[1],6,5,sp)});
+  }else if(a.type==="zebra"){
+    var w="#f8fafc",k="#1f2937";
+    leg(g,-26,-48,10,52,d*.32,"#e2e8f0");leg(g,20,-48,10,52,c*.32,"#e2e8f0");
+    ell(g,0,-64,46,24,w);
+    g.save();g.beginPath();g.ellipse(0,-64,46,24,0,0,Math.PI*2);g.clip();g.strokeStyle=k;g.lineWidth=5;for(var i=-40;i<=40;i+=13){g.beginPath();g.moveTo(i,-92);g.lineTo(i+8,-40);g.stroke()}g.restore();
+    leg(g,-12,-48,10,52,c*.32,w);leg(g,32,-48,10,52,d*.32,w);
+    g.save();g.translate(36,-74);g.rotate(.6);g.fillStyle=w;roundRect(g,-11,-36,22,42,10);g.fill();g.restore();
+    ell(g,62,-102,12,22,w,.9);ell(g,72,-92,8,7,k);
+    g.strokeStyle=k;g.lineWidth=5;g.beginPath();g.moveTo(34,-80);g.lineTo(52,-112);g.stroke();eye(g,60,-108);
+    g.lineWidth=3;g.beginPath();g.moveTo(-46,-66);g.lineTo(-56,-44+c*4);g.stroke();
+  }else if(a.type==="lion"){
+    var l="#e3a64c",m="#b5652a";
+    leg(g,-26,-34,12,36,d*.35,"#cf9440");leg(g,20,-34,12,36,c*.35,"#cf9440");
+    ell(g,0,-48,46,22,l);
+    leg(g,-12,-34,12,36,c*.35,l);leg(g,32,-34,12,36,d*.35,l);
+    g.strokeStyle=l;g.lineWidth=5;g.lineCap="round";g.beginPath();g.moveTo(-44,-52);g.quadraticCurveTo(-64,-70,-60,-84+c*5);g.stroke();ell(g,-60,-86+c*5,6,7,m);
+    ell(g,48,-62,30,30,m);ell(g,52,-60,19,19,"#ebb862");ell(g,62,-54,6,4,"#8b5a2b");eye(g,58,-66);
+  }else{ // hippo
+    var h="#a891bd",hd="#937aa9";
+    leg(g,-30,-20,18,26,d*.3,hd);leg(g,24,-20,18,26,c*.3,hd);
+    ell(g,0,-42,58,32,h);
+    leg(g,-14,-20,18,26,c*.3,h);leg(g,38,-20,18,26,d*.3,h);
+    ell(g,60,-44,30,24,h);ell(g,74,-36,18,15,"#c0abd2");ell(g,80,-40,3,2,"#6b5480");ell(g,72,-40,3,2,"#6b5480");
+    ell(g,46,-66,6,6,hd);eye(g,58,-58);
+  }
+}
+
+/* ---------- 동물 움직임 ---------- */
+function groundY(){var hz=horizon();return hz+H*.06+Math.random()*(H-hz-H*.1)}
+function scaleAt(y){var hz=horizon();return (.45+.85*(y-hz)/(H-hz))*H/620}
+function spawn(){
+  if(S.animals.length>=MAX)return;
+  var type=TYPES[S.nextType++%TYPES.length],fromLeft=Math.random()<.5,y=groundY();
+  S.animals.push({type:type,x:fromLeft?-120:W+120,y:y,dir:fromLeft?1:-1,tx:W*(.15+Math.random()*.7),speed:28+Math.random()*18,sw:Math.random()*6,state:"walk",wait:0,leave:false});
+}
+function scare(){
+  if(!S.animals.length)return;
+  var cand=S.animals.filter(function(a){return !a.leave});if(!cand.length)return;
+  var a=cand[cand.length-1];a.leave=true;a.state="walk";a.speed=150;a.dir=a.x<W/2?-1:1;a.tx=a.dir<0?-200:W+200;
+}
+function update(dt){
+  S.animals.forEach(function(a){
+    if(a.state==="rest"){a.wait-=dt;if(a.wait<=0){a.state="walk";a.tx=W*(.08+Math.random()*.84);a.dir=a.tx>a.x?1:-1}return}
+    var dx=a.tx-a.x,step=a.speed*dt*(H/620);
+    a.dir=dx>0?1:-1;
+    if(Math.abs(dx)<=step){a.x=a.tx;if(!a.leave){a.state="rest";a.wait=1.5+Math.random()*4}}
+    else{a.x+=a.dir*step;a.sw+=dt*(a.leave?14:6)}
+  });
+  S.animals=S.animals.filter(function(a){return !(a.leave&&(a.x<-180||a.x>W+180))});
+  S.clouds.forEach(function(c){c.x+=c.v*dt;if(c.x>W+120)c.x=-120});
+}
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  if(BG)ctx.drawImage(BG,0,0);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  S.clouds.forEach(function(c){ctx.globalAlpha=.9;ell(ctx,c.x,c.y,40*c.s,14*c.s,"#fff");ell(ctx,c.x-16*c.s,c.y-8*c.s,18*c.s,14*c.s,"#fff");ell(ctx,c.x+14*c.s,c.y-10*c.s,20*c.s,15*c.s,"#fff");ctx.globalAlpha=1});
+  S.animals.slice().sort(function(a,b){return a.y-b.y}).forEach(function(a){
+    var s=scaleAt(a.y),bob=a.state==="walk"?-Math.abs(Math.sin(a.sw))*3*s:0;
+    ctx.save();ctx.translate(a.x,a.y);
+    ctx.globalAlpha=.18;ell(ctx,0,2,60*s,10*s,"#4b3a1e");ctx.globalAlpha=1;
+    ctx.translate(0,bob);ctx.scale(a.dir*s,s);
+    drawAnimal(ctx,a,a.state==="walk"?a.sw:0);
+    ctx.restore();
+  });
+}
+
+/* ---------- 소리 크기 ---------- */
+var audio={ctx:null,an:null,buf:null};
+function readLevel(){
+  if(!audio.an)return 0;
+  audio.an.getFloatTimeDomainData(audio.buf);
+  var sum=0;for(var i=0;i<audio.buf.length;i++)sum+=audio.buf[i]*audio.buf[i];
+  var rms=Math.sqrt(sum/audio.buf.length),db=20*Math.log10(rms+1e-8);   // 조용함 약 -60dB, 크게 떠들면 -15dB 근처
+  return Math.max(0,Math.min(100,(db+60)/45*100));
+}
+function start(){
+  $("err").textContent="";
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("err").textContent="이 브라우저에서는 마이크를 쓸 수 없어요.";return}
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}).then(function(stream){
+    var AC=window.AudioContext||window.webkitAudioContext;audio.ctx=new AC();
+    var src=audio.ctx.createMediaStreamSource(stream);audio.an=audio.ctx.createAnalyser();audio.an.fftSize=1024;
+    audio.buf=new Float32Array(audio.an.fftSize);src.connect(audio.an);
+    $("cover").hidden=true;S.running=true;S.quiet=S.gap-3;   // 첫 동물은 금방 온다
+  }).catch(function(){$("err").textContent="마이크를 쓸 수 없어요. 브라우저 주소창의 마이크 권한을 허용한 뒤 다시 눌러 주세요."});
+}
+
+/* ---------- 매 순간 ---------- */
+var last=performance.now();
+function frame(now){
+  var dt=Math.min(.05,(now-last)/1000);last=now;S.t+=dt;
+  if(S.running){
+    var raw=readLevel();S.level+=(raw-S.level)*(raw>S.level?.5:.08);   // 커질 때는 빨리, 작아질 때는 천천히
+    var loud=S.level>=S.thr;
+    S.cool=Math.max(0,S.cool-dt);
+    if(loud){S.loud+=dt;S.quiet=0;if(S.loud>.7&&S.cool<=0){scare();S.cool=2.5;S.loud=0}}
+    else{S.loud=Math.max(0,S.loud-dt);S.quiet+=dt;if(S.quiet>=S.gap){S.quiet=0;spawn()}}
+    hud(loud);
+  }
+  update(dt);draw();
+  requestAnimationFrame(frame);
+}
+function hud(loud){
+  var l=$("lvl");l.style.width=S.level.toFixed(1)+"%";
+  l.style.background=S.level>=S.thr?"var(--loud)":S.level>=S.thr*.75?"var(--mid)":"var(--ok)";
+  var n=S.animals.filter(function(a){return !a.leave}).length;
+  $("count").textContent="동물 "+n+"마리"+(n>=MAX?" (가득!)":"");
+  $("state").textContent=loud?"너무 시끄러워요! 동물이 도망가요":n>=MAX?"초원이 가득 찼어요":"동물들이 오고 있어요";
+  $("dot").style.background=loud?"var(--loud)":"var(--ok)";
+  $("next").textContent=loud||n>=MAX?"":"다음 동물까지 "+Math.max(1,Math.ceil(S.gap-S.quiet))+"초";
+  $("meter").classList.toggle("loud",loud&&S.cool>2.3);
+}
+function setThr(){S.thr=+$("sens").value;$("thr").style.left=S.thr+"%";$("sensv").textContent=S.thr<45?"(작은 소리에도 반응)":S.thr>70?"(큰 소리에만 반응)":"(보통)"}
+
+$("start").onclick=start;
+$("sens").oninput=setThr;
+$("gap").onchange=function(){S.gap=+this.value;S.quiet=Math.min(S.quiet,S.gap-1)};
+$("reset").onclick=function(){S.animals.forEach(function(a){a.leave=true;a.speed=150;a.dir=a.x<W/2?-1:1;a.tx=a.dir<0?-200:W+200;a.state="walk"});S.quiet=0};
+$("full").onclick=function(){var st=$("stage");if(document.fullscreenElement){document.exitFullscreen()}else if(st.requestFullscreen){st.requestFullscreen().catch(function(){})}};
+document.addEventListener("fullscreenchange",function(){$("full").textContent=document.fullscreenElement?"⛶ 전체 화면 끄기":"⛶ 전체 화면";setTimeout(resize,100)});
+window.addEventListener("resize",resize);
+for(var i=0;i<4;i++)S.clouds.push({x:Math.random()*900,y:30+Math.random()*120,s:.7+Math.random()*.8,v:6+Math.random()*8});
+resize();setThr();
+// 시작하기 전에도 두 마리가 거닐며 분위기를 보여 준다
+S.nextType=0;spawn();spawn();S.animals.forEach(function(a){a.x=W*(.3+Math.random()*.4)});
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
